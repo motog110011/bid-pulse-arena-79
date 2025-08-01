@@ -91,6 +91,11 @@ export function AuctionCard({ item, userBalance = 0, onBid, className }: Auction
               isFavorited ? "fill-red-500 text-red-500" : "text-white"
             )} />
           </Button>
+          <div className="absolute bottom-2 right-2">
+            <span className="text-xs text-white/70 bg-black/50 px-2 py-1 rounded">
+              *Imagen para fines ilustrativos
+            </span>
+          </div>
         </div>
       </CardHeader>
 
