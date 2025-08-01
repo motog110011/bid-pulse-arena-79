@@ -2,12 +2,11 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Timer } from "@/components/ui/timer";
-import { ArrowRight, Gavel, TrendingUp, Users, Star, CreditCard } from "lucide-react";
+import { ArrowRight, Gavel, TrendingUp, Users, Star } from "lucide-react";
 import heroImage from "@/assets/hero-mexican-airport.jpg";
-import visaLogo from "@/assets/visa-logo.svg";
 
 export function Hero() {
-  const [activeUsers] = useState(1247);
+  const [activeUsers] = useState(247);
   const [totalAuctions] = useState(24);
   const [liveAuctions] = useState(8);
 
@@ -111,22 +110,6 @@ export function Hero() {
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-auction-success" />
                 <span className="text-sm text-muted-foreground">+35% más ganancias</span>
-              </div>
-            </div>
-
-            {/* Secure payment methods */}
-            <div className="pt-4 border-t border-border/50">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Métodos de pago seguros:</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <img src={visaLogo} alt="Visa" className="h-6 w-auto" />
-                  <div className="h-6 w-10 bg-gradient-to-r from-red-500 to-orange-500 rounded flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">MC</span>
-                  </div>
-                </div>
               </div>
             </div>
           </div>

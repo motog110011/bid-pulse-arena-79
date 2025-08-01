@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Gavel, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import visaLogo from "@/assets/visa-logo.svg";
+import mastercardLogo from "@/assets/mastercard-logo.png";
 
 export function Footer() {
   return (
@@ -112,15 +114,14 @@ export function Footer() {
         </div>
 
         <div className="border-t border-border/50 mt-8 pt-8 flex flex-col sm:flex-row items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            © 2024 Subastas GAP. Todos los derechos reservados.
-          </p>
-          <div className="flex items-center space-x-4 mt-4 sm:mt-0">
-            <span className="text-xs text-muted-foreground">Métodos de pago seguros</span>
-            <div className="flex items-center space-x-2">
-              <div className="h-6 w-8 bg-gradient-primary rounded opacity-60"></div>
-              <div className="h-6 w-8 bg-gradient-gold rounded opacity-60"></div>
-              <div className="h-6 w-8 bg-auction-success rounded opacity-60"></div>
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-muted-foreground">
+              © 2024 Subastas GAP. Todos los derechos reservados.
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Métodos de pago seguros:</span>
+              <img src={visaLogo} alt="Visa" className="h-5 w-auto" />
+              <img src={mastercardLogo} alt="Mastercard" className="h-5 w-auto" />
             </div>
           </div>
         </div>
