@@ -20,8 +20,8 @@ export function useUserRole() {
     }
 
     console.log('User found, starting role fetch')
+    // CRÍTICO: Asegurar que loading sea true cuando hay usuario
     setLoading(true)
-    setRole(null) // Reset role while fetching
     fetchRole()
   }, [user])
 
@@ -29,7 +29,6 @@ export function useUserRole() {
     if (!user) return
 
     try {
-      setLoading(true)
       console.log('Fetching role for user:', user.id)
       
       // @ts-ignore - Temporary fix for missing types
