@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -29,6 +30,8 @@ import { AuthDialog } from "@/components/auth/AuthDialog";
 
 export function Header() {
   const { user, loading, signOut } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [notifications] = useState(3);
   const [rechargeAmount, setRechargeAmount] = useState("100");
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -68,7 +71,7 @@ export function Header() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <div className="flex items-center gap-3">
+            <Link to="/" className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-gradient-primary">
                 <Gavel className="h-6 w-6 text-white" />
               </div>
@@ -78,7 +81,7 @@ export function Header() {
                 </h1>
                 <p className="text-xs text-muted-foreground">Premium Auctions</p>
               </div>
-            </div>
+            </Link>
           </div>
 
           {/* Navigation */}
@@ -86,14 +89,26 @@ export function Header() {
             <Button 
               variant="ghost" 
               className="text-foreground"
-              onClick={() => document.getElementById('auction-grid')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => {
+                if (location.pathname === '/') {
+                  document.getElementById('auction-grid')?.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                  navigate('/?scroll=auction-grid');
+                }
+              }}
             >
               Subastas
             </Button>
             <Button 
               variant="ghost" 
               className="text-foreground"
-              onClick={() => document.getElementById('auction-grid')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => {
+                if (location.pathname === '/') {
+                  document.getElementById('auction-grid')?.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                  navigate('/?scroll=auction-grid');
+                }
+              }}
             >
               Categorías
             </Button>
@@ -103,7 +118,13 @@ export function Header() {
             <Button 
               variant="ghost" 
               className="text-foreground"
-              onClick={() => document.getElementById('como-funciona')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => {
+                if (location.pathname === '/') {
+                  document.getElementById('como-funciona')?.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                  navigate('/?scroll=como-funciona');
+                }
+              }}
             >
               Cómo Funciona
             </Button>
@@ -369,11 +390,11 @@ export function Header() {
               </>
             ) : (
               <div className="flex items-center gap-2">
-                <Button variant="ghost" onClick={() => setAuthDialogOpen(true)}>
-                  Iniciar Sesión
+                <Button variant="ghost" asChild>
+                  <Link to="/auth">Iniciar Sesión</Link>
                 </Button>
-                <Button variant="secondary" onClick={() => setAuthDialogOpen(true)}>
-                  Crear Cuenta
+                <Button variant="secondary" asChild>
+                  <Link to="/auth">Crear Cuenta</Link>
                 </Button>
               </div>
             )}
