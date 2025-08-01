@@ -49,13 +49,13 @@ export function Hero() {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${heroImage})` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/50 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-background/98 via-background/85 to-background/60" />
       
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left content */}
           <div className="space-y-8">
-            <div className="space-y-4">
+            <div className="space-y-4 bg-background/80 backdrop-blur-sm p-6 rounded-lg border border-border/20">
               <Badge className="bg-gradient-gold text-black font-medium text-sm px-4 py-2">
                 ✨ Plataforma Premium de Subastas
               </Badge>
@@ -67,7 +67,7 @@ export function Hero() {
                 </span>
               </h1>
               
-              <p className="text-xl text-muted-foreground max-w-lg">
+              <p className="text-xl text-foreground max-w-lg">
                 Productos decomisados legalmente en aeropuertos de México por motivos de seguridad. Todos los artículos son 100% legales y están disponibles para subasta al público general.
               </p>
             </div>
