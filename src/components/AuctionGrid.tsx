@@ -122,13 +122,13 @@ export function AuctionGrid() {
     },
     {
       id: "9",
-      title: "Rolex Submariner Date - Confiscado Aduana",
-      image: productLuxuryWatches,
-      currentBid: 2850,
-      minimumBid: 2860,
+      title: "Tequila Don Julio 1942 750ml - Confiscado",
+      image: productPremiumSpirits,
+      currentBid: 285,
+      minimumBid: 295,
       endTime: new Date(Date.now() + 8 * 60 * 60 * 1000), // 8 hours
       totalBids: 67,
-      category: "Relojes",
+      category: "Licores",
       isLive: true,
       lastBidder: "Alejandro K."
     },
@@ -146,18 +146,6 @@ export function AuctionGrid() {
     },
     {
       id: "11",
-      title: "Collar Oro 18k + Cadena Cartier - Confiscado",
-      image: productLuxuryJewelry,
-      currentBid: 890,
-      minimumBid: 900,
-      endTime: new Date(Date.now() + 6 * 60 * 60 * 1000 + 45 * 60 * 1000), // 6h 45m
-      totalBids: 29,
-      category: "Joyería",
-      isLive: false,
-      lastBidder: "Mónica V."
-    },
-    {
-      id: "12",
       title: "Vodka Grey Goose 1L + Gin Bombay - Decomisados",
       image: productPremiumSpirits,
       currentBid: 55,
@@ -169,7 +157,7 @@ export function AuctionGrid() {
       lastBidder: "Eduardo F."
     },
     {
-      id: "13",
+      id: "12",
       title: "Dior Sauvage 100ml + Gift Set - Confiscado",
       image: productCosmetics,
       currentBid: 38,
@@ -181,19 +169,7 @@ export function AuctionGrid() {
       lastBidder: "Carmen L."
     },
     {
-      id: "14",
-      title: "Omega Speedmaster Professional - Decomisado",
-      image: productLuxuryWatches,
-      currentBid: 1650,
-      minimumBid: 1660,
-      endTime: new Date(Date.now() + 7 * 60 * 60 * 1000), // 7 hours
-      totalBids: 38,
-      category: "Relojes",
-      isLive: true,
-      lastBidder: "Javier R."
-    },
-    {
-      id: "15",
+      id: "13",
       title: "Multitool Leatherman Wave Plus - Confiscado",
       image: productTools,
       currentBid: 28,
@@ -203,6 +179,66 @@ export function AuctionGrid() {
       category: "Herramientas",
       isLive: true,
       lastBidder: "Ricardo P."
+    },
+    {
+      id: "14",
+      title: "Ron Zacapa 23 años 750ml - Decomisado",
+      image: productLiquor,
+      currentBid: 95,
+      minimumBid: 105,
+      endTime: new Date(Date.now() + 7 * 60 * 60 * 1000), // 7 hours
+      totalBids: 38,
+      category: "Licores",
+      isLive: true,
+      lastBidder: "Javier R."
+    },
+    {
+      id: "15",
+      title: "Champagne Dom Pérignon 2015 - Confiscado",
+      image: productPremiumSpirits,
+      currentBid: 165,
+      minimumBid: 175,
+      endTime: new Date(Date.now() + 4 * 60 * 60 * 1000 + 15 * 60 * 1000), // 4h 15m
+      totalBids: 29,
+      category: "Licores",
+      isLive: false,
+      lastBidder: "Mónica V."
+    },
+    {
+      id: "16",
+      title: "Mezcal Clase Azul Reposado 750ml - Decomisado",
+      image: productLiquor,
+      currentBid: 145,
+      minimumBid: 155,
+      endTime: new Date(Date.now() + 6 * 60 * 60 * 1000 + 45 * 60 * 1000), // 6h 45m
+      totalBids: 22,
+      category: "Licores",
+      isLive: true,
+      lastBidder: "Carlos E."
+    },
+    {
+      id: "17",
+      title: "Whiskey Johnnie Walker Blue Label - Confiscado",
+      image: productPremiumSpirits,
+      currentBid: 135,
+      minimumBid: 145,
+      endTime: new Date(Date.now() + 5 * 60 * 60 * 1000), // 5 hours
+      totalBids: 31,
+      category: "Licores",
+      isLive: true,
+      lastBidder: "Ana M."
+    },
+    {
+      id: "18",
+      title: "Brandy Torres 20 Hors d'Age - Decomisado",
+      image: productLiquor,
+      currentBid: 75,
+      minimumBid: 85,
+      endTime: new Date(Date.now() + 3 * 60 * 60 * 1000 + 20 * 60 * 1000), // 3h 20m
+      totalBids: 18,
+      category: "Licores",
+      isLive: false,
+      lastBidder: "Roberto L."
     }
   ];
 
@@ -222,7 +258,7 @@ export function AuctionGrid() {
   });
 
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <section id="auction-grid" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <div className="space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
@@ -260,8 +296,7 @@ export function AuctionGrid() {
               <TabsTrigger value="licores">Licores</TabsTrigger>
               <TabsTrigger value="herramientas">Herramientas</TabsTrigger>
               <TabsTrigger value="cosméticos">Cosméticos</TabsTrigger>
-              <TabsTrigger value="relojes">Relojes</TabsTrigger>
-              <TabsTrigger value="joyería">Joyería</TabsTrigger>
+              <TabsTrigger value="electrónicos">Electrónicos</TabsTrigger>
               <TabsTrigger value="ending">Terminando Pronto</TabsTrigger>
             </TabsList>
 
@@ -342,20 +377,7 @@ export function AuctionGrid() {
             </div>
           </TabsContent>
 
-          <TabsContent value="relojes" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAuctions.map((auction) => (
-                <AuctionCard
-                  key={auction.id}
-                  item={auction}
-                  userBalance={userBalance}
-                  onBid={handleBid}
-                />
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="joyería" className="space-y-6">
+          <TabsContent value="electrónicos" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredAuctions.map((auction) => (
                 <AuctionCard

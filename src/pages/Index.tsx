@@ -1,6 +1,7 @@
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { AuctionGrid } from "@/components/AuctionGrid";
+import { HowItWorks } from "@/components/HowItWorks";
 import { Footer } from "@/components/Footer";
 
 const Index = () => {
@@ -10,6 +11,7 @@ const Index = () => {
       <main>
         <Hero />
         <AuctionGrid />
+        <HowItWorks />
       </main>
       <Footer />
     </div>

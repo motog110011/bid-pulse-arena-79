@@ -82,16 +82,28 @@ export function Header({ userBalance = 5000, userName = "Usuario Demo", userAvat
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Button variant="ghost" className="text-foreground">
+            <Button 
+              variant="ghost" 
+              className="text-foreground"
+              onClick={() => document.getElementById('auction-grid')?.scrollIntoView({ behavior: 'smooth' })}
+            >
               Subastas
             </Button>
-            <Button variant="ghost" className="text-foreground">
+            <Button 
+              variant="ghost" 
+              className="text-foreground"
+              onClick={() => document.getElementById('auction-grid')?.scrollIntoView({ behavior: 'smooth' })}
+            >
               Categorías
             </Button>
             <Button variant="ghost" className="text-foreground">
               Mis Pujas
             </Button>
-            <Button variant="ghost" className="text-foreground">
+            <Button 
+              variant="ghost" 
+              className="text-foreground"
+              onClick={() => document.getElementById('como-funciona')?.scrollIntoView({ behavior: 'smooth' })}
+            >
               Cómo Funciona
             </Button>
           </nav>
