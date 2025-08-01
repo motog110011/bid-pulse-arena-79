@@ -15,10 +15,10 @@ export function useUserBalance() {
     }
 
     fetchBalance()
-  }, [user])
+  }, [user?.id]) // Fixed dependency to prevent infinite loops
 
   const fetchBalance = async () => {
-    if (!user) return
+    if (!user?.id) return
 
     try {
       setLoading(true)
@@ -44,7 +44,9 @@ export function useUserBalance() {
   }
 
   const refreshBalance = () => {
-    fetchBalance()
+    if (user?.id) {
+      fetchBalance()
+    }
   }
 
   return {

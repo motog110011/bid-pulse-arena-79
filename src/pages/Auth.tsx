@@ -221,7 +221,7 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <Tabs value={activeTab || "login"} onValueChange={(value) => value && setActiveTab(value)}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
                 <TabsTrigger value="signup">Crear Cuenta</TabsTrigger>
