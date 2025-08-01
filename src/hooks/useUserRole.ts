@@ -1,51 +1,62 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from './useAuth'
+import { supabase } from '@/integrations/supabase/client'
 
 export function useUserRole() {
   const [role, setRole] = useState<'admin' | 'user' | null>(null)
   const [loading, setLoading] = useState(true)
+  const [ready, setReady] = useState(false)
   const { user } = useAuth()
 
-  console.log('🔍 useUserRole render:', { 
-    userEmail: user?.email, 
-    role, 
-    loading,
-    isAdmin: role === 'admin'
-  })
-
   useEffect(() => {
-    console.log('🔄 useUserRole effect triggered:', { userEmail: user?.email })
-    
     if (!user) {
-      console.log('❌ No user, setting role to null')
       setRole(null)
       setLoading(false)
+      setReady(true)
       return
     }
 
-    console.log('👤 User found:', user.email)
-    
-    // Hardcoded admin check - hacer esto inmediatamente y de forma síncrona
-    if (user.email === 'motog110011@gmail.com') {
-      console.log('✅ Setting role to ADMIN for motog110011@gmail.com')
-      setRole('admin')
-      setLoading(false)
-    } else {
-      console.log('👥 Setting role to USER for', user.email)
+    fetchUserRole()
+  }, [user?.id])
+
+  const fetchUserRole = async () => {
+    if (!user) return
+
+    try {
+      setLoading(true)
+      
+      // Use the existing database function to get user role
+      const { data, error } = await (supabase as any).rpc('get_current_user_role')
+
+      if (error) {
+        console.error('Error fetching user role:', error)
+        setRole('user') // Default to user role on error
+      } else {
+        // The function returns app_role enum
+        setRole(data || 'user')
+      }
+    } catch (error) {
+      console.error('Error in fetchUserRole:', error)
       setRole('user')
+    } finally {
       setLoading(false)
+      setReady(true)
     }
-    console.log('🔚 Effect complete')
-  }, [user?.email]) // Cambiar dependencia a user?.email para evitar recreaciones
+  }
+
+  const refreshRole = () => {
+    if (user) {
+      fetchUserRole()
+    }
+  }
 
   const isAdmin = role === 'admin'
-  
-  console.log('📊 Final values:', { role, isAdmin, loading })
 
   return {
     role,
     isAdmin,
     loading,
-    refreshRole: () => {}, // Dummy function
+    ready,
+    refreshRole,
   }
 }

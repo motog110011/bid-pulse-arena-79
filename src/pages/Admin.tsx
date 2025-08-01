@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { CheckCircle, XCircle, DollarSign, Users, Clock, TrendingUp } from 'lucide-react'
+import { AdminRoleManager } from '@/components/AdminRoleManager'
 
 interface RechargeRequest {
   id: string
@@ -39,27 +40,27 @@ interface UserWallet {
 
 export default function Admin() {
   const { user, loading: authLoading } = useAuth()
-  const { isAdmin, loading: roleLoading } = useUserRole()
+  const { isAdmin, loading: roleLoading, ready } = useUserRole()
   const { toast } = useToast()
   const [rechargeRequests, setRechargeRequests] = useState<RechargeRequest[]>([])
   const [userWallets, setUserWallets] = useState<UserWallet[]>([])
   const [loading, setLoading] = useState(true)
   const [processingRequest, setProcessingRequest] = useState<string | null>(null)
 
-  console.log('🎯 Admin render:', { 
-    authLoading, 
-    roleLoading, 
-    isAdmin, 
-    userEmail: user?.email,
-    willRedirect: !isAdmin && !roleLoading && !authLoading
-  })
+  // Wait for auth and role to be ready before making decisions
+  const isLoading = authLoading || roleLoading || !ready
+  const shouldRedirect = ready && (!user || !isAdmin)
+
+  const fetchData = () => {
+    fetchRechargeRequests()
+    fetchUserWallets()
+  }
 
   useEffect(() => {
-    if (user && isAdmin) {
-      fetchRechargeRequests()
-      fetchUserWallets()
+    if (!isLoading && user && isAdmin) {
+      fetchData()
     }
-  }, [user, isAdmin])
+  }, [isLoading, user, isAdmin])
 
   const fetchRechargeRequests = async () => {
     try {
@@ -184,19 +185,12 @@ export default function Admin() {
     }
   }
 
-  console.log('Admin render - authLoading:', authLoading, 'roleLoading:', roleLoading, 'isAdmin:', isAdmin, 'user:', user?.email)
-
-  if (authLoading || roleLoading) {
+  if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">Cargando...</div>
   }
 
-  if (!user) {
-    return <Navigate to="/auth" replace />
-  }
-
-  if (!isAdmin) {
-    console.log('❌ Redirecting because isAdmin is false - roleLoading:', roleLoading, 'isAdmin:', isAdmin)
-    return <Navigate to="/" replace />
+  if (shouldRedirect) {
+    return <Navigate to={!user ? "/auth" : "/"} replace />
   }
 
   console.log('✅ Access granted to admin panel')
@@ -262,6 +256,7 @@ export default function Admin() {
           <TabsList>
             <TabsTrigger value="recharge-requests">Solicitudes de Recarga</TabsTrigger>
             <TabsTrigger value="user-wallets">Billeteras de Usuarios</TabsTrigger>
+            <TabsTrigger value="admin-management">Gestión de Admins</TabsTrigger>
           </TabsList>
 
           <TabsContent value="recharge-requests" className="space-y-6">
@@ -380,6 +375,10 @@ export default function Admin() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="admin-management" className="space-y-6">
+            <AdminRoleManager />
           </TabsContent>
         </Tabs>
       </main>
