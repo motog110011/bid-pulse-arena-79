@@ -184,7 +184,11 @@ export default function Admin() {
     return <Navigate to="/auth" replace />
   }
 
+  // Debug: Agregar console.log temporal
+  console.log('Admin check - isAdmin:', isAdmin, 'user:', user?.email)
+
   if (!isAdmin) {
+    console.log('Redirecting to home because isAdmin is false')
     return <Navigate to="/" replace />
   }
 
