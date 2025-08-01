@@ -73,18 +73,6 @@ export function AuctionGrid() {
       lastBidder: "Laura P."
     },
     {
-      id: "5",
-      title: "iPhone 15 Pro 256GB + AirPods Pro - Decomisados",
-      image: productPremiumElectronics,
-      currentBid: 750,
-      minimumBid: 760,
-      endTime: new Date(Date.now() + 2 * 60 * 60 * 1000 + 15 * 60 * 1000), // 2h 15m
-      totalBids: 8,
-      category: "Electrónicos",
-      isLive: false,
-      lastBidder: "Roberto H."
-    },
-    {
       id: "6",
       title: "Cognac Hennessy XO 700ml - Decomisado",
       image: productLiquor,
@@ -131,18 +119,6 @@ export function AuctionGrid() {
       category: "Licores",
       isLive: true,
       lastBidder: "Alejandro K."
-    },
-    {
-      id: "10",
-      title: "MacBook Pro M3 Pro 16\" - Decomisado",
-      image: productElectronics,
-      currentBid: 1450,
-      minimumBid: 1460,
-      endTime: new Date(Date.now() + 4 * 60 * 60 * 1000 + 20 * 60 * 1000), // 4h 20m
-      totalBids: 43,
-      category: "Electrónicos",
-      isLive: true,
-      lastBidder: "Patricia M."
     },
     {
       id: "11",
@@ -296,7 +272,7 @@ export function AuctionGrid() {
               <TabsTrigger value="licores">Licores</TabsTrigger>
               <TabsTrigger value="herramientas">Herramientas</TabsTrigger>
               <TabsTrigger value="cosméticos">Cosméticos</TabsTrigger>
-              <TabsTrigger value="electrónicos">Electrónicos</TabsTrigger>
+              
               <TabsTrigger value="ending">Terminando Pronto</TabsTrigger>
             </TabsList>
 
@@ -377,18 +353,6 @@ export function AuctionGrid() {
             </div>
           </TabsContent>
 
-          <TabsContent value="electrónicos" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAuctions.map((auction) => (
-                <AuctionCard
-                  key={auction.id}
-                  item={auction}
-                  userBalance={userBalance}
-                  onBid={handleBid}
-                />
-              ))}
-            </div>
-          </TabsContent>
 
           <TabsContent value="ending" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

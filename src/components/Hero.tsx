@@ -10,13 +10,37 @@ export function Hero() {
   const [totalAuctions] = useState(156);
   const [liveAuctions] = useState(23);
 
-  // Simulación de subasta destacada de producto decomisado
-  const featuredAuction = {
-    title: "Whiskey Macallan 18 años - Decomisado",
-    currentBid: 1850,
-    endTime: new Date(Date.now() + 2 * 60 * 60 * 1000 + 45 * 60 * 1000), // 2h 45m from now
-    bidders: 47
-  };
+  // Simulación de subasta destacada que cambia cada vez
+  const featuredAuctions = [
+    {
+      title: "Whiskey Macallan 18 años - Decomisado",
+      currentBid: 1850,
+      endTime: new Date(Date.now() + 2 * 60 * 60 * 1000 + 45 * 60 * 1000),
+      bidders: 47
+    },
+    {
+      title: "Chanel No. 5 EDP 100ml - Confiscado",
+      currentBid: 125,
+      endTime: new Date(Date.now() + 1 * 60 * 60 * 1000 + 30 * 60 * 1000),
+      bidders: 28
+    },
+    {
+      title: "Cognac Hennessy XO 700ml - Decomisado",
+      currentBid: 285,
+      endTime: new Date(Date.now() + 3 * 60 * 60 * 1000 + 15 * 60 * 1000),
+      bidders: 35
+    },
+    {
+      title: "Mezcal Clase Azul Reposado - Confiscado",
+      currentBid: 195,
+      endTime: new Date(Date.now() + 4 * 60 * 60 * 1000 + 20 * 60 * 1000),
+      bidders: 22
+    }
+  ];
+
+  // Seleccionar subasta destacada basada en el tiempo para que cambie
+  const [featuredIndex] = useState(() => Math.floor(Date.now() / 60000) % featuredAuctions.length);
+  const featuredAuction = featuredAuctions[featuredIndex];
 
   return (
     <section className="relative min-h-[80vh] flex items-center overflow-hidden">
