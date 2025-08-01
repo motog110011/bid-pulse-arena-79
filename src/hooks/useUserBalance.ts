@@ -22,6 +22,7 @@ export function useUserBalance() {
 
     try {
       setLoading(true)
+      // @ts-ignore - Temporary fix for missing types
       const { data, error } = await supabase
         .from('user_wallets')
         .select('balance')
@@ -31,7 +32,7 @@ export function useUserBalance() {
       if (error) {
         console.error('Error fetching balance:', error)
         setBalance(0)
-      } else {
+      } else if (data) {
         setBalance(Number(data.balance) || 0)
       }
     } catch (error) {
