@@ -149,7 +149,7 @@ export function Header() {
 
             {/* User Authentication/Profile */}
             {user ? (
-              <>
+              <div className="flex items-center gap-2">
                 {/* Balance */}
                 <Dialog>
                   <DialogTrigger asChild>
@@ -385,10 +385,10 @@ export function Header() {
                         </div>
                       </TabsContent>
                     </Tabs>
-                  </DialogContent>
-                </Dialog>
-              </>
-            ) : (
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              ) : (
               <div className="flex items-center gap-2">
                 <Button variant="ghost" asChild>
                   <Link to="/auth">Iniciar Sesión</Link>

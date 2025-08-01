@@ -326,24 +326,6 @@ const Auth = () => {
               </TabsContent>
             </Tabs>
 
-            {/* Demo User */}
-            <div className="mt-6 pt-6 border-t border-border/50">
-              <div className="text-center space-y-3">
-                <p className="text-sm text-muted-foreground">¿Solo quieres probar?</p>
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
-                  onClick={handleDemoLogin}
-                  disabled={isLoading}
-                >
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Usar Usuario Demo
-                </Button>
-                <p className="text-xs text-muted-foreground">
-                  Email: demo@subastasgap.mx | Contraseña: demo123456
-                </p>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>
