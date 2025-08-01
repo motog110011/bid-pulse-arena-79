@@ -188,7 +188,7 @@ export function WalletRechargeForm() {
                 <li>2. Te contactaremos con los datos bancarios y número de referencia</li>
                 <li>3. Realiza tu transferencia bancaria</li>
                 <li>4. Envíanos el comprobante de pago</li>
-                <li>5. Tu saldo será acreditado en 24-48 horas</li>
+                <li>5. Tu saldo será acreditado en 12-24 horas</li>
               </ol>
             </div>
 
