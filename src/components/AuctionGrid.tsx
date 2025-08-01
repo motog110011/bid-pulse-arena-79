@@ -279,7 +279,6 @@ export function AuctionGrid() {
                 <AuctionCard
                   key={auction.id}
                   item={auction}
-                  userBalance={userBalance}
                   onBid={handleBid}
                 />
               ))}
@@ -292,7 +291,6 @@ export function AuctionGrid() {
                 <AuctionCard
                   key={auction.id}
                   item={auction}
-                  userBalance={userBalance}
                   onBid={handleBid}
                 />
               ))}
@@ -305,7 +303,6 @@ export function AuctionGrid() {
                 <AuctionCard
                   key={auction.id}
                   item={auction}
-                  userBalance={userBalance}
                   onBid={handleBid}
                 />
               ))}
@@ -318,7 +315,6 @@ export function AuctionGrid() {
                 <AuctionCard
                   key={auction.id}
                   item={auction}
-                  userBalance={userBalance}
                   onBid={handleBid}
                 />
               ))}
@@ -331,7 +327,6 @@ export function AuctionGrid() {
                 <AuctionCard
                   key={auction.id}
                   item={auction}
-                  userBalance={userBalance}
                   onBid={handleBid}
                 />
               ))}
@@ -345,7 +340,6 @@ export function AuctionGrid() {
                 <AuctionCard
                   key={auction.id}
                   item={auction}
-                  userBalance={userBalance}
                   onBid={handleBid}
                 />
               ))}

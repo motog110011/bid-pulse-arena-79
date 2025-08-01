@@ -6,6 +6,7 @@ import { Timer } from "@/components/ui/timer";
 import { cn } from "@/lib/utils";
 import { Heart, Gavel, Users, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useUserBalance } from "@/hooks/useUserBalance";
 
 interface AuctionItem {
   id: string;
@@ -22,14 +23,14 @@ interface AuctionItem {
 
 interface AuctionCardProps {
   item: AuctionItem;
-  userBalance?: number;
   onBid?: (itemId: string, amount: number) => void;
   className?: string;
 }
 
-export function AuctionCard({ item, userBalance = 0, onBid, className }: AuctionCardProps) {
+export function AuctionCard({ item, onBid, className }: AuctionCardProps) {
   const [isFavorited, setIsFavorited] = useState(false);
   const [bidAmount, setBidAmount] = useState(item.currentBid + 10);
+  const { balance: userBalance } = useUserBalance();
   const { toast } = useToast();
 
   const handleBid = () => {

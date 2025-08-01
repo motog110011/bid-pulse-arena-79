@@ -26,11 +26,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Bell, Search, User, Wallet, LogOut, Settings, Gavel, CreditCard, History, Award } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserBalance } from "@/hooks/useUserBalance";
+import { useUserRole } from "@/hooks/useUserRole";
 import { AuthDialog } from "@/components/auth/AuthDialog";
 import { WalletRechargeForm } from "@/components/WalletRechargeForm";
 
 export function Header() {
   const { user, loading, signOut } = useAuth();
+  const { balance, loading: balanceLoading } = useUserBalance();
+  const { isAdmin } = useUserRole();
   const navigate = useNavigate();
   const location = useLocation();
   const [notifications] = useState(0);
@@ -39,8 +43,8 @@ export function Header() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const { toast } = useToast();
   
-  // Mock user balance for authenticated users
-  const userBalance = user ? 2500 : 0;
+  // Real user balance from database
+  const userBalance = user && !balanceLoading ? balance : 0;
 
 
   const userStats = {
@@ -270,6 +274,15 @@ export function Header() {
                         <span>Configuración</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
+                      {isAdmin && (
+                        <>
+                          <DropdownMenuItem onClick={() => navigate('/admin')}>
+                            <Settings className="mr-2 h-4 w-4" />
+                            <span>Panel de Admin</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                        </>
+                      )}
                       <DropdownMenuItem onClick={signOut}>
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Cerrar Sesión</span>
