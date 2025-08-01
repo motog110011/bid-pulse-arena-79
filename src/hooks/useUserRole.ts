@@ -23,7 +23,7 @@ export function useUserRole() {
     try {
       setLoading(true)
       // @ts-ignore - Temporary fix for missing types
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)

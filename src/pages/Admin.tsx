@@ -56,7 +56,7 @@ export default function Admin() {
   const fetchRechargeRequests = async () => {
     try {
       // @ts-ignore - Temporary fix for missing types
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('wallet_recharge_requests')
         .select(`
           *,
@@ -81,7 +81,7 @@ export default function Admin() {
   const fetchUserWallets = async () => {
     try {
       // @ts-ignore - Temporary fix for missing types
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('user_wallets')
         .select(`
           *,
@@ -104,7 +104,7 @@ export default function Admin() {
       if (!request) return
 
       // @ts-ignore - Temporary fix for missing types
-      const { error: updateError } = await supabase
+      const { error: updateError } = await (supabase as any)
         .from('wallet_recharge_requests')
         .update({
           status: approve ? 'approved' : 'rejected',
@@ -116,7 +116,7 @@ export default function Admin() {
 
       if (approve) {
         // @ts-ignore - Temporary fix for missing types
-        const { data: wallet } = await supabase
+        const { data: wallet } = await (supabase as any)
           .from('user_wallets')
           .select('balance')
           .eq('user_id', request.user_id)
@@ -124,7 +124,7 @@ export default function Admin() {
 
         if (wallet) {
           // @ts-ignore - Temporary fix for missing types
-          const { error: updateWalletError } = await supabase
+          const { error: updateWalletError } = await (supabase as any)
             .from('user_wallets')
             .update({ balance: Number(wallet.balance) + Number(request.amount) })
             .eq('user_id', request.user_id)
@@ -133,7 +133,7 @@ export default function Admin() {
         }
 
         // @ts-ignore - Temporary fix for missing types
-        const { data: walletData } = await supabase
+        const { data: walletData } = await (supabase as any)
           .from('user_wallets')
           .select('id')
           .eq('user_id', request.user_id)
@@ -141,7 +141,7 @@ export default function Admin() {
 
         if (walletData) {
           // @ts-ignore - Temporary fix for missing types
-          await supabase
+          await (supabase as any)
             .from('balance_transactions')
             .insert({
               user_id: request.user_id,

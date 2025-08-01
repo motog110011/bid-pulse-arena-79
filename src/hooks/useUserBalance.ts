@@ -23,7 +23,7 @@ export function useUserBalance() {
     try {
       setLoading(true)
       // @ts-ignore - Temporary fix for missing types
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('user_wallets')
         .select('balance')
         .eq('user_id', user.id)
