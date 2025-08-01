@@ -194,10 +194,12 @@ export function WalletRechargeForm() {
 
             <Button 
               type="submit" 
-              className="w-full"
+              className="w-full bg-gradient-primary hover:shadow-glow"
               disabled={isLoading}
+              size="lg"
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <CreditCard className="mr-2 h-4 w-4" />
               Solicitar Recarga
             </Button>
           </form>
