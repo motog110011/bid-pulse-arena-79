@@ -73,18 +73,18 @@ export function Hero() {
             </div>
 
             {/* Stats */}
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-8 bg-background/80 backdrop-blur-sm p-4 rounded-lg border border-border/20">
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary">{activeUsers.toLocaleString()}</div>
-                <div className="text-sm text-muted-foreground">Usuarios Activos</div>
+                <div className="text-sm text-foreground">Usuarios Activos</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-auction-gold">{totalAuctions}</div>
-                <div className="text-sm text-muted-foreground">Subastas Hoy</div>
+                <div className="text-sm text-foreground">Subastas Hoy</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-auction-success">{liveAuctions}</div>
-                <div className="text-sm text-muted-foreground">En Vivo</div>
+                <div className="text-sm text-foreground">En Vivo</div>
               </div>
             </div>
 
@@ -102,14 +102,14 @@ export function Hero() {
             </div>
 
             {/* Trust indicators */}
-            <div className="flex items-center gap-6 pt-4">
+            <div className="flex items-center gap-6 pt-4 bg-background/80 backdrop-blur-sm p-4 rounded-lg border border-border/20">
               <div className="flex items-center gap-2">
                 <Star className="h-5 w-5 text-auction-gold" />
-                <span className="text-sm text-muted-foreground">Calificación 4.9/5</span>
+                <span className="text-sm text-foreground">Calificación 4.9/5</span>
               </div>
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-auction-success" />
-                <span className="text-sm text-muted-foreground">+35% más ganancias</span>
+                <span className="text-sm text-foreground">+35% más ganancias</span>
               </div>
             </div>
           </div>
