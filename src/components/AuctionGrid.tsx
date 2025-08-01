@@ -22,201 +22,121 @@ export function AuctionGrid() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [userBalance] = useState(15000);
 
-  // Productos decomisados en aeropuertos - Precios realistas pero atractivos
-  const auctions = [
-    {
-      id: "1",
-      title: "Chanel No. 5 EDP 100ml - Decomisado en Seguridad",
-      image: productLuxuryPerfumes,
-      currentBid: 45,
-      minimumBid: 55,
-      endTime: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hours
-      totalBids: 24,
-      category: "Perfumes",
-      isLive: true,
-      lastBidder: "Carlos M."
-    },
-    {
-      id: "2",
-      title: "Whiskey Macallan 12 años 700ml - Confiscado",
-      image: productPremiumSpirits,
-      currentBid: 89,
-      minimumBid: 99,
-      endTime: new Date(Date.now() + 1 * 60 * 60 * 1000 + 30 * 60 * 1000), // 1.5 hours
-      totalBids: 18,
-      category: "Licores",
-      isLive: true,
-      lastBidder: "Ana R."
-    },
-    {
-      id: "3",
-      title: "Navaja Suiza Victorinox SwissChamp - Decomisada",
-      image: productSwissKnife,
-      currentBid: 25,
-      minimumBid: 35,
-      endTime: new Date(Date.now() + 5 * 60 * 60 * 1000), // 5 hours
-      totalBids: 31,
-      category: "Herramientas",
-      isLive: true,
-      lastBidder: "Miguel S."
-    },
-    {
-      id: "4",
-      title: "Set Cosméticos La Mer - Productos Confiscados",
-      image: productLuxuryMakeup,
-      currentBid: 35,
-      minimumBid: 45,
-      endTime: new Date(Date.now() + 45 * 60 * 1000), // 45 minutes
-      totalBids: 12,
-      category: "Cosméticos",
-      isLive: true,
-      lastBidder: "Laura P."
-    },
-    {
-      id: "6",
-      title: "Cognac Hennessy XO 700ml - Decomisado",
-      image: productLiquor,
-      currentBid: 125,
-      minimumBid: 135,
-      endTime: new Date(Date.now() + 6 * 60 * 60 * 1000), // 6 hours
-      totalBids: 19,
-      category: "Licores",
-      isLive: false,
-      lastBidder: "Fernando L."
-    },
-    {
-      id: "7",
-      title: "Tom Ford Oud Wood 100ml - Confiscado Seguridad",
-      image: productPerfume,
-      currentBid: 65,
-      minimumBid: 75,
-      endTime: new Date(Date.now() + 4 * 60 * 60 * 1000), // 4 hours
-      totalBids: 15,
-      category: "Perfumes",
-      isLive: true,
-      lastBidder: "Sofia V."
-    },
-    {
-      id: "8",
-      title: "Kit Supervivencia Leatherman - Decomisado",
-      image: productTacticalGear,
-      currentBid: 45,
-      minimumBid: 55,
-      endTime: new Date(Date.now() + 3 * 60 * 60 * 1000 + 30 * 60 * 1000), // 3h 30m
-      totalBids: 22,
-      category: "Herramientas",
-      isLive: true,
-      lastBidder: "Diego R."
-    },
-    {
-      id: "9",
-      title: "Tequila Don Julio 1942 750ml - Confiscado",
-      image: productPremiumSpirits,
-      currentBid: 285,
-      minimumBid: 295,
-      endTime: new Date(Date.now() + 8 * 60 * 60 * 1000), // 8 hours
-      totalBids: 67,
-      category: "Licores",
-      isLive: true,
-      lastBidder: "Alejandro K."
-    },
-    {
-      id: "11",
-      title: "Vodka Grey Goose 1L + Gin Bombay - Decomisados",
-      image: productPremiumSpirits,
-      currentBid: 55,
-      minimumBid: 65,
-      endTime: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours
-      totalBids: 16,
-      category: "Licores",
-      isLive: true,
-      lastBidder: "Eduardo F."
-    },
-    {
-      id: "12",
-      title: "Dior Sauvage 100ml + Gift Set - Confiscado",
-      image: productCosmetics,
-      currentBid: 38,
-      minimumBid: 48,
-      endTime: new Date(Date.now() + 5 * 60 * 60 * 1000 + 30 * 60 * 1000), // 5h 30m
-      totalBids: 21,
-      category: "Perfumes",
-      isLive: false,
-      lastBidder: "Carmen L."
-    },
-    {
-      id: "13",
-      title: "Multitool Leatherman Wave Plus - Confiscado",
-      image: productTools,
-      currentBid: 28,
-      minimumBid: 38,
-      endTime: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hours
-      totalBids: 14,
-      category: "Herramientas",
-      isLive: true,
-      lastBidder: "Ricardo P."
-    },
-    {
-      id: "14",
-      title: "Ron Zacapa 23 años 750ml - Decomisado",
-      image: productLiquor,
-      currentBid: 95,
-      minimumBid: 105,
-      endTime: new Date(Date.now() + 7 * 60 * 60 * 1000), // 7 hours
-      totalBids: 38,
-      category: "Licores",
-      isLive: true,
-      lastBidder: "Javier R."
-    },
-    {
-      id: "15",
-      title: "Champagne Dom Pérignon 2015 - Confiscado",
-      image: productPremiumSpirits,
-      currentBid: 165,
-      minimumBid: 175,
-      endTime: new Date(Date.now() + 4 * 60 * 60 * 1000 + 15 * 60 * 1000), // 4h 15m
-      totalBids: 29,
-      category: "Licores",
-      isLive: false,
-      lastBidder: "Mónica V."
-    },
-    {
-      id: "16",
-      title: "Mezcal Clase Azul Reposado 750ml - Decomisado",
-      image: productLiquor,
-      currentBid: 145,
-      minimumBid: 155,
-      endTime: new Date(Date.now() + 6 * 60 * 60 * 1000 + 45 * 60 * 1000), // 6h 45m
-      totalBids: 22,
-      category: "Licores",
-      isLive: true,
-      lastBidder: "Carlos E."
-    },
-    {
-      id: "17",
-      title: "Whiskey Johnnie Walker Blue Label - Confiscado",
-      image: productPremiumSpirits,
-      currentBid: 135,
-      minimumBid: 145,
-      endTime: new Date(Date.now() + 5 * 60 * 60 * 1000), // 5 hours
-      totalBids: 31,
-      category: "Licores",
-      isLive: true,
-      lastBidder: "Ana M."
-    },
-    {
-      id: "18",
-      title: "Brandy Torres 20 Hors d'Age - Decomisado",
-      image: productLiquor,
-      currentBid: 75,
-      minimumBid: 85,
-      endTime: new Date(Date.now() + 3 * 60 * 60 * 1000 + 20 * 60 * 1000), // 3h 20m
-      totalBids: 18,
-      category: "Licores",
-      isLive: false,
-      lastBidder: "Roberto L."
-    }
-  ];
+  // Estado para subastas dinámicas
+  const [auctions, setAuctions] = useState(() => {
+    // Datos iniciales de subastas
+    return [
+      {
+        id: "1",
+        title: "Chanel No. 5 EDP 100ml - Decomisado en Seguridad",
+        image: productLuxuryPerfumes,
+        currentBid: 45,
+        minimumBid: 55,
+        endTime: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hours
+        totalBids: 24,
+        category: "Perfumes",
+        isLive: true,
+        lastBidder: "Carlos M."
+      },
+      {
+        id: "2",
+        title: "Whiskey Macallan 12 años 700ml - Confiscado",
+        image: productPremiumSpirits,
+        currentBid: 89,
+        minimumBid: 99,
+        endTime: new Date(Date.now() + 1 * 60 * 60 * 1000 + 30 * 60 * 1000), // 1.5 hours
+        totalBids: 18,
+        category: "Licores",
+        isLive: true,
+        lastBidder: "Ana R."
+      },
+      {
+        id: "3",
+        title: "Navaja Suiza Victorinox SwissChamp - Decomisada",
+        image: productSwissKnife,
+        currentBid: 25,
+        minimumBid: 35,
+        endTime: new Date(Date.now() + 5 * 60 * 60 * 1000), // 5 hours
+        totalBids: 31,
+        category: "Herramientas",
+        isLive: true,
+        lastBidder: "Miguel S."
+      },
+      {
+        id: "4",
+        title: "Set Cosméticos La Mer - Productos Confiscados",
+        image: productLuxuryMakeup,
+        currentBid: 35,
+        minimumBid: 45,
+        endTime: new Date(Date.now() + 45 * 60 * 1000), // 45 minutes
+        totalBids: 12,
+        category: "Cosméticos",
+        isLive: true,
+        lastBidder: "Laura P."
+      },
+      {
+        id: "6",
+        title: "Cognac Hennessy XO 700ml - Decomisado",
+        image: productLiquor,
+        currentBid: 125,
+        minimumBid: 135,
+        endTime: new Date(Date.now() + 6 * 60 * 60 * 1000), // 6 hours
+        totalBids: 19,
+        category: "Licores",
+        isLive: false,
+        lastBidder: "Fernando L."
+      }
+    ];
+  });
+  
+  // Generadores para ofertas aleatorias
+  const getRandomBidder = () => {
+    const bidders = ["Carlos M.", "Ana R.", "Miguel S.", "Laura P.", "Fernando L.", "Sofia V.", "Diego R.", "Alejandro K.", "Eduardo F.", "Carmen L.", "Ricardo P.", "Javier R.", "Mónica V.", "Carlos E.", "Ana M.", "Roberto L.", "Patricia G.", "Luis H.", "Marina C.", "David S."];
+    return bidders[Math.floor(Math.random() * bidders.length)];
+  };
+
+  const getRandomPrice = (min: number, max: number) => {
+    return Math.floor(Math.random() * (max - min) + min);
+  };
+
+  const getRandomEndTime = () => {
+    const hoursToAdd = Math.floor(Math.random() * 8) + 1; // 1-8 hours
+    const minutesToAdd = Math.floor(Math.random() * 60); // 0-59 minutes
+    return new Date(Date.now() + hoursToAdd * 60 * 60 * 1000 + minutesToAdd * 60 * 1000);
+  };
+
+  const regenerateAuction = (auction: any) => {
+    const newCurrentBid = getRandomPrice(25, 300);
+    return {
+      ...auction,
+      currentBid: newCurrentBid,
+      minimumBid: newCurrentBid + 10,
+      endTime: getRandomEndTime(),
+      totalBids: Math.floor(Math.random() * 50) + 10,
+      lastBidder: getRandomBidder(),
+      isLive: Math.random() > 0.2 // 80% chance of being live
+    };
+  };
+
+  // Efecto para regenerar subastas cuando expiren
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAuctions(currentAuctions => {
+        const now = Date.now();
+        return currentAuctions.map(auction => {
+          // Si la subasta ha expirado, regenerarla
+          if (auction.endTime.getTime() <= now) {
+            console.log(`Regenerando subasta: ${auction.title}`);
+            return regenerateAuction(auction);
+          }
+          return auction;
+        });
+      });
+    }, 30000); // Verificar cada 30 segundos
+
+    return () => clearInterval(interval);
+  }, []);
+
 
   const handleBid = (itemId: string, amount: number) => {
     console.log(`Nueva puja de $${amount} para el item ${itemId}`);
