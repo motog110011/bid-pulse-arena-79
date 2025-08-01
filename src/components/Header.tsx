@@ -69,7 +69,6 @@ export function Header() {
                 <h1 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
                   Subastas GAP
                 </h1>
-                <p className="text-xs text-muted-foreground">Premium Auctions</p>
               </div>
             </Link>
           </div>

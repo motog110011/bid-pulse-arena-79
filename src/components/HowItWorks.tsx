@@ -24,7 +24,7 @@ export function HowItWorks() {
     {
       id: "02", 
       title: "Agrega saldo a tu cuenta",
-      description: "Para ofertar necesitas tener saldo disponible. Haz una transferencia SPEI desde tu banco al número de cuenta que te proporcionamos. Validamos tu depósito manualmente en un plazo de 24 a 48 horas y actualizamos tu saldo en el sistema.",
+      description: "Para ofertar necesitas tener saldo disponible. Haz una transferencia SPEI desde tu banco al número de cuenta que te proporcionamos. Validamos tu depósito manualmente en un plazo de 12 a 24 horas y actualizamos tu saldo en el sistema.",
       icon: CreditCard,
       color: "bg-green-500"
     },
@@ -104,7 +104,7 @@ export function HowItWorks() {
                     <step.icon className="h-6 w-6 text-primary" />
                     <h3 className="text-2xl font-bold">{step.title}</h3>
                   </div>
-                  <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl">
+                  <p className="text-lg leading-relaxed max-w-2xl bg-background/80 backdrop-blur-sm p-4 rounded-lg border border-border/50">
                     {step.description}
                   </p>
                 </div>
