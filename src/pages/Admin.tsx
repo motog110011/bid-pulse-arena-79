@@ -176,6 +176,8 @@ export default function Admin() {
     }
   }
 
+  console.log('Admin render - authLoading:', authLoading, 'roleLoading:', roleLoading, 'isAdmin:', isAdmin, 'user:', user?.email)
+
   if (authLoading || roleLoading) {
     return <div className="min-h-screen flex items-center justify-center">Cargando...</div>
   }
@@ -185,8 +187,11 @@ export default function Admin() {
   }
 
   if (!isAdmin) {
+    console.log('❌ Redirecting because isAdmin is false - roleLoading:', roleLoading, 'isAdmin:', isAdmin)
     return <Navigate to="/" replace />
   }
+
+  console.log('✅ Access granted to admin panel')
 
   const pendingRequests = rechargeRequests.filter(r => r.status === 'pending')
   const totalBalance = userWallets.reduce((sum, wallet) => sum + Number(wallet.balance), 0)
