@@ -101,8 +101,8 @@ export function Header() {
             >
               Categorías
             </Button>
-            <Button variant="ghost" className="text-foreground">
-              Mis Pujas
+            <Button variant="ghost" className="text-foreground" asChild>
+              <Link to="/mis-pujas">Mis Pujas</Link>
             </Button>
             <Button 
               variant="ghost" 

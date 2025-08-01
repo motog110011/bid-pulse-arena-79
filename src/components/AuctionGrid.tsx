@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Filter, SortAsc } from "lucide-react";
+import { useAutoBid } from "@/hooks/useAutoBid";
+import { useToast } from "@/hooks/use-toast";
 import productPerfume from "@/assets/product-perfume.jpg";
 import productLiquor from "@/assets/product-liquor.jpg";
 import productTools from "@/assets/product-tools.jpg";
@@ -137,10 +139,73 @@ export function AuctionGrid() {
     return () => clearInterval(interval);
   }, []);
 
+  const { triggerAutoBid } = useAutoBid();
+  const { toast } = useToast();
 
   const handleBid = (itemId: string, amount: number) => {
     console.log(`Nueva puja de $${amount} para el item ${itemId}`);
-    // Aquí implementarías la lógica de puja
+    
+    // Actualizar la subasta con la nueva puja del usuario
+    setAuctions(currentAuctions => {
+      return currentAuctions.map(auction => {
+        if (auction.id === itemId) {
+          const updatedAuction = {
+            ...auction,
+            currentBid: amount,
+            minimumBid: amount + 10,
+            totalBids: auction.totalBids + 1,
+            lastBidder: "Tú" // Indicar que el usuario hizo la puja
+          };
+
+          // Activar el sistema de pujas automáticas
+          triggerAutoBid(
+            amount,
+            itemId,
+            {
+              minDelay: 15, // 15-45 segundos de delay
+              maxDelay: 45,
+              chanceToRespond: 0.7, // 70% de probabilidad de respuesta
+              maxBidIncrease: 30 // incremento máximo de $30
+            },
+            handleAutoBid
+          );
+
+          return updatedAuction;
+        }
+        return auction;
+      });
+    });
+
+    toast({
+      title: "¡Puja realizada!",
+      description: `Has pujado $${amount.toLocaleString()} por el producto`,
+    });
+  };
+
+  const handleAutoBid = (auctionId: string, newBid: number, bidder: string) => {
+    setAuctions(currentAuctions => {
+      return currentAuctions.map(auction => {
+        if (auction.id === auctionId) {
+          // Verificar que la subasta aún esté activa
+          if (auction.endTime.getTime() > Date.now()) {
+            return {
+              ...auction,
+              currentBid: newBid,
+              minimumBid: newBid + 10,
+              totalBids: auction.totalBids + 1,
+              lastBidder: bidder
+            };
+          }
+        }
+        return auction;
+      });
+    });
+
+    toast({
+      title: "Nueva puja recibida",
+      description: `${bidder} ha pujado $${newBid.toLocaleString()}`,
+      duration: 3000,
+    });
   };
 
   const filteredAuctions = selectedCategory === "all" 

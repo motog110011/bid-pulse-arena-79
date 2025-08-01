@@ -9,6 +9,7 @@ import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import RefundPolicy from "./pages/RefundPolicy";
 import Contact from "./pages/Contact";
+import MyBids from "./pages/MyBids";
 import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
 
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/privacidad" element={<PrivacyPolicy />} />
           <Route path="/reembolsos" element={<RefundPolicy />} />
           <Route path="/contacto" element={<Contact />} />
+          <Route path="/mis-pujas" element={<MyBids />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
