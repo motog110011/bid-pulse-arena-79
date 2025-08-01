@@ -7,15 +7,21 @@ export function useUserRole() {
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
 
+  console.log('useUserRole render - user:', user?.email, 'role:', role, 'loading:', loading)
+
   useEffect(() => {
+    console.log('useUserRole effect triggered - user:', user?.email)
+    
     if (!user) {
+      console.log('No user, setting role to null and loading to false')
       setRole(null)
       setLoading(false)
       return
     }
 
-    // Cuando hay usuario, SIEMPRE debe estar loading hasta que se complete el fetch
+    console.log('User found, starting role fetch')
     setLoading(true)
+    setRole(null) // Reset role while fetching
     fetchRole()
   }, [user])
 
