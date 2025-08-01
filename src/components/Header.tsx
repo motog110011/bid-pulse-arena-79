@@ -160,7 +160,7 @@ export function Header() {
                       </Button>
                     </div>
                   </DialogTrigger>
-                  <DialogContent className="glass-card max-w-md">
+                  <DialogContent className="glass-card max-w-md max-h-[90vh] overflow-y-auto">
                     <WalletRechargeForm />
                   </DialogContent>
                 </Dialog>

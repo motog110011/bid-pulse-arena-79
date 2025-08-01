@@ -181,17 +181,6 @@ export function WalletRechargeForm() {
               )}
             />
 
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <h4 className="font-medium mb-2">¿Cómo funciona?</h4>
-              <ol className="text-sm text-muted-foreground space-y-1">
-                <li>1. Envía tu solicitud con el monto deseado</li>
-                <li>2. Te contactaremos con los datos bancarios y número de referencia</li>
-                <li>3. Realiza tu transferencia bancaria</li>
-                <li>4. Envíanos el comprobante de pago</li>
-                <li>5. Tu saldo será acreditado en 12-24 horas</li>
-              </ol>
-            </div>
-
             <Button 
               type="submit" 
               className="w-full bg-gradient-primary hover:shadow-glow"
@@ -202,6 +191,17 @@ export function WalletRechargeForm() {
               <CreditCard className="mr-2 h-4 w-4" />
               Solicitar Recarga
             </Button>
+
+            <div className="bg-muted/50 p-4 rounded-lg">
+              <h4 className="font-medium mb-2">¿Cómo funciona?</h4>
+              <ol className="text-sm text-muted-foreground space-y-1">
+                <li>1. Envía tu solicitud con el monto deseado</li>
+                <li>2. Te contactaremos con los datos bancarios y número de referencia</li>
+                <li>3. Realiza tu transferencia bancaria</li>
+                <li>4. Envíanos el comprobante de pago</li>
+                <li>5. Tu saldo será acreditado en 12-24 horas</li>
+              </ol>
+            </div>
           </form>
         </Form>
       </CardContent>
