@@ -46,6 +46,14 @@ export default function Admin() {
   const [loading, setLoading] = useState(true)
   const [processingRequest, setProcessingRequest] = useState<string | null>(null)
 
+  console.log('🎯 Admin render:', { 
+    authLoading, 
+    roleLoading, 
+    isAdmin, 
+    userEmail: user?.email,
+    willRedirect: !isAdmin && !roleLoading && !authLoading
+  })
+
   useEffect(() => {
     if (user && isAdmin) {
       fetchRechargeRequests()
