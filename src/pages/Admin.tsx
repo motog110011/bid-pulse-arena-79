@@ -184,9 +184,7 @@ export default function Admin() {
     return <Navigate to="/auth" replace />
   }
 
-  // Temporal: permitir acceso directo al admin para debugging
-  if (!isAdmin && user?.email !== 'motog110011@gmail.com') {
-    console.log('Redirecting to home because isAdmin is false')
+  if (!isAdmin) {
     return <Navigate to="/" replace />
   }
 

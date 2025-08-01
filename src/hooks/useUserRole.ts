@@ -14,7 +14,12 @@ export function useUserRole() {
       return
     }
 
-    fetchRole()
+    // Pequeño delay para asegurar que la sesión esté completamente establecida
+    const timer = setTimeout(() => {
+      fetchRole()
+    }, 100)
+
+    return () => clearTimeout(timer)
   }, [user])
 
   const fetchRole = async () => {
