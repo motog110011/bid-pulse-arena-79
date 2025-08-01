@@ -7,22 +7,22 @@ export function useUserRole() {
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
 
-  console.log('useUserRole render - user:', user?.email, 'role:', role, 'loading:', loading)
-
   useEffect(() => {
-    console.log('useUserRole effect triggered - user:', user?.email)
-    
     if (!user) {
-      console.log('No user, setting role to null and loading to false')
       setRole(null)
       setLoading(false)
       return
     }
 
-    console.log('User found, starting role fetch')
-    // CRÍTICO: Asegurar que loading sea true cuando hay usuario
-    setLoading(true)
-    fetchRole()
+    // Hardcoded admin check
+    if (user.email === 'motog110011@gmail.com') {
+      setRole('admin')
+      setLoading(false)
+      return
+    }
+
+    setRole('user')
+    setLoading(false)
   }, [user])
 
   const fetchRole = async () => {
