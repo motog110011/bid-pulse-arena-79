@@ -51,6 +51,16 @@ export default function Admin() {
   const isLoading = authLoading || roleLoading || !ready
   const shouldRedirect = ready && (!user || !isAdmin)
 
+  console.log('🎯 Admin Debug:', { 
+    authLoading, 
+    roleLoading, 
+    ready, 
+    isAdmin, 
+    userEmail: user?.email,
+    isLoading,
+    shouldRedirect
+  })
+
   const fetchData = () => {
     fetchRechargeRequests()
     fetchUserWallets()

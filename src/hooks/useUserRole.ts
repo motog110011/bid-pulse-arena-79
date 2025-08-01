@@ -28,12 +28,16 @@ export function useUserRole() {
       // Use the existing database function to get user role
       const { data, error } = await (supabase as any).rpc('get_current_user_role')
 
+      console.log('🔍 Role fetch result:', { data, error })
+
       if (error) {
         console.error('Error fetching user role:', error)
         setRole('user') // Default to user role on error
       } else {
         // The function returns app_role enum
-        setRole(data || 'user')
+        const userRole = data as 'admin' | 'user' | null
+        console.log('✅ Setting role to:', userRole || 'user')
+        setRole(userRole || 'user')
       }
     } catch (error) {
       console.error('Error in fetchUserRole:', error)
