@@ -1,0 +1,21 @@
+{
+  "name": "backup-scripts",
+  "version": "1.0.0",
+  "description": "Scripts de respaldo automático para proyectos Lovable con Supabase",
+  "main": "backup.js",
+  "scripts": {
+    "backup": "node backup.js",
+    "backup:schedule": "node schedule-backup.js",
+    "restore:verify": "node verify-backup.js"
+  },
+  "dependencies": {
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.7"
+  },
+  "bin": {
+    "lovable-backup": "./backup.js"
+  },
+  "keywords": ["backup", "lovable", "supabase", "automation"],
+  "author": "Auto-generated",
+  "license": "MIT"
+}
