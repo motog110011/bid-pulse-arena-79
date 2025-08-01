@@ -67,7 +67,7 @@ export function Footer() {
               <a href="#" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                 FAQ
               </a>
-              <a href="#" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <a href="/terminos" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Términos y Condiciones
               </a>
               <a href="#" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -88,17 +88,18 @@ export function Footer() {
             <div className="space-y-3">
               <div className="flex items-center gap-3 text-sm">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">soporte@subastasgap.com</span>
+                <span className="text-muted-foreground">contacto@subastasgap.mx</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <Phone className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">+1 (555) 123-4567</span>
+                <span className="text-muted-foreground">+52 (222) 123-4567</span>
               </div>
               <div className="flex items-start gap-3 text-sm">
                 <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
                 <span className="text-muted-foreground">
-                  123 Auction Street<br />
-                  Premium District, PD 12345
+                  Vía Atlixcáyotl No. 3248, Torre JV II, Piso 6<br />
+                  Col. Reserva Territorial Atlixcáyotl<br />
+                  C.P. 72830, San Andrés Cholula, Puebla
                 </span>
               </div>
             </div>
