@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Timer } from "@/components/ui/timer";
 import { ArrowRight, Gavel, TrendingUp, Users, Star } from "lucide-react";
-import heroImage from "@/assets/hero-airport.jpg";
+import heroImage from "@/assets/hero-mexican-airport.jpg";
 
 export function Hero() {
   const [activeUsers] = useState(1247);
