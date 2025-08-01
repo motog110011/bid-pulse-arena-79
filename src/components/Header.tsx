@@ -129,13 +129,8 @@ export function Header() {
 
           {/* Right side */}
           <div className="flex items-center gap-4">
-            {/* Search */}
-            <Button variant="ghost" size="icon" className="glass">
-              <Search className="h-5 w-5" />
-            </Button>
-
             {/* Notifications */}
-            <Button variant="ghost" size="icon" className="glass relative">
+            <Button variant="ghost" size="icon" className="glass relative">{/* rest of content remains */}
               <Bell className="h-5 w-5" />
               {notifications > 0 && (
                 <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-destructive">
@@ -188,12 +183,12 @@ export function Header() {
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DialogTrigger asChild>
-                        <DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/perfil">
                           <User className="mr-2 h-4 w-4" />
                           <span>Mi Perfil</span>
-                        </DropdownMenuItem>
-                      </DialogTrigger>
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem>
                         <Wallet className="mr-2 h-4 w-4" />
                         <span>Mi Billetera</span>
