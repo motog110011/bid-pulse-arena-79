@@ -16,6 +16,8 @@ export function useUserRole() {
       return
     }
 
+    // Reset ready state when starting to fetch
+    setReady(false)
     fetchUserRole()
   }, [user?.id])
 
@@ -44,17 +46,21 @@ export function useUserRole() {
       setRole('user')
     } finally {
       setLoading(false)
-      setReady(true)
+      // Only set ready to true AFTER we have processed the role
+      setTimeout(() => setReady(true), 0)
     }
   }
 
   const refreshRole = () => {
     if (user) {
+      setReady(false)
       fetchUserRole()
     }
   }
 
   const isAdmin = role === 'admin'
+
+  console.log('📊 useUserRole state:', { role, isAdmin, loading, ready, userEmail: user?.email })
 
   return {
     role,
