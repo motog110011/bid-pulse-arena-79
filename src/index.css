@@ -1,0 +1,196 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Subastas GAP - Sistema de diseño moderno para plataforma de subastas
+Inspirado en glassmorphism y diseño premium
+Todos los colores deben ser HSL.
+*/
+
+@layer base {
+  :root {
+    /* Colores base premium para subastas */
+    --background: 240 10% 8%;
+    --foreground: 240 5% 98%;
+
+    /* Cards con efecto glassmorphism */
+    --card: 240 8% 12%;
+    --card-foreground: 240 5% 95%;
+
+    --popover: 240 8% 12%;
+    --popover-foreground: 240 5% 95%;
+
+    /* Azul premium para confianza */
+    --primary: 220 100% 65%;
+    --primary-foreground: 240 10% 8%;
+
+    /* Dorado para elementos premium */
+    --secondary: 45 100% 70%;
+    --secondary-foreground: 240 10% 8%;
+
+    --muted: 240 8% 18%;
+    --muted-foreground: 240 5% 70%;
+
+    /* Verde para éxito/pujas ganadas */
+    --accent: 142 100% 65%;
+    --accent-foreground: 240 10% 8%;
+
+    /* Rojo para urgencia/tiempo */
+    --destructive: 0 100% 65%;
+    --destructive-foreground: 240 5% 98%;
+
+    --border: 240 8% 20%;
+    --input: 240 8% 15%;
+    --ring: 220 100% 65%;
+
+    /* Colores específicos para subastas */
+    --auction-gold: 45 100% 70%;
+    --auction-success: 142 100% 65%;
+    --auction-warning: 25 100% 65%;
+    --auction-danger: 0 100% 65%;
+    
+    /* Gradientes glassmorphism */
+    --gradient-primary: linear-gradient(135deg, hsl(220 100% 65% / 0.8), hsl(240 100% 75% / 0.6));
+    --gradient-gold: linear-gradient(135deg, hsl(45 100% 70% / 0.8), hsl(35 100% 65% / 0.6));
+    --gradient-glass: linear-gradient(135deg, hsl(240 8% 12% / 0.4), hsl(240 8% 20% / 0.2));
+    
+    /* Sombras premium */
+    --shadow-glow: 0 0 30px hsl(220 100% 65% / 0.3);
+    --shadow-gold: 0 0 30px hsl(45 100% 70% / 0.3);
+    --shadow-glass: 0 8px 32px hsl(240 8% 5% / 0.3);
+    
+    /* Transiciones suaves */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .light {
+    /* Modo claro elegante */
+    --background: 240 20% 98%;
+    --foreground: 240 10% 15%;
+
+    --card: 240 10% 100%;
+    --card-foreground: 240 10% 15%;
+
+    --popover: 240 10% 100%;
+    --popover-foreground: 240 10% 15%;
+
+    --primary: 220 100% 55%;
+    --primary-foreground: 240 20% 98%;
+
+    --secondary: 45 100% 60%;
+    --secondary-foreground: 240 10% 15%;
+
+    --muted: 240 10% 95%;
+    --muted-foreground: 240 5% 45%;
+
+    --accent: 142 100% 55%;
+    --accent-foreground: 240 20% 98%;
+
+    --destructive: 0 100% 55%;
+    --destructive-foreground: 240 20% 98%;
+
+    --border: 240 10% 90%;
+    --input: 240 10% 95%;
+    --ring: 220 100% 55%;
+
+    /* Gradientes para modo claro */
+    --gradient-primary: linear-gradient(135deg, hsl(220 100% 55% / 0.9), hsl(240 100% 65% / 0.7));
+    --gradient-gold: linear-gradient(135deg, hsl(45 100% 60% / 0.9), hsl(35 100% 55% / 0.7));
+    --gradient-glass: linear-gradient(135deg, hsl(240 10% 100% / 0.4), hsl(240 10% 95% / 0.2));
+    
+    --shadow-glow: 0 0 30px hsl(220 100% 55% / 0.2);
+    --shadow-gold: 0 0 30px hsl(45 100% 60% / 0.2);
+    --shadow-glass: 0 8px 32px hsl(240 10% 80% / 0.3);
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-inter antialiased;
+  }
+
+  /* Clases utilitarias para glassmorphism */
+  .glass {
+    background: var(--gradient-glass);
+    backdrop-filter: blur(10px);
+    border: 1px solid hsl(var(--border));
+  }
+
+  .glass-card {
+    @apply glass rounded-xl p-6 shadow-lg;
+    box-shadow: var(--shadow-glass);
+  }
+
+  .auction-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .gold-glow {
+    box-shadow: var(--shadow-gold);
+  }
+
+  .smooth-transition {
+    transition: var(--transition-smooth);
+  }
+
+  .bounce-transition {
+    transition: var(--transition-bounce);
+  }
+
+  /* Animaciones para temporizadores */
+  @keyframes pulse-auction {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.05);
+    }
+  }
+
+  .animate-pulse-auction {
+    animation: pulse-auction 2s ease-in-out infinite;
+  }
+
+  @keyframes countdown-urgency {
+    0% { color: hsl(var(--accent)); }
+    50% { color: hsl(var(--auction-warning)); }
+    100% { color: hsl(var(--destructive)); }
+  }
+
+  .animate-countdown-urgency {
+    animation: countdown-urgency 1s ease-in-out infinite alternate;
+  }
+}
