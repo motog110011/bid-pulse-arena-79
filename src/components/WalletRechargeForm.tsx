@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const rechargeSchema = z.object({
   amount: z.number()
@@ -57,9 +58,21 @@ export function WalletRechargeForm() {
     try {
       const referenceNumber = generateReference();
 
-      // Simulamos el envío de la solicitud
-      // En un entorno real, aquí harías la llamada a la API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Save to database
+      const { error } = await (supabase as any)
+        .from('wallet_recharge_requests')
+        .insert({
+          user_id: user.id,
+          amount: data.amount,
+          contact_method: data.contactMethod,
+          contact_value: data.contactValue,
+          reference_number: referenceNumber,
+          status: 'pending'
+        });
+
+      if (error) {
+        throw error;
+      }
 
       toast({
         title: "Solicitud enviada",
@@ -67,11 +80,10 @@ export function WalletRechargeForm() {
       });
 
       form.reset();
-    } catch (error) {
-      console.error('Error creating recharge request:', error);
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Error al procesar la solicitud. Inténtalo de nuevo.",
+        description: error.message || "Error al procesar la solicitud. Inténtalo de nuevo.",
         variant: "destructive",
       });
     } finally {

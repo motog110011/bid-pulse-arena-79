@@ -56,6 +56,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
         email,
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/`,
           data: {
             full_name: name,
           },
