@@ -129,6 +129,11 @@ export function Header() {
             <Button variant="ghost" className="text-foreground" asChild>
               <Link to="/mis-pujas">Mis Pujas</Link>
             </Button>
+            {isAdmin && (
+              <Button variant="ghost" className="text-foreground" asChild>
+                <Link to="/panel-admin">Admin</Link>
+              </Button>
+            )}
             <Button 
               variant="ghost" 
               className="text-foreground"
@@ -276,7 +281,7 @@ export function Header() {
                       <DropdownMenuSeparator />
                       {isAdmin && (
                         <>
-                          <DropdownMenuItem onClick={() => navigate('/admin')}>
+                          <DropdownMenuItem onClick={() => navigate('/panel-admin')}>
                             <Settings className="mr-2 h-4 w-4" />
                             <span>Panel de Admin</span>
                           </DropdownMenuItem>
