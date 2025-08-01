@@ -61,7 +61,15 @@ export function Header() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center gap-3">
+            <Link 
+              to="/" 
+              className="flex items-center gap-3"
+              onClick={() => {
+                if (location.pathname === '/') {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
+            >
               <div className="p-2 rounded-lg bg-gradient-primary">
                 <Gavel className="h-6 w-6 text-white" />
               </div>
