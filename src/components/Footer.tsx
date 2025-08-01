@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { Gavel, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 import visaLogo from "@/assets/visa-logo.svg";
 import mastercardLogo from "@/assets/mastercard-logo.png";
@@ -66,21 +67,21 @@ export function Footer() {
           <div className="space-y-4">
             <h4 className="text-lg font-semibold">Soporte</h4>
             <nav className="space-y-2">
-              <a href="#" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/faq" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                 FAQ
-              </a>
-              <a href="/terminos" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+              </Link>
+              <Link to="/terminos" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Términos y Condiciones
-              </a>
-              <a href="#" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+              </Link>
+              <Link to="/privacidad" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Política de Privacidad
-              </a>
-              <a href="#" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+              </Link>
+              <Link to="/reembolsos" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Política de Reembolsos
-              </a>
-              <a href="#" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+              </Link>
+              <Link to="/contacto" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Contacto
-              </a>
+              </Link>
             </nav>
           </div>
 
