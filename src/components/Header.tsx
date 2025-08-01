@@ -27,13 +27,13 @@ import { Bell, Search, User, Wallet, LogOut, Settings, Gavel, CreditCard, Histor
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthDialog } from "@/components/auth/AuthDialog";
+import { WalletRechargeForm } from "@/components/WalletRechargeForm";
 
 export function Header() {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [notifications] = useState(3);
-  const [rechargeAmount, setRechargeAmount] = useState("100");
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const { toast } = useToast();
@@ -41,16 +41,6 @@ export function Header() {
   // Mock user balance for authenticated users
   const userBalance = user ? 2500 : 0;
 
-  const handleRecharge = () => {
-    const amount = parseInt(rechargeAmount);
-    if (amount > 0) {
-      toast({
-        title: "Recarga exitosa",
-        description: `Se han agregado $${amount.toLocaleString()} a tu cuenta.`,
-      });
-      setRechargeAmount("100");
-    }
-  };
 
   const userStats = {
     totalBids: 47,
@@ -163,55 +153,8 @@ export function Header() {
                       </Button>
                     </div>
                   </DialogTrigger>
-                  <DialogContent className="glass-card">
-                    <DialogHeader>
-                      <DialogTitle>Recargar Billetera</DialogTitle>
-                      <DialogDescription>
-                        Agrega fondos a tu cuenta para participar en las subastas
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="amount" className="text-right">
-                          Cantidad
-                        </Label>
-                        <Input
-                          id="amount"
-                          type="number"
-                          value={rechargeAmount}
-                          onChange={(e) => setRechargeAmount(e.target.value)}
-                          className="col-span-3"
-                          placeholder="100"
-                        />
-                      </div>
-                      <div className="bg-muted p-4 rounded-lg space-y-2">
-                        <h4 className="font-medium">Datos para transferencia SPEI:</h4>
-                        <p className="text-sm"><strong>Banco:</strong> BBVA México</p>
-                        <p className="text-sm"><strong>CLABE:</strong> 012180001234567890</p>
-                        <p className="text-sm"><strong>Referencia:</strong> {user.id}</p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Validamos tu depósito en 24-48 horas y actualizamos tu saldo automáticamente.
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setRechargeAmount("50")}>
-                          $50
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setRechargeAmount("100")}>
-                          $100
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setRechargeAmount("250")}>
-                          $250
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setRechargeAmount("500")}>
-                          $500
-                        </Button>
-                      </div>
-                      <Button onClick={handleRecharge} className="w-full bg-gradient-primary">
-                        <CreditCard className="mr-2 h-4 w-4" />
-                        Recargar ${parseInt(rechargeAmount || "0").toLocaleString()}
-                      </Button>
-                    </div>
+                  <DialogContent className="glass-card max-w-md">
+                    <WalletRechargeForm />
                   </DialogContent>
                 </Dialog>
 
