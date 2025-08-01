@@ -33,7 +33,7 @@ export function Header() {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [notifications] = useState(3);
+  const [notifications] = useState(0);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -57,30 +57,15 @@ export function Header() {
   ];
 
   const mockNotifications = [
-    { 
-      id: 1, 
-      type: "bid_won", 
-      title: "¡Puja ganada!", 
-      message: "Has ganado la subasta de iPhone 15 Pro", 
-      time: "Hace 2 horas", 
-      read: false 
-    },
-    { 
-      id: 2, 
-      type: "bid_outbid", 
-      title: "Puja superada", 
-      message: "Tu puja en Rolex Submariner ha sido superada", 
-      time: "Hace 4 horas", 
-      read: false 
-    },
-    { 
-      id: 3, 
-      type: "auction_ending", 
-      title: "Subasta por terminar", 
-      message: "La subasta de MacBook Pro termina en 30 minutos", 
-      time: "Hace 1 hora", 
-      read: true 
-    }
+    // Comentado para mostrar estado vacío real
+    // { 
+    //   id: 1, 
+    //   type: "bid_won", 
+    //   title: "¡Puja ganada!", 
+    //   message: "Has ganado la subasta de iPhone 15 Pro", 
+    //   time: "Hace 2 horas", 
+    //   read: false 
+    // },
   ];
 
   return (
@@ -180,7 +165,7 @@ export function Header() {
                   {mockNotifications.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No tienes notificaciones</p>
+                      <p>No hay notificaciones nuevas</p>
                     </div>
                   ) : (
                     mockNotifications.map((notification) => (
