@@ -14,12 +14,9 @@ export function useUserRole() {
       return
     }
 
-    // Pequeño delay para asegurar que la sesión esté completamente establecida
-    const timer = setTimeout(() => {
-      fetchRole()
-    }, 100)
-
-    return () => clearTimeout(timer)
+    // Cuando hay usuario, SIEMPRE debe estar loading hasta que se complete el fetch
+    setLoading(true)
+    fetchRole()
   }, [user])
 
   const fetchRole = async () => {
