@@ -25,17 +25,18 @@ export function useUserRole() {
 
     console.log('👤 User found:', user.email)
     
-    // Hardcoded admin check
+    // Hardcoded admin check - hacer esto inmediatamente y de forma síncrona
     if (user.email === 'motog110011@gmail.com') {
       console.log('✅ Setting role to ADMIN for motog110011@gmail.com')
       setRole('admin')
+      setLoading(false)
     } else {
       console.log('👥 Setting role to USER for', user.email)
       setRole('user')
+      setLoading(false)
     }
-    setLoading(false)
-    console.log('🔚 Effect complete, loading set to false')
-  }, [user])
+    console.log('🔚 Effect complete')
+  }, [user?.email]) // Cambiar dependencia a user?.email para evitar recreaciones
 
   const isAdmin = role === 'admin'
   
