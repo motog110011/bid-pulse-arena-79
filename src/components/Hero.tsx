@@ -90,13 +90,32 @@ export function Hero() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="bg-gradient-primary hover:shadow-glow text-lg px-8">
+              <Button 
+                size="lg" 
+                className="bg-gradient-primary hover:shadow-glow text-lg px-8"
+                onClick={() => {
+                  const auctionGrid = document.getElementById('auction-grid');
+                  if (auctionGrid) {
+                    auctionGrid.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+              >
                 <Gavel className="mr-2 h-5 w-5" />
                 Comenzar a Pujar
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               
-              <Button size="lg" variant="outline" className="text-lg px-8">
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="text-lg px-8"
+                onClick={() => {
+                  const auctionGrid = document.getElementById('auction-grid');
+                  if (auctionGrid) {
+                    auctionGrid.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+              >
                 Ver Subastas
               </Button>
             </div>

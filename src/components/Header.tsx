@@ -36,6 +36,7 @@ export function Header() {
   const [notifications] = useState(3);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const { toast } = useToast();
   
   // Mock user balance for authenticated users
@@ -53,6 +54,33 @@ export function Header() {
     { id: 1, action: "Puja ganada", item: "Whiskey Macallan 12 años", amount: 125, date: "Hace 2 horas" },
     { id: 2, action: "Puja realizada", item: "iPhone 15 Pro", amount: 750, date: "Hace 4 horas" },
     { id: 3, action: "Puja superada", item: "Rolex Submariner", amount: 2850, date: "Hace 1 día" }
+  ];
+
+  const mockNotifications = [
+    { 
+      id: 1, 
+      type: "bid_won", 
+      title: "¡Puja ganada!", 
+      message: "Has ganado la subasta de iPhone 15 Pro", 
+      time: "Hace 2 horas", 
+      read: false 
+    },
+    { 
+      id: 2, 
+      type: "bid_outbid", 
+      title: "Puja superada", 
+      message: "Tu puja en Rolex Submariner ha sido superada", 
+      time: "Hace 4 horas", 
+      read: false 
+    },
+    { 
+      id: 3, 
+      type: "auction_ending", 
+      title: "Subasta por terminar", 
+      message: "La subasta de MacBook Pro termina en 30 minutos", 
+      time: "Hace 1 hora", 
+      read: true 
+    }
   ];
 
   return (
@@ -130,14 +158,69 @@ export function Header() {
           {/* Right side */}
           <div className="flex items-center gap-4">
             {/* Notifications */}
-            <Button variant="ghost" size="icon" className="glass relative">{/* rest of content remains */}
-              <Bell className="h-5 w-5" />
-              {notifications > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-destructive">
-                  {notifications}
-                </Badge>
-              )}
-            </Button>
+            <Dialog open={notificationsOpen} onOpenChange={setNotificationsOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="glass relative">
+                  <Bell className="h-5 w-5" />
+                  {notifications > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-destructive">
+                      {notifications}
+                    </Badge>
+                  )}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="glass-card max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Notificaciones</DialogTitle>
+                  <DialogDescription>
+                    Mantente al día con tus subastas
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {mockNotifications.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No tienes notificaciones</p>
+                    </div>
+                  ) : (
+                    mockNotifications.map((notification) => (
+                      <div 
+                        key={notification.id}
+                        className={`p-4 rounded-lg border transition-colors ${
+                          notification.read 
+                            ? 'bg-background/50 border-border/30' 
+                            : 'bg-primary/5 border-primary/20'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`p-2 rounded-full ${
+                            notification.type === 'bid_won' ? 'bg-auction-success/20' :
+                            notification.type === 'bid_outbid' ? 'bg-destructive/20' :
+                            'bg-auction-gold/20'
+                          }`}>
+                            {notification.type === 'bid_won' && <Award className="h-4 w-4 text-auction-success" />}
+                            {notification.type === 'bid_outbid' && <Gavel className="h-4 w-4 text-destructive" />}
+                            {notification.type === 'auction_ending' && <Bell className="h-4 w-4 text-auction-gold" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-medium">{notification.title}</h4>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {notification.message}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              {notification.time}
+                            </p>
+                          </div>
+                          {!notification.read && (
+                            <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-2" />
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
 
             {/* User Authentication/Profile */}
             {user ? (
