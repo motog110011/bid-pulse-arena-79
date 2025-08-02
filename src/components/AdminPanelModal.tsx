@@ -5,8 +5,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-import { CheckCircle, XCircle, DollarSign, Users, Clock, TrendingUp } from 'lucide-react'
+import { CheckCircle, XCircle, DollarSign, Users, Clock, TrendingUp, Search, Crown, User, Shield } from 'lucide-react'
 import { AdminRoleManager } from '@/components/AdminRoleManager'
 
 interface RechargeRequest {
@@ -34,17 +37,41 @@ interface UserWallet {
   }
 }
 
+interface DetailedUser {
+  id: string
+  email: string
+  email_confirmed_at: string | null
+  last_sign_in_at: string | null
+  created_at: string
+  profile?: {
+    full_name?: string
+  }
+  role?: {
+    role: string
+  }
+  wallet?: {
+    balance: number
+  }
+  transactions_count?: number
+  recharge_requests_count?: number
+}
+
 export function AdminPanelModal() {
   const { user } = useAuth()
   const { toast } = useToast()
   const [rechargeRequests, setRechargeRequests] = useState<RechargeRequest[]>([])
   const [userWallets, setUserWallets] = useState<UserWallet[]>([])
+  const [detailedUsers, setDetailedUsers] = useState<DetailedUser[]>([])
   const [loading, setLoading] = useState(true)
   const [processingRequest, setProcessingRequest] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [roleFilter, setRoleFilter] = useState('all')
+  const [confirmationFilter, setConfirmationFilter] = useState('all')
 
   const fetchData = () => {
     fetchRechargeRequests()
     fetchUserWallets()
+    fetchDetailedUsers()
   }
 
   useEffect(() => {
@@ -93,6 +120,138 @@ export function AdminPanelModal() {
       setUserWallets(data || [])
     } catch (error) {
       console.error('Error fetching user wallets:', error)
+    }
+  }
+
+  const fetchDetailedUsers = async () => {
+    try {
+      // @ts-ignore - Temporary fix for missing types
+      const { data: users, error } = await (supabase as any)
+        .rpc('get_detailed_users')
+
+      if (error) {
+        console.error('Error fetching detailed users:', error)
+        // Fallback to basic user data if RPC function doesn't exist
+        await fetchBasicUserData()
+      } else {
+        setDetailedUsers(users || [])
+      }
+    } catch (error) {
+      console.error('Error fetching detailed users:', error)
+      await fetchBasicUserData()
+    }
+  }
+
+  const fetchBasicUserData = async () => {
+    try {
+      // Get auth users data from profiles, roles, and wallets
+      // @ts-ignore - Temporary fix for missing types
+      const { data: profiles } = await (supabase as any)
+        .from('profiles')
+        .select('*')
+
+      // @ts-ignore - Temporary fix for missing types
+      const { data: roles } = await (supabase as any)
+        .from('user_roles')
+        .select('*')
+
+      // @ts-ignore - Temporary fix for missing types
+      const { data: wallets } = await (supabase as any)
+        .from('user_wallets')
+        .select('*')
+
+      // @ts-ignore - Temporary fix for missing types
+      const { data: transactionCounts } = await (supabase as any)
+        .from('balance_transactions')
+        .select('user_id')
+
+      // @ts-ignore - Temporary fix for missing types
+      const { data: requestCounts } = await (supabase as any)
+        .from('wallet_recharge_requests')
+        .select('user_id')
+
+      // Combine data into detailed users format
+      const userMap = new Map()
+      
+      profiles?.forEach((profile: any) => {
+        userMap.set(profile.id, {
+          id: profile.id,
+          email: 'N/A', // Can't access auth.users directly
+          email_confirmed_at: null,
+          last_sign_in_at: null,
+          created_at: profile.created_at,
+          profile: {
+            full_name: profile.full_name
+          },
+          role: null,
+          wallet: null,
+          transactions_count: 0,
+          recharge_requests_count: 0
+        })
+      })
+
+      roles?.forEach((role: any) => {
+        if (userMap.has(role.user_id)) {
+          userMap.get(role.user_id).role = { role: role.role }
+        }
+      })
+
+      wallets?.forEach((wallet: any) => {
+        if (userMap.has(wallet.user_id)) {
+          userMap.get(wallet.user_id).wallet = { balance: wallet.balance }
+        }
+      })
+
+      // Count transactions
+      const transactionCountMap = new Map()
+      transactionCounts?.forEach((t: any) => {
+        transactionCountMap.set(t.user_id, (transactionCountMap.get(t.user_id) || 0) + 1)
+      })
+
+      // Count recharge requests
+      const requestCountMap = new Map()
+      requestCounts?.forEach((r: any) => {
+        requestCountMap.set(r.user_id, (requestCountMap.get(r.user_id) || 0) + 1)
+      })
+
+      userMap.forEach((user, userId) => {
+        user.transactions_count = transactionCountMap.get(userId) || 0
+        user.recharge_requests_count = requestCountMap.get(userId) || 0
+      })
+
+      setDetailedUsers(Array.from(userMap.values()))
+    } catch (error) {
+      console.error('Error fetching basic user data:', error)
+    }
+  }
+
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    try {
+      // @ts-ignore - Temporary fix for missing types
+      const { error } = await (supabase as any)
+        .from('user_roles')
+        .upsert({ 
+          user_id: userId, 
+          role: newRole 
+        }, { 
+          onConflict: 'user_id,role' 
+        })
+
+      if (error) throw error
+
+      toast({
+        title: "Rol Actualizado",
+        description: `El rol del usuario ha sido cambiado a ${newRole}`,
+      })
+
+      fetchDetailedUsers()
+    } catch (error) {
+      console.error('Error updating user role:', error)
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el rol del usuario",
+        variant: "destructive",
+      })
     }
   }
 
@@ -235,6 +394,7 @@ export function AdminPanelModal() {
         <TabsList>
           <TabsTrigger value="recharge-requests">Solicitudes de Recarga</TabsTrigger>
           <TabsTrigger value="user-wallets">Billeteras de Usuarios</TabsTrigger>
+          <TabsTrigger value="user-management">Gestión de Usuarios</TabsTrigger>
           <TabsTrigger value="admin-management">Gestión de Admins</TabsTrigger>
         </TabsList>
 
@@ -350,6 +510,162 @@ export function AdminPanelModal() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="user-management" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Gestión de Usuarios</CardTitle>
+              <CardDescription>
+                Administra usuarios, roles y visualiza información detallada
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Filters and Search */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nombre o email..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue placeholder="Filtrar por rol" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los roles</SelectItem>
+                    <SelectItem value="admin">Administradores</SelectItem>
+                    <SelectItem value="user">Usuarios</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={confirmationFilter} onValueChange={setConfirmationFilter}>
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue placeholder="Estado de email" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="confirmed">Confirmados</SelectItem>
+                    <SelectItem value="unconfirmed">Sin confirmar</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Users Table */}
+              {loading ? (
+                <p>Cargando usuarios...</p>
+              ) : detailedUsers.length === 0 ? (
+                <p className="text-muted-foreground">No hay usuarios registrados</p>
+              ) : (
+                <div className="border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Usuario</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Rol</TableHead>
+                        <TableHead>Balance</TableHead>
+                        <TableHead>Transacciones</TableHead>
+                        <TableHead>Estado</TableHead>
+                        <TableHead>Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {detailedUsers
+                        .filter(user => {
+                          const matchesSearch = !searchTerm || 
+                            (user.profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                             user.email?.toLowerCase().includes(searchTerm.toLowerCase()))
+                          
+                          const matchesRole = roleFilter === 'all' || user.role?.role === roleFilter
+                          
+                          const matchesConfirmation = confirmationFilter === 'all' ||
+                            (confirmationFilter === 'confirmed' && user.email_confirmed_at) ||
+                            (confirmationFilter === 'unconfirmed' && !user.email_confirmed_at)
+                          
+                          return matchesSearch && matchesRole && matchesConfirmation
+                        })
+                        .map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm">
+                                  {user.profile?.full_name?.charAt(0) || user.email?.charAt(0) || '?'}
+                                </div>
+                                <div>
+                                  <p className="font-medium">
+                                    {user.profile?.full_name || 'Sin nombre'}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {new Date(user.created_at).toLocaleDateString('es-ES')}
+                                  </p>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="max-w-[200px] truncate">
+                                {user.email || 'N/A'}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={user.role?.role === 'admin' ? 'default' : 'secondary'}>
+                                <div className="flex items-center gap-1">
+                                  {user.role?.role === 'admin' ? (
+                                    <Crown className="h-3 w-3" />
+                                  ) : (
+                                    <User className="h-3 w-3" />
+                                  )}
+                                  {user.role?.role === 'admin' ? 'Admin' : 'Usuario'}
+                                </div>
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-right">
+                                <p className="font-semibold">
+                                  ${(user.wallet?.balance || 0).toLocaleString()}
+                                </p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-center">
+                                <p className="text-sm">
+                                  {user.transactions_count || 0} transacciones
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {user.recharge_requests_count || 0} recargas
+                                </p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={user.email_confirmed_at ? 'default' : 'secondary'}>
+                                {user.email_confirmed_at ? 'Confirmado' : 'Pendiente'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={user.role?.role || 'user'}
+                                onValueChange={(newRole) => handleRoleChange(user.id, newRole)}
+                              >
+                                <SelectTrigger className="w-24">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="user">Usuario</SelectItem>
+                                  <SelectItem value="admin">Admin</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </CardContent>
