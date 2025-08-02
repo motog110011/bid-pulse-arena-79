@@ -60,8 +60,6 @@ export function useUserRole() {
 
   const isAdmin = role === 'admin'
 
-  console.log('📊 useUserRole state:', { role, isAdmin, loading, ready, userEmail: user?.email })
-
   return {
     role,
     isAdmin,

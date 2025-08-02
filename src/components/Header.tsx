@@ -23,13 +23,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bell, Search, User, Wallet, LogOut, Settings, Gavel, CreditCard, History, Award } from "lucide-react";
+import { Bell, Search, User, Wallet, LogOut, Settings, Gavel, CreditCard, History, Award, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserBalance } from "@/hooks/useUserBalance";
 import { useUserRole } from "@/hooks/useUserRole";
 import { AuthDialog } from "@/components/auth/AuthDialog";
 import { WalletRechargeForm } from "@/components/WalletRechargeForm";
+import { AdminPanelModal } from "@/components/AdminPanelModal";
 
 export function Header() {
   const { user, loading, signOut } = useAuth();
@@ -41,6 +42,7 @@ export function Header() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const { toast } = useToast();
   
   // Real user balance from database
@@ -130,8 +132,12 @@ export function Header() {
               <Link to="/mis-pujas">Mis Pujas</Link>
             </Button>
             {isAdmin && (
-              <Button variant="ghost" className="text-foreground" asChild>
-                <Link to="/panel-admin">Admin</Link>
+              <Button 
+                variant="ghost" 
+                className="text-foreground"
+                onClick={() => setIsAdminPanelOpen(true)}
+              >
+                Admin
               </Button>
             )}
             <Button 
@@ -281,8 +287,8 @@ export function Header() {
                       <DropdownMenuSeparator />
                       {isAdmin && (
                         <>
-                          <DropdownMenuItem onClick={() => navigate('/panel-admin')}>
-                            <Settings className="mr-2 h-4 w-4" />
+                          <DropdownMenuItem onClick={() => setIsAdminPanelOpen(true)}>
+                            <Shield className="mr-2 h-4 w-4" />
                             <span>Panel de Admin</span>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
@@ -435,6 +441,21 @@ export function Header() {
       
       {/* Auth Dialog */}
       <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
+      
+      {/* Admin Panel Modal */}
+      {isAdmin && (
+        <Dialog open={isAdminPanelOpen} onOpenChange={setIsAdminPanelOpen}>
+          <DialogContent className="glass-card max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Panel de Administración</DialogTitle>
+              <DialogDescription>
+                Gestiona recargas y balances de usuarios
+              </DialogDescription>
+            </DialogHeader>
+            <AdminPanelModal />
+          </DialogContent>
+        </Dialog>
+      )}
     </header>
   );
 }
