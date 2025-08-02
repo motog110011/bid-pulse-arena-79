@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useToast } from '@/hooks/use-toast'
 import { CheckCircle, XCircle, DollarSign, Users, Clock, TrendingUp, Search, Crown, User, Shield } from 'lucide-react'
 import { AdminRoleManager } from '@/components/AdminRoleManager'
@@ -41,6 +42,7 @@ interface DetailedUser {
   id: string
   email: string
   email_confirmed_at: string | null
+  email_confirmed: boolean
   last_sign_in_at: string | null
   created_at: string
   profile?: {
@@ -178,6 +180,7 @@ export function AdminPanelModal() {
           id: profile.id,
           email: 'N/A', // Can't access auth.users directly
           email_confirmed_at: null,
+          email_confirmed: false,
           last_sign_in_at: null,
           created_at: profile.created_at,
           profile: {
@@ -250,6 +253,64 @@ export function AdminPanelModal() {
       toast({
         title: "Error",
         description: "No se pudo actualizar el rol del usuario",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleUserAction = async (action: string, user: DetailedUser) => {
+    const actionNames = {
+      delete: 'eliminar',
+      verify: 'verificar',
+      change_password: 'cambiar contraseña de',
+      suspend: 'suspender',
+      activate: 'activar'
+    }
+
+    const actionName = actionNames[action as keyof typeof actionNames]
+    
+    if (!confirm(`¿Estás seguro que quieres ${actionName} al usuario ${user.email}?`)) {
+      return
+    }
+
+    let newPassword = ''
+    if (action === 'change_password') {
+      newPassword = prompt('Ingresa la nueva contraseña:') || ''
+      if (!newPassword) {
+        toast({
+          title: "Error",
+          description: "La contraseña no puede estar vacía.",
+          variant: "destructive",
+        })
+        return
+      }
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-user-management', {
+        body: {
+          action,
+          userId: user.id,
+          email: user.email,
+          newPassword: newPassword || undefined
+        }
+      })
+
+      if (error) throw error
+
+      toast({
+        title: "Acción completada",
+        description: data.message,
+      })
+
+      // Refresh data
+      fetchDetailedUsers()
+      fetchData()
+    } catch (error) {
+      console.error('Error performing user action:', error)
+      toast({
+        title: "Error",
+        description: `No se pudo ${actionName} al usuario.`,
         variant: "destructive",
       })
     }
@@ -587,8 +648,8 @@ export function AdminPanelModal() {
                           const matchesRole = roleFilter === 'all' || user.role?.role === roleFilter
                           
                           const matchesConfirmation = confirmationFilter === 'all' ||
-                            (confirmationFilter === 'confirmed' && user.email_confirmed_at) ||
-                            (confirmationFilter === 'unconfirmed' && !user.email_confirmed_at)
+                            (confirmationFilter === 'confirmed' && (user.email_confirmed_at || user.email_confirmed)) ||
+                            (confirmationFilter === 'unconfirmed' && !(user.email_confirmed_at || user.email_confirmed))
                           
                           return matchesSearch && matchesRole && matchesConfirmation
                         })
@@ -644,23 +705,67 @@ export function AdminPanelModal() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Badge variant={user.email_confirmed_at ? 'default' : 'secondary'}>
-                                {user.email_confirmed_at ? 'Confirmado' : 'Pendiente'}
+                              <Badge variant={(user.email_confirmed_at || user.email_confirmed) ? 'default' : 'secondary'}>
+                                {(user.email_confirmed_at || user.email_confirmed) ? 'Confirmado' : 'Pendiente'}
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <Select
-                                value={user.role?.role || 'user'}
-                                onValueChange={(newRole) => handleRoleChange(user.id, newRole)}
-                              >
-                                <SelectTrigger className="w-24">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="user">Usuario</SelectItem>
-                                  <SelectItem value="admin">Admin</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              <div className="flex items-center gap-2 justify-end">
+                                <Select
+                                  value={user.role?.role || 'user'}
+                                  onValueChange={(newRole) => handleRoleChange(user.id, newRole)}
+                                >
+                                  <SelectTrigger className="w-24">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="user">Usuario</SelectItem>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                      Acciones
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    {!user.email_confirmed && (
+                                      <DropdownMenuItem 
+                                        onClick={() => handleUserAction('verify', user)}
+                                        className="text-green-600"
+                                      >
+                                        Verificar Email
+                                      </DropdownMenuItem>
+                                    )}
+                                    <DropdownMenuItem 
+                                      onClick={() => handleUserAction('change_password', user)}
+                                    >
+                                      Cambiar Contraseña
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                      onClick={() => handleUserAction('suspend', user)}
+                                      className="text-yellow-600"
+                                    >
+                                      Suspender Usuario
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                      onClick={() => handleUserAction('activate', user)}
+                                      className="text-green-600"
+                                    >
+                                      Activar Usuario
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem 
+                                      onClick={() => handleUserAction('delete', user)}
+                                      className="text-red-600"
+                                    >
+                                      Eliminar Usuario
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
