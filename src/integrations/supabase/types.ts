@@ -183,6 +183,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_detailed_users: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          email: string
+          email_confirmed_at: string
+          created_at: string
+          last_sign_in_at: string
+          role: Database["public"]["Enums"]["app_role"]
+          balance: number
+          transaction_count: number
+          full_name: string
+        }[]
+      }
       has_role: {
         Args: {
           _user_id: string
