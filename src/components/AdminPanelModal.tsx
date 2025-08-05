@@ -85,16 +85,27 @@ export function AdminPanelModal() {
   const fetchRechargeRequests = async () => {
     try {
       // @ts-ignore - Temporary fix for missing types
-      const { data, error } = await (supabase as any)
+      const { data: requests, error } = await (supabase as any)
         .from('wallet_recharge_requests')
-        .select(`
-          *,
-          profiles:user_id (full_name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setRechargeRequests(data || [])
+
+      // Get profiles for all user_ids
+      const userIds = requests?.map((r: any) => r.user_id) || []
+      const { data: profiles } = await (supabase as any)
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', userIds)
+
+      // Combine requests with profile data
+      const requestsWithProfiles = requests?.map((request: any) => ({
+        ...request,
+        profiles: profiles?.find((p: any) => p.id === request.user_id) || null
+      })) || []
+
+      setRechargeRequests(requestsWithProfiles)
     } catch (error) {
       console.error('Error fetching recharge requests:', error)
       toast({
@@ -110,16 +121,27 @@ export function AdminPanelModal() {
   const fetchUserWallets = async () => {
     try {
       // @ts-ignore - Temporary fix for missing types
-      const { data, error } = await (supabase as any)
+      const { data: wallets, error } = await (supabase as any)
         .from('user_wallets')
-        .select(`
-          *,
-          profiles:user_id (full_name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setUserWallets(data || [])
+
+      // Get profiles for all user_ids
+      const userIds = wallets?.map((w: any) => w.user_id) || []
+      const { data: profiles } = await (supabase as any)
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', userIds)
+
+      // Combine wallets with profile data
+      const walletsWithProfiles = wallets?.map((wallet: any) => ({
+        ...wallet,
+        profiles: profiles?.find((p: any) => p.id === wallet.user_id) || null
+      })) || []
+
+      setUserWallets(walletsWithProfiles)
     } catch (error) {
       console.error('Error fetching user wallets:', error)
     }
