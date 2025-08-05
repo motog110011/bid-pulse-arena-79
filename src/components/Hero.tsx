@@ -3,9 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Timer } from "@/components/ui/timer";
 import { ArrowRight, Gavel, TrendingUp, Users, Star } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useUserBalance } from "@/hooks/useUserBalance";
+import { AuthDialog } from "@/components/auth/AuthDialog";
+import { useToast } from "@/hooks/use-toast";
 import heroImage from "@/assets/hero-mexican-airport.jpg";
 
 export function Hero() {
+  const { user } = useAuth();
+  const { balance } = useUserBalance();
+  const { toast } = useToast();
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [activeUsers] = useState(247);
   const [totalAuctions] = useState(24);
   const [liveAuctions] = useState(8);
@@ -169,7 +177,10 @@ export function Hero() {
                   </div>
                 </div>
 
-                <Button className="w-full bg-gradient-primary hover:shadow-glow">
+                <Button 
+                  className="w-full bg-gradient-primary hover:shadow-glow"
+                  onClick={() => handleFeaturedBid()}
+                >
                   <Gavel className="mr-2 h-4 w-4" />
                   Pujar Ahora
                 </Button>
@@ -178,6 +189,41 @@ export function Hero() {
           </div>
         </div>
       </div>
+      
+      {/* Auth Dialog */}
+      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
     </section>
   );
+
+  function handleFeaturedBid() {
+    if (!user) {
+      setAuthDialogOpen(true);
+      return;
+    }
+
+    const nextBidAmount = featuredAuction.currentBid + 10;
+    
+    if (balance < nextBidAmount) {
+      toast({
+        title: "Saldo insuficiente",
+        description: "No tienes suficiente saldo para realizar esta puja. Recarga tu cuenta para participar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Simular puja exitosa
+    toast({
+      title: "¡Puja realizada!",
+      description: `Has pujado $${nextBidAmount.toLocaleString()} por ${featuredAuction.title}`,
+    });
+
+    // Scroll to auction grid to see more auctions
+    setTimeout(() => {
+      const auctionGrid = document.getElementById('auction-grid');
+      if (auctionGrid) {
+        auctionGrid.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 1500);
+  }
 }
