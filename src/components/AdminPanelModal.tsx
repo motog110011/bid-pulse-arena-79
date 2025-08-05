@@ -148,21 +148,68 @@ export function AdminPanelModal() {
   }
 
   const fetchDetailedUsers = async () => {
+    setLoading(true)
+    console.log('🔍 Attempting to fetch detailed users...')
+    
     try {
-      // @ts-ignore - Temporary fix for missing types
-      const { data: users, error } = await (supabase as any)
-        .rpc('get_detailed_users')
-
-      if (error) {
-        console.error('Error fetching detailed users:', error)
-        // Fallback to basic user data if RPC function doesn't exist
-        await fetchBasicUserData()
+      // Try using the RPC function first
+      const { data: rpcData, error: rpcError } = await (supabase as any).rpc('get_detailed_users')
+      
+      console.log('🔍 RPC result:', { data: rpcData, error: rpcError })
+      
+      if (rpcError) {
+        console.warn('⚠️ RPC failed, using improved fallback method:', rpcError)
+        
+        // Improved fallback: get all related data and combine properly
+        const [
+          { data: walletsData, error: walletsError },
+          { data: profilesData, error: profilesError },
+          { data: rolesData, error: rolesError }
+        ] = await Promise.all([
+          supabase.from('user_wallets').select('*'),
+          supabase.from('profiles').select('*'),
+          supabase.from('user_roles').select('*')
+        ])
+        
+        if (walletsError) {
+          console.error('❌ Error fetching wallets:', walletsError)
+          setDetailedUsers([])
+          return
+        }
+        
+        // Create comprehensive user data by combining all sources
+        const combinedUsers = walletsData?.map(wallet => {
+          const profile = profilesData?.find(p => p.id === wallet.user_id)
+          const roleData = rolesData?.find(r => r.user_id === wallet.user_id)
+          
+          return {
+            id: wallet.user_id,
+            email: 'Usuario desde base de datos', // We can't access auth.users directly
+            email_confirmed_at: null,
+            email_confirmed: false,
+            last_sign_in_at: null,
+            created_at: wallet.created_at,
+            profile: {
+              full_name: profile?.full_name || 'Sin nombre'
+            },
+            role: roleData ? { role: roleData.role } : { role: 'user' },
+            wallet: { balance: wallet.balance },
+            transactions_count: 0,
+            recharge_requests_count: 0
+          }
+        }) || []
+        
+        console.log('✅ Improved fallback data prepared:', combinedUsers)
+        setDetailedUsers(combinedUsers)
       } else {
-        setDetailedUsers(users || [])
+        console.log('✅ RPC data loaded successfully:', rpcData)
+        setDetailedUsers(rpcData || [])
       }
     } catch (error) {
-      console.error('Error fetching detailed users:', error)
-      await fetchBasicUserData()
+      console.error('❌ Error fetching detailed users:', error)
+      setDetailedUsers([])
+    } finally {
+      setLoading(false)
     }
   }
 
