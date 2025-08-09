@@ -38,6 +38,25 @@ interface UserWallet {
   }
 }
 
+interface AdminNotification {
+  id: string
+  type: string
+  title: string
+  message: string
+  data: any
+  read: boolean
+  created_at: string
+  user_id: string | null
+}
+
+interface BankDetails {
+  bank_name: string
+  account_holder: string
+  account_number: string
+  clabe: string
+  reference_instructions: string
+}
+
 interface DetailedUser {
   id: string
   email: string
@@ -64,16 +83,21 @@ export function AdminPanelModal() {
   const [rechargeRequests, setRechargeRequests] = useState<RechargeRequest[]>([])
   const [userWallets, setUserWallets] = useState<UserWallet[]>([])
   const [detailedUsers, setDetailedUsers] = useState<DetailedUser[]>([])
+  const [notifications, setNotifications] = useState<AdminNotification[]>([])
+  const [bankDetails, setBankDetails] = useState<BankDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [processingRequest, setProcessingRequest] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
   const [confirmationFilter, setConfirmationFilter] = useState('all')
+  const [editingBankDetails, setEditingBankDetails] = useState(false)
 
   const fetchData = () => {
     fetchRechargeRequests()
     fetchUserWallets()
     fetchDetailedUsers()
+    fetchNotifications()
+    fetchBankDetails()
   }
 
   useEffect(() => {
@@ -210,6 +234,96 @@ export function AdminPanelModal() {
       setDetailedUsers([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchNotifications = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('admin_notifications')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      if (error) {
+        console.error('Error fetching notifications:', error)
+        return
+      }
+
+      setNotifications(data || [])
+    } catch (error) {
+      console.error('Error fetching notifications:', error)
+    }
+  }
+
+  const fetchBankDetails = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('setting_value')
+        .eq('setting_key', 'bank_details')
+        .single()
+
+      if (error) {
+        console.error('Error fetching bank details:', error)
+        return
+      }
+
+        if (data?.setting_value) {
+          setBankDetails(data.setting_value as unknown as BankDetails)
+      }
+    } catch (error) {
+      console.error('Error fetching bank details:', error)
+    }
+  }
+
+  const updateBankDetails = async (newDetails: BankDetails) => {
+    try {
+      const { error } = await supabase
+        .from('app_settings')
+        .update({ setting_value: newDetails as any })
+        .eq('setting_key', 'bank_details')
+
+      if (error) {
+        throw error
+      }
+
+      setBankDetails(newDetails)
+      setEditingBankDetails(false)
+      toast({
+        title: "Éxito",
+        description: "Datos bancarios actualizados correctamente",
+      })
+    } catch (error) {
+      console.error('Error updating bank details:', error)
+      toast({
+        title: "Error",
+        description: "No se pudieron actualizar los datos bancarios",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const markNotificationAsRead = async (notificationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('admin_notifications')
+        .update({ read: true })
+        .eq('id', notificationId)
+
+      if (error) {
+        throw error
+      }
+
+      setNotifications(prev => 
+        prev.map(notification => 
+          notification.id === notificationId 
+            ? { ...notification, read: true }
+            : notification
+        )
+      )
+    } catch (error) {
+      console.error('Error marking notification as read:', error)
     }
   }
 
