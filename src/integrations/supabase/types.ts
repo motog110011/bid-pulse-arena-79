@@ -231,6 +231,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_update_user_balance: {
+        Args: {
+          target_user_id: string
+          new_balance: number
+          admin_notes?: string
+        }
+        Returns: undefined
+      }
       create_admin_notification: {
         Args: {
           notification_type: string

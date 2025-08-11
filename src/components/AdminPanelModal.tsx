@@ -7,10 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useToast } from '@/hooks/use-toast'
-import { CheckCircle, XCircle, DollarSign, Users, Clock, TrendingUp, Search, Crown, User, Shield } from 'lucide-react'
+import { CheckCircle, XCircle, DollarSign, Users, Clock, TrendingUp, Search, Crown, User, Shield, Edit2, Mail, Ban, Trash2, MoreHorizontal } from 'lucide-react'
 import { AdminRoleManager } from '@/components/AdminRoleManager'
 
 interface RechargeRequest {
@@ -61,20 +63,19 @@ interface DetailedUser {
   id: string
   email: string
   email_confirmed_at: string | null
-  email_confirmed: boolean
-  last_sign_in_at: string | null
   created_at: string
-  profile?: {
-    full_name?: string
-  }
-  role?: {
-    role: string
-  }
-  wallet?: {
-    balance: number
-  }
-  transactions_count?: number
-  recharge_requests_count?: number
+  last_sign_in_at: string | null
+  role: 'admin' | 'user'
+  balance: number
+  transaction_count: number
+  full_name: string | null
+}
+
+interface EditingBalance {
+  userId: string
+  currentBalance: number
+  newBalance: string
+  notes: string
 }
 
 export function AdminPanelModal() {
@@ -88,9 +89,9 @@ export function AdminPanelModal() {
   const [loading, setLoading] = useState(true)
   const [processingRequest, setProcessingRequest] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [roleFilter, setRoleFilter] = useState('all')
-  const [confirmationFilter, setConfirmationFilter] = useState('all')
+  const [filterRole, setFilterRole] = useState<'all' | 'admin' | 'user'>('all')
   const [editingBankDetails, setEditingBankDetails] = useState(false)
+  const [editingBalance, setEditingBalance] = useState<EditingBalance | null>(null)
 
   const fetchData = () => {
     fetchRechargeRequests()
@@ -108,8 +109,8 @@ export function AdminPanelModal() {
 
   const fetchRechargeRequests = async () => {
     try {
-      // @ts-ignore - Temporary fix for missing types
-      const { data: requests, error } = await (supabase as any)
+      // Fetch requests first
+      const { data: requests, error } = await supabase
         .from('wallet_recharge_requests')
         .select('*')
         .order('created_at', { ascending: false })
@@ -118,7 +119,7 @@ export function AdminPanelModal() {
 
       // Get profiles for all user_ids
       const userIds = requests?.map((r: any) => r.user_id) || []
-      const { data: profiles } = await (supabase as any)
+      const { data: profiles } = await supabase
         .from('profiles')
         .select('id, full_name')
         .in('id', userIds)
@@ -144,8 +145,8 @@ export function AdminPanelModal() {
 
   const fetchUserWallets = async () => {
     try {
-      // @ts-ignore - Temporary fix for missing types
-      const { data: wallets, error } = await (supabase as any)
+      // Fetch wallets first
+      const { data: wallets, error } = await supabase
         .from('user_wallets')
         .select('*')
         .order('created_at', { ascending: false })
@@ -154,7 +155,7 @@ export function AdminPanelModal() {
 
       // Get profiles for all user_ids
       const userIds = wallets?.map((w: any) => w.user_id) || []
-      const { data: profiles } = await (supabase as any)
+      const { data: profiles } = await supabase
         .from('profiles')
         .select('id, full_name')
         .in('id', userIds)
@@ -172,68 +173,27 @@ export function AdminPanelModal() {
   }
 
   const fetchDetailedUsers = async () => {
-    setLoading(true)
-    console.log('🔍 Attempting to fetch detailed users...')
-    
     try {
-      // Try using the RPC function first
-      const { data: rpcData, error: rpcError } = await (supabase as any).rpc('get_detailed_users')
+      const { data, error } = await supabase.rpc('get_detailed_users')
       
-      console.log('🔍 RPC result:', { data: rpcData, error: rpcError })
-      
-      if (rpcError) {
-        console.warn('⚠️ RPC failed, using improved fallback method:', rpcError)
-        
-        // Improved fallback: get all related data and combine properly
-        const [
-          { data: walletsData, error: walletsError },
-          { data: profilesData, error: profilesError },
-          { data: rolesData, error: rolesError }
-        ] = await Promise.all([
-          supabase.from('user_wallets').select('*'),
-          supabase.from('profiles').select('*'),
-          supabase.from('user_roles').select('*')
-        ])
-        
-        if (walletsError) {
-          console.error('❌ Error fetching wallets:', walletsError)
-          setDetailedUsers([])
-          return
-        }
-        
-        // Create comprehensive user data by combining all sources
-        const combinedUsers = walletsData?.map(wallet => {
-          const profile = profilesData?.find(p => p.id === wallet.user_id)
-          const roleData = rolesData?.find(r => r.user_id === wallet.user_id)
-          
-          return {
-            id: wallet.user_id,
-            email: 'Usuario desde base de datos', // We can't access auth.users directly
-            email_confirmed_at: null,
-            email_confirmed: false,
-            last_sign_in_at: null,
-            created_at: wallet.created_at,
-            profile: {
-              full_name: profile?.full_name || 'Sin nombre'
-            },
-            role: roleData ? { role: roleData.role } : { role: 'user' },
-            wallet: { balance: wallet.balance },
-            transactions_count: 0,
-            recharge_requests_count: 0
-          }
-        }) || []
-        
-        console.log('✅ Improved fallback data prepared:', combinedUsers)
-        setDetailedUsers(combinedUsers)
-      } else {
-        console.log('✅ RPC data loaded successfully:', rpcData)
-        setDetailedUsers(rpcData || [])
+      if (error) {
+        console.error('Error fetching detailed users:', error)
+        toast({
+          title: "Error",
+          description: "Failed to fetch user details",
+          variant: "destructive",
+        })
+        return
       }
+      
+      setDetailedUsers(data || [])
     } catch (error) {
-      console.error('❌ Error fetching detailed users:', error)
-      setDetailedUsers([])
-    } finally {
-      setLoading(false)
+      console.error('Error fetching detailed users:', error)
+      toast({
+        title: "Error", 
+        description: "Failed to fetch user details",
+        variant: "destructive",
+      })
     }
   }
 
@@ -269,8 +229,8 @@ export function AdminPanelModal() {
         return
       }
 
-        if (data?.setting_value) {
-          setBankDetails(data.setting_value as unknown as BankDetails)
+      if (data?.setting_value) {
+        setBankDetails(data.setting_value as unknown as BankDetails)
       }
     } catch (error) {
       console.error('Error fetching bank details:', error)
@@ -281,8 +241,11 @@ export function AdminPanelModal() {
     try {
       const { error } = await supabase
         .from('app_settings')
-        .update({ setting_value: newDetails as any })
-        .eq('setting_key', 'bank_details')
+        .upsert({
+          setting_key: 'bank_details',
+          setting_value: newDetails as any,
+          description: 'Bank details for recharge instructions'
+        })
 
       if (error) {
         throw error
@@ -327,100 +290,13 @@ export function AdminPanelModal() {
     }
   }
 
-  const fetchBasicUserData = async () => {
+  const handleRoleChange = async (userId: string, newRole: 'admin' | 'user') => {
     try {
-      // Get auth users data from profiles, roles, and wallets
-      // @ts-ignore - Temporary fix for missing types
-      const { data: profiles } = await (supabase as any)
-        .from('profiles')
-        .select('*')
-
-      // @ts-ignore - Temporary fix for missing types
-      const { data: roles } = await (supabase as any)
-        .from('user_roles')
-        .select('*')
-
-      // @ts-ignore - Temporary fix for missing types
-      const { data: wallets } = await (supabase as any)
-        .from('user_wallets')
-        .select('*')
-
-      // @ts-ignore - Temporary fix for missing types
-      const { data: transactionCounts } = await (supabase as any)
-        .from('balance_transactions')
-        .select('user_id')
-
-      // @ts-ignore - Temporary fix for missing types
-      const { data: requestCounts } = await (supabase as any)
-        .from('wallet_recharge_requests')
-        .select('user_id')
-
-      // Combine data into detailed users format
-      const userMap = new Map()
-      
-      profiles?.forEach((profile: any) => {
-        userMap.set(profile.id, {
-          id: profile.id,
-          email: 'N/A', // Can't access auth.users directly
-          email_confirmed_at: null,
-          email_confirmed: false,
-          last_sign_in_at: null,
-          created_at: profile.created_at,
-          profile: {
-            full_name: profile.full_name
-          },
-          role: null,
-          wallet: null,
-          transactions_count: 0,
-          recharge_requests_count: 0
-        })
-      })
-
-      roles?.forEach((role: any) => {
-        if (userMap.has(role.user_id)) {
-          userMap.get(role.user_id).role = { role: role.role }
-        }
-      })
-
-      wallets?.forEach((wallet: any) => {
-        if (userMap.has(wallet.user_id)) {
-          userMap.get(wallet.user_id).wallet = { balance: wallet.balance }
-        }
-      })
-
-      // Count transactions
-      const transactionCountMap = new Map()
-      transactionCounts?.forEach((t: any) => {
-        transactionCountMap.set(t.user_id, (transactionCountMap.get(t.user_id) || 0) + 1)
-      })
-
-      // Count recharge requests
-      const requestCountMap = new Map()
-      requestCounts?.forEach((r: any) => {
-        requestCountMap.set(r.user_id, (requestCountMap.get(r.user_id) || 0) + 1)
-      })
-
-      userMap.forEach((user, userId) => {
-        user.transactions_count = transactionCountMap.get(userId) || 0
-        user.recharge_requests_count = requestCountMap.get(userId) || 0
-      })
-
-      setDetailedUsers(Array.from(userMap.values()))
-    } catch (error) {
-      console.error('Error fetching basic user data:', error)
-    }
-  }
-
-  const handleRoleChange = async (userId: string, newRole: string) => {
-    try {
-      // @ts-ignore - Temporary fix for missing types
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('user_roles')
         .upsert({ 
           user_id: userId, 
           role: newRole 
-        }, { 
-          onConflict: 'user_id,role' 
         })
 
       if (error) throw error
@@ -441,132 +317,132 @@ export function AdminPanelModal() {
     }
   }
 
-  const handleUserAction = async (action: string, user: DetailedUser) => {
-    const actionNames = {
-      delete: 'eliminar',
-      verify: 'verificar',
-      change_password: 'cambiar contraseña de',
-      suspend: 'suspender',
-      activate: 'activar'
-    }
-
-    const actionName = actionNames[action as keyof typeof actionNames]
-    
-    if (!confirm(`¿Estás seguro que quieres ${actionName} al usuario ${user.email}?`)) {
-      return
-    }
-
-    let newPassword = ''
-    if (action === 'change_password') {
-      newPassword = prompt('Ingresa la nueva contraseña:') || ''
-      if (!newPassword) {
+  const handleUserAction = async (userId: string, action: string, value?: string) => {
+    try {
+      setLoading(true)
+      
+      const { data, error } = await supabase.functions.invoke('admin-user-management', {
+        body: {
+          action,
+          userId,
+          value,
+        },
+      })
+      
+      if (error) {
+        console.error('Error performing user action:', error)
         toast({
           title: "Error",
-          description: "La contraseña no puede estar vacía.",
+          description: `Failed to ${action} user`,
           variant: "destructive",
         })
         return
       }
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke('admin-user-management', {
-        body: {
-          action,
-          userId: user.id,
-          email: user.email,
-          newPassword: newPassword || undefined
-        }
-      })
-
-      if (error) throw error
-
+      
       toast({
-        title: "Acción completada",
-        description: data.message,
+        title: "Success",
+        description: `User ${action} completed successfully`,
       })
-
+      
       // Refresh data
-      fetchDetailedUsers()
       fetchData()
     } catch (error) {
       console.error('Error performing user action:', error)
       toast({
         title: "Error",
-        description: `No se pudo ${actionName} al usuario.`,
+        description: `Failed to ${action} user`,
         variant: "destructive",
       })
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleRechargeRequest = async (requestId: string, approve: boolean, notes?: string) => {
+  const handleBalanceEdit = (user: DetailedUser) => {
+    setEditingBalance({
+      userId: user.id,
+      currentBalance: user.balance,
+      newBalance: user.balance.toString(),
+      notes: ''
+    })
+  }
+
+  const handleBalanceUpdate = async () => {
+    if (!editingBalance) return
+    
+    try {
+      setLoading(true)
+      
+      const { error } = await supabase.rpc('admin_update_user_balance', {
+        target_user_id: editingBalance.userId,
+        new_balance: parseFloat(editingBalance.newBalance),
+        admin_notes: editingBalance.notes || null
+      })
+      
+      if (error) {
+        console.error('Error updating balance:', error)
+        toast({
+          title: "Error",
+          description: "Failed to update user balance",
+          variant: "destructive",
+        })
+        return
+      }
+      
+      toast({
+        title: "Success",
+        description: "User balance updated successfully",
+      })
+      
+      setEditingBalance(null)
+      fetchData()
+    } catch (error) {
+      console.error('Error updating balance:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update user balance",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRechargeRequest = async (requestId: string, action: 'approve' | 'reject', adminNotes?: string) => {
     try {
       setProcessingRequest(requestId)
       
       const request = rechargeRequests.find(r => r.id === requestId)
       if (!request) return
 
-      // @ts-ignore - Temporary fix for missing types
-      const { error: updateError } = await (supabase as any)
+      if (action === 'approve') {
+        // Update user wallet balance
+        const { error: walletError } = await supabase.rpc('admin_update_user_balance', {
+          target_user_id: request.user_id,
+          new_balance: request.amount,
+          admin_notes: `Recarga aprobada: ${adminNotes || 'Sin notas'}`
+        })
+
+        if (walletError) throw walletError
+      }
+
+      // Update request status
+      const { error: requestError } = await supabase
         .from('wallet_recharge_requests')
-        .update({
-          status: approve ? 'approved' : 'rejected',
-          admin_notes: notes || null
+        .update({ 
+          status: action === 'approve' ? 'approved' : 'rejected',
+          admin_notes: adminNotes
         })
         .eq('id', requestId)
 
-      if (updateError) throw updateError
-
-      if (approve) {
-        // @ts-ignore - Temporary fix for missing types
-        const { data: wallet } = await (supabase as any)
-          .from('user_wallets')
-          .select('balance')
-          .eq('user_id', request.user_id)
-          .single()
-
-        if (wallet) {
-          // @ts-ignore - Temporary fix for missing types
-          const { error: updateWalletError } = await (supabase as any)
-            .from('user_wallets')
-            .update({ balance: Number(wallet.balance) + Number(request.amount) })
-            .eq('user_id', request.user_id)
-
-          if (updateWalletError) throw updateWalletError
-        }
-
-        // @ts-ignore - Temporary fix for missing types
-        const { data: walletData } = await (supabase as any)
-          .from('user_wallets')
-          .select('id')
-          .eq('user_id', request.user_id)
-          .single()
-
-        if (walletData) {
-          // @ts-ignore - Temporary fix for missing types
-          await (supabase as any)
-            .from('balance_transactions')
-            .insert({
-              user_id: request.user_id,
-              wallet_id: walletData.id,
-              amount: request.amount,
-              transaction_type: 'recharge_approved',
-              description: `Recarga aprobada - Referencia: ${request.reference_number}`,
-              reference_number: request.reference_number
-            })
-        }
-      }
+      if (requestError) throw requestError
 
       toast({
-        title: approve ? "Recarga Aprobada" : "Recarga Rechazada",
-        description: approve 
-          ? `Se ha agregado $${request.amount} al balance del usuario`
-          : "La solicitud de recarga ha sido rechazada",
+        title: "Solicitud Procesada",
+        description: `La solicitud ha sido ${action === 'approve' ? 'aprobada' : 'rechazada'}`,
       })
 
-      // Refresh data
-      fetchRechargeRequests()
-      fetchUserWallets()
+      fetchData()
     } catch (error) {
       console.error('Error processing recharge request:', error)
       toast({
@@ -579,146 +455,220 @@ export function AdminPanelModal() {
     }
   }
 
-  const pendingRequests = rechargeRequests.filter(r => r.status === 'pending')
-  const totalBalance = userWallets.reduce((sum, wallet) => sum + Number(wallet.balance), 0)
+  const filteredUsers = detailedUsers.filter(user => {
+    const matchesSearch = !searchTerm || 
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    const matchesRole = filterRole === 'all' || user.role === filterRole
+    
+    return matchesSearch && matchesRole
+  })
 
-  return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+  const BankDetailsForm = ({ details, onSave, onCancel }: {
+    details: BankDetails | null
+    onSave: (details: BankDetails) => void
+    onCancel: () => void
+  }) => {
+    const [formData, setFormData] = useState<BankDetails>(details || {
+      bank_name: '',
+      account_holder: '',
+      account_number: '',
+      clabe: '',
+      reference_instructions: ''
+    })
+
+    return (
+      <div className="space-y-4">
         <div>
-          <h1 className="text-2xl font-bold">Panel de Administración</h1>
-          <p className="text-muted-foreground">Gestiona recargas y balances de usuarios</p>
+          <Label htmlFor="bank_name">Nombre del Banco</Label>
+          <Input
+            id="bank_name"
+            value={formData.bank_name}
+            onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
+          />
+        </div>
+        <div>
+          <Label htmlFor="account_holder">Titular de la Cuenta</Label>
+          <Input
+            id="account_holder"
+            value={formData.account_holder}
+            onChange={(e) => setFormData({ ...formData, account_holder: e.target.value })}
+          />
+        </div>
+        <div>
+          <Label htmlFor="account_number">Número de Cuenta</Label>
+          <Input
+            id="account_number"
+            value={formData.account_number}
+            onChange={(e) => setFormData({ ...formData, account_number: e.target.value })}
+          />
+        </div>
+        <div>
+          <Label htmlFor="clabe">CLABE</Label>
+          <Input
+            id="clabe"
+            value={formData.clabe}
+            onChange={(e) => setFormData({ ...formData, clabe: e.target.value })}
+          />
+        </div>
+        <div>
+          <Label htmlFor="reference_instructions">Instrucciones de Referencia</Label>
+          <Textarea
+            id="reference_instructions"
+            value={formData.reference_instructions}
+            onChange={(e) => setFormData({ ...formData, reference_instructions: e.target.value })}
+          />
+        </div>
+        <div className="flex space-x-2">
+          <Button onClick={() => onSave(formData)}>Guardar</Button>
+          <Button variant="outline" onClick={onCancel}>Cancelar</Button>
         </div>
       </div>
+    )
+  }
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Cargando panel de administración...</p>
+        </div>
+      </div>
+    )
+  }
+
+  const pendingRequests = rechargeRequests.filter(r => r.status === 'pending').length
+  const totalUsers = detailedUsers.length
+  const totalBalance = userWallets.reduce((sum, wallet) => sum + wallet.balance, 0)
+  const totalRecharges = rechargeRequests.filter(r => r.status === 'approved').length
+
+  return (
+    <div className="space-y-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Solicitudes Pendientes</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pendingRequests.length}</div>
+            <div className="text-2xl font-bold">{pendingRequests}</div>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Usuarios</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Usuarios</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userWallets.length}</div>
+            <div className="text-2xl font-bold">{totalUsers}</div>
           </CardContent>
         </Card>
-
+        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Balance Total</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalBalance.toLocaleString()}</div>
+            <div className="text-2xl font-bold">${totalBalance.toFixed(2)}</div>
           </CardContent>
         </Card>
-
+        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recargas Totales</CardTitle>
+            <CardTitle className="text-sm font-medium">Recargas Aprobadas</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{rechargeRequests.length}</div>
+            <div className="text-2xl font-bold">{totalRecharges}</div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Main Content */}
       <Tabs defaultValue="recharge-requests" className="space-y-4">
         <TabsList>
           <TabsTrigger value="recharge-requests">Solicitudes de Recarga</TabsTrigger>
-          <TabsTrigger value="user-wallets">Billeteras de Usuarios</TabsTrigger>
+          <TabsTrigger value="user-wallets">Billeteras</TabsTrigger>
           <TabsTrigger value="user-management">Gestión de Usuarios</TabsTrigger>
-          <TabsTrigger value="admin-management">Gestión de Admins</TabsTrigger>
+          <TabsTrigger value="notifications">Notificaciones</TabsTrigger>
+          <TabsTrigger value="settings">Configuración</TabsTrigger>
+          <TabsTrigger value="admin-management">Gestión Admin</TabsTrigger>
         </TabsList>
 
         <TabsContent value="recharge-requests" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Solicitudes de Recarga</CardTitle>
+              <CardTitle>Solicitudes de Recarga de Billetera</CardTitle>
               <CardDescription>
-                Revisa y aprueba las solicitudes de recarga de los usuarios
+                Revisa y gestiona las solicitudes de recarga pendientes
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <p>Cargando solicitudes...</p>
-              ) : rechargeRequests.length === 0 ? (
-                <p className="text-muted-foreground">No hay solicitudes de recarga</p>
-              ) : (
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {rechargeRequests.map((request) => (
-                    <div key={request.id} className="border rounded-lg p-4 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-semibold">
-                              {request.profiles?.full_name || 'Usuario sin nombre'}
-                            </h4>
-                            <Badge variant={
-                              request.status === 'pending' ? 'secondary' :
-                              request.status === 'approved' ? 'default' : 'destructive'
-                            }>
-                              {request.status === 'pending' ? 'Pendiente' :
-                               request.status === 'approved' ? 'Aprobada' : 'Rechazada'}
-                            </Badge>
-                          </div>
+              <div className="space-y-4">
+                {rechargeRequests.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-4">
+                    No hay solicitudes de recarga
+                  </p>
+                ) : (
+                  rechargeRequests.map((request) => (
+                    <div key={request.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-semibold">
+                            {request.profiles?.full_name || 'Usuario sin nombre'}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            Monto: ${request.amount.toFixed(2)}
+                          </p>
                           <p className="text-sm text-muted-foreground">
                             Referencia: {request.reference_number}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {new Date(request.created_at).toLocaleDateString('es-ES')}
+                            Contacto: {request.contact_method} - {request.contact_value}
                           </p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-bold">${request.amount}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {request.contact_method}: {request.contact_value}
-                          </p>
-                        </div>
+                        <Badge variant={
+                          request.status === 'pending' ? 'default' :
+                          request.status === 'approved' ? 'default' : 'destructive'
+                        }>
+                          {request.status}
+                        </Badge>
                       </div>
-
-                      {request.admin_notes && (
-                        <div className="bg-muted p-3 rounded">
-                          <p className="text-sm"><strong>Notas del admin:</strong> {request.admin_notes}</p>
-                        </div>
-                      )}
-
+                      
                       {request.status === 'pending' && (
-                        <div className="flex gap-2">
+                        <div className="flex space-x-2 mt-3">
                           <Button
-                            onClick={() => handleRechargeRequest(request.id, true)}
+                            size="sm"
+                            onClick={() => handleRechargeRequest(request.id, 'approve')}
                             disabled={processingRequest === request.id}
-                            className="flex items-center gap-2"
                           >
-                            <CheckCircle className="h-4 w-4" />
+                            <CheckCircle className="w-4 h-4 mr-1" />
                             Aprobar
                           </Button>
                           <Button
+                            size="sm"
                             variant="destructive"
-                            onClick={() => handleRechargeRequest(request.id, false)}
+                            onClick={() => handleRechargeRequest(request.id, 'reject')}
                             disabled={processingRequest === request.id}
-                            className="flex items-center gap-2"
                           >
-                            <XCircle className="h-4 w-4" />
+                            <XCircle className="w-4 h-4 mr-1" />
                             Rechazar
                           </Button>
                         </div>
                       )}
+                      
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Creado: {new Date(request.created_at).toLocaleString()}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              )}
+                  ))
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -728,34 +678,42 @@ export function AdminPanelModal() {
             <CardHeader>
               <CardTitle>Billeteras de Usuarios</CardTitle>
               <CardDescription>
-                Visualiza y gestiona los balances de todos los usuarios
+                Vista general de los balances de todos los usuarios
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {userWallets.length === 0 ? (
-                <p className="text-muted-foreground">No hay usuarios registrados</p>
-              ) : (
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {userWallets.map((wallet) => (
-                    <div key={wallet.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <h4 className="font-semibold">
+              <div className="space-y-4">
+                {userWallets.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-4">
+                    No hay billeteras registradas
+                  </p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Usuario</TableHead>
+                        <TableHead>Balance</TableHead>
+                        <TableHead>Fecha de Creación</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {userWallets.map((wallet) => (
+                        <TableRow key={wallet.id}>
+                          <TableCell>
                             {wallet.profiles?.full_name || 'Usuario sin nombre'}
-                          </h4>
-                          <p className="text-sm text-muted-foreground">
-                            Creado: {new Date(wallet.created_at).toLocaleDateString('es-ES')}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-bold">${Number(wallet.balance).toLocaleString()}</p>
-                          <p className="text-sm text-muted-foreground">Balance actual</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            ${wallet.balance.toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            {new Date(wallet.created_at).toLocaleDateString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -765,195 +723,225 @@ export function AdminPanelModal() {
             <CardHeader>
               <CardTitle>Gestión de Usuarios</CardTitle>
               <CardDescription>
-                Administra usuarios, roles y visualiza información detallada
+                Administra usuarios, roles y permisos
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Filters and Search */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar por nombre o email..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                <Select value={roleFilter} onValueChange={setRoleFilter}>
-                  <SelectTrigger className="w-full sm:w-48">
+            <CardContent>
+              <div className="flex space-x-4 mb-4">
+                <Input
+                  placeholder="Buscar usuarios..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1"
+                />
+                <Select value={filterRole} onValueChange={(value: 'all' | 'admin' | 'user') => setFilterRole(value)}>
+                  <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Filtrar por rol" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos los roles</SelectItem>
-                    <SelectItem value="admin">Administradores</SelectItem>
-                    <SelectItem value="user">Usuarios</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={confirmationFilter} onValueChange={setConfirmationFilter}>
-                  <SelectTrigger className="w-full sm:w-48">
-                    <SelectValue placeholder="Estado de email" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="confirmed">Confirmados</SelectItem>
-                    <SelectItem value="unconfirmed">Sin confirmar</SelectItem>
+                    <SelectItem value="all">Todos los Roles</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="user">Usuario</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Users Table */}
-              {loading ? (
-                <p>Cargando usuarios...</p>
-              ) : detailedUsers.length === 0 ? (
-                <p className="text-muted-foreground">No hay usuarios registrados</p>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead>Rol</TableHead>
+                    <TableHead>Balance</TableHead>
+                    <TableHead>Transacciones</TableHead>
+                    <TableHead>Fecha de Registro</TableHead>
+                    <TableHead>Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">
+                        {user.email || 'Sin email'}
+                      </TableCell>
+                      <TableCell>{user.full_name || 'Sin nombre'}</TableCell>
+                      <TableCell>
+                        <Select
+                          value={user.role}
+                          onValueChange={(newRole) => handleRoleChange(user.id, newRole as 'admin' | 'user')}
+                        >
+                          <SelectTrigger className="w-[100px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">User</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        {editingBalance?.userId === user.id ? (
+                          <div className="flex items-center space-x-2">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={editingBalance.newBalance}
+                              onChange={(e) => setEditingBalance({
+                                ...editingBalance,
+                                newBalance: e.target.value
+                              })}
+                              className="w-24"
+                            />
+                            <Button
+                              size="sm"
+                              onClick={handleBalanceUpdate}
+                              disabled={loading}
+                            >
+                              Guardar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setEditingBalance(null)}
+                            >
+                              Cancelar
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            <span>${user.balance.toFixed(2)}</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleBalanceEdit(user)}
+                              className="h-6 w-6 p-0"
+                            >
+                              <Edit2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>{user.transaction_count}</TableCell>
+                      <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => handleUserAction(user.id, 'verify')}>
+                              <Mail className="mr-2 h-4 w-4" />
+                              Verificar Email
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleUserAction(user.id, 'suspend')}>
+                              <Ban className="mr-2 h-4 w-4" />
+                              Suspender Cuenta
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleUserAction(user.id, 'activate')}>
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Activar Cuenta
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => handleUserAction(user.id, 'delete')}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Eliminar Usuario
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Notificaciones del Administrador</CardTitle>
+              <CardDescription>
+                Notificaciones recientes del sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {notifications.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-4">
+                    No hay notificaciones
+                  </p>
+                ) : (
+                  notifications.map((notification) => (
+                    <div 
+                      key={notification.id} 
+                      className={`border rounded-lg p-4 ${notification.read ? 'bg-muted/50' : 'bg-background'}`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h4 className="font-semibold">{notification.title}</h4>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {notification.message}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {new Date(notification.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                        {!notification.read && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => markNotificationAsRead(notification.id)}
+                          >
+                            Marcar como leída
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configuración Bancaria</CardTitle>
+              <CardDescription>
+                Configura los datos bancarios para las instrucciones de recarga
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {editingBankDetails ? (
+                <BankDetailsForm
+                  details={bankDetails}
+                  onSave={updateBankDetails}
+                  onCancel={() => setEditingBankDetails(false)}
+                />
               ) : (
-                <div className="border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Usuario</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Rol</TableHead>
-                        <TableHead>Balance</TableHead>
-                        <TableHead>Transacciones</TableHead>
-                        <TableHead>Estado</TableHead>
-                        <TableHead>Acciones</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {detailedUsers
-                        .filter(user => {
-                          const matchesSearch = !searchTerm || 
-                            (user.profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                             user.email?.toLowerCase().includes(searchTerm.toLowerCase()))
-                          
-                          const matchesRole = roleFilter === 'all' || user.role?.role === roleFilter
-                          
-                          const matchesConfirmation = confirmationFilter === 'all' ||
-                            (confirmationFilter === 'confirmed' && (user.email_confirmed_at || user.email_confirmed)) ||
-                            (confirmationFilter === 'unconfirmed' && !(user.email_confirmed_at || user.email_confirmed))
-                          
-                          return matchesSearch && matchesRole && matchesConfirmation
-                        })
-                        .map((user) => (
-                          <TableRow key={user.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm">
-                                  {user.profile?.full_name?.charAt(0) || user.email?.charAt(0) || '?'}
-                                </div>
-                                <div>
-                                  <p className="font-medium">
-                                    {user.profile?.full_name || 'Sin nombre'}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {new Date(user.created_at).toLocaleDateString('es-ES')}
-                                  </p>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="max-w-[200px] truncate">
-                                {user.email || 'N/A'}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={user.role?.role === 'admin' ? 'default' : 'secondary'}>
-                                <div className="flex items-center gap-1">
-                                  {user.role?.role === 'admin' ? (
-                                    <Crown className="h-3 w-3" />
-                                  ) : (
-                                    <User className="h-3 w-3" />
-                                  )}
-                                  {user.role?.role === 'admin' ? 'Admin' : 'Usuario'}
-                                </div>
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="text-right">
-                                <p className="font-semibold">
-                                  ${(user.wallet?.balance || 0).toLocaleString()}
-                                </p>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="text-center">
-                                <p className="text-sm">
-                                  {user.transactions_count || 0} transacciones
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {user.recharge_requests_count || 0} recargas
-                                </p>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={(user.email_confirmed_at || user.email_confirmed) ? 'default' : 'secondary'}>
-                                {(user.email_confirmed_at || user.email_confirmed) ? 'Confirmado' : 'Pendiente'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2 justify-end">
-                                <Select
-                                  value={user.role?.role || 'user'}
-                                  onValueChange={(newRole) => handleRoleChange(user.id, newRole)}
-                                >
-                                  <SelectTrigger className="w-24">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="user">Usuario</SelectItem>
-                                    <SelectItem value="admin">Admin</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                      Acciones
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    {!user.email_confirmed && (
-                                      <DropdownMenuItem 
-                                        onClick={() => handleUserAction('verify', user)}
-                                        className="text-green-600"
-                                      >
-                                        Verificar Email
-                                      </DropdownMenuItem>
-                                    )}
-                                    <DropdownMenuItem 
-                                      onClick={() => handleUserAction('change_password', user)}
-                                    >
-                                      Cambiar Contraseña
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem 
-                                      onClick={() => handleUserAction('suspend', user)}
-                                      className="text-yellow-600"
-                                    >
-                                      Suspender Usuario
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem 
-                                      onClick={() => handleUserAction('activate', user)}
-                                      className="text-green-600"
-                                    >
-                                      Activar Usuario
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem 
-                                      onClick={() => handleUserAction('delete', user)}
-                                      className="text-red-600"
-                                    >
-                                      Eliminar Usuario
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                    </TableBody>
-                  </Table>
+                <div className="space-y-4">
+                  {bankDetails ? (
+                    <div className="space-y-2">
+                      <p><strong>Banco:</strong> {bankDetails.bank_name}</p>
+                      <p><strong>Titular:</strong> {bankDetails.account_holder}</p>
+                      <p><strong>Número de Cuenta:</strong> {bankDetails.account_number}</p>
+                      <p><strong>CLABE:</strong> {bankDetails.clabe}</p>
+                      <p><strong>Instrucciones:</strong> {bankDetails.reference_instructions}</p>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No hay datos bancarios configurados</p>
+                  )}
+                  <Button onClick={() => setEditingBankDetails(true)}>
+                    {bankDetails ? 'Editar Datos Bancarios' : 'Configurar Datos Bancarios'}
+                  </Button>
                 </div>
               )}
             </CardContent>
