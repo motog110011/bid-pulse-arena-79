@@ -11,9 +11,11 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
 import { CheckCircle, XCircle, DollarSign, Users, Clock, TrendingUp, Search, Crown, User, Shield, Edit2, Mail, Ban, Trash2, MoreHorizontal } from 'lucide-react'
 import { AdminRoleManager } from '@/components/AdminRoleManager'
+import { AuctionManagement } from '@/components/AuctionManagement'
 
 interface RechargeRequest {
   id: string
@@ -416,11 +418,21 @@ export function AdminPanelModal() {
       if (!request) return
 
       if (action === 'approve') {
-        // Update user wallet balance
+        // Get current user balance first
+        const { data: walletData } = await supabase
+          .from('user_wallets')
+          .select('balance')
+          .eq('user_id', request.user_id)
+          .single()
+        
+        const currentBalance = walletData?.balance || 0
+        const newBalance = currentBalance + request.amount
+        
+        // Update user wallet balance by adding the recharge amount
         const { error: walletError } = await supabase.rpc('admin_update_user_balance', {
           target_user_id: request.user_id,
-          new_balance: request.amount,
-          admin_notes: `Recarga aprobada: ${adminNotes || 'Sin notas'}`
+          new_balance: newBalance,
+          admin_notes: `Recarga aprobada: $${request.amount} agregados. ${adminNotes || 'Sin notas adicionales'}`
         })
 
         if (walletError) throw walletError
@@ -591,14 +603,14 @@ export function AdminPanelModal() {
 
       {/* Main Content */}
       <Tabs defaultValue="recharge-requests" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="recharge-requests">Solicitudes de Recarga</TabsTrigger>
-          <TabsTrigger value="user-wallets">Billeteras</TabsTrigger>
-          <TabsTrigger value="user-management">Gestión de Usuarios</TabsTrigger>
-          <TabsTrigger value="auctions">Subastas</TabsTrigger>
-          <TabsTrigger value="notifications">Notificaciones</TabsTrigger>
-          <TabsTrigger value="settings">Configuración</TabsTrigger>
-          <TabsTrigger value="admin-management">Gestión Admin</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
+          <TabsTrigger value="recharge-requests" className="text-xs sm:text-sm">Solicitudes</TabsTrigger>
+          <TabsTrigger value="user-wallets" className="text-xs sm:text-sm">Billeteras</TabsTrigger>
+          <TabsTrigger value="user-management" className="text-xs sm:text-sm">Usuarios</TabsTrigger>
+          <TabsTrigger value="auctions" className="text-xs sm:text-sm">Subastas</TabsTrigger>
+          <TabsTrigger value="notifications" className="text-xs sm:text-sm">Notificaciones</TabsTrigger>
+          <TabsTrigger value="settings" className="text-xs sm:text-sm">Config</TabsTrigger>
+          <TabsTrigger value="admin-management" className="text-xs sm:text-sm">Admins</TabsTrigger>
         </TabsList>
 
         <TabsContent value="recharge-requests" className="space-y-4">
@@ -689,30 +701,32 @@ export function AdminPanelModal() {
                     No hay billeteras registradas
                   </p>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Usuario</TableHead>
-                        <TableHead>Balance</TableHead>
-                        <TableHead>Fecha de Creación</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {userWallets.map((wallet) => (
-                        <TableRow key={wallet.id}>
-                          <TableCell>
-                            {wallet.profiles?.full_name || 'Usuario sin nombre'}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            ${wallet.balance.toFixed(2)}
-                          </TableCell>
-                          <TableCell>
-                            {new Date(wallet.created_at).toLocaleDateString()}
-                          </TableCell>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Usuario</TableHead>
+                          <TableHead>Balance</TableHead>
+                          <TableHead>Fecha de Creación</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {userWallets.map((wallet) => (
+                          <TableRow key={wallet.id}>
+                            <TableCell>
+                              {wallet.profiles?.full_name || 'Usuario sin nombre'}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              ${wallet.balance.toFixed(2)}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(wallet.created_at).toLocaleDateString()}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
               </div>
             </CardContent>
@@ -747,7 +761,8 @@ export function AdminPanelModal() {
                 </Select>
               </div>
 
-              <Table>
+              <div className="overflow-x-auto">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Email</TableHead>
@@ -859,7 +874,8 @@ export function AdminPanelModal() {
                     </TableRow>
                   ))}
                 </TableBody>
-              </Table>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
