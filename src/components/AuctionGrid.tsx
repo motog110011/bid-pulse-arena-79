@@ -1,221 +1,201 @@
 import { useState, useEffect } from "react";
-import { AuctionCard } from "@/components/ui/auction-card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Filter, SortAsc } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Filter, ArrowUpDown } from "lucide-react";
+import { AuctionCard } from "@/components/ui/auction-card";
 import { useAutoBid } from "@/hooks/useAutoBid";
 import { useToast } from "@/hooks/use-toast";
-import productPerfume from "@/assets/product-perfume.jpg";
-import productLiquor from "@/assets/product-liquor.jpg";
-import productTools from "@/assets/product-tools.jpg";
-import productCosmetics from "@/assets/product-cosmetics.jpg";
-import productElectronics from "@/assets/product-electronics.jpg";
-import productLuxuryPerfumes from "@/assets/product-luxury-perfumes.jpg";
-import productPremiumSpirits from "@/assets/product-premium-spirits.jpg";
-import productSwissKnife from "@/assets/product-swiss-knife.jpg";
-import productLuxuryMakeup from "@/assets/product-luxury-makeup.jpg";
-import productPremiumElectronics from "@/assets/product-premium-electronics.jpg";
-import productLuxuryWatches from "@/assets/product-luxury-watches.jpg";
-import productTacticalGear from "@/assets/product-tactical-gear.jpg";
-import productLuxuryJewelry from "@/assets/product-luxury-jewelry.jpg";
+import { supabase } from "@/integrations/supabase/client";
 
-export function AuctionGrid() {
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [userBalance] = useState(15000);
+interface AuctionItem {
+  id: string;
+  title: string;
+  currentBid: number;
+  endTime: Date;
+  image: string;
+  category: string;
+  isLive: boolean;
+  description?: string;
+  currentBidder?: string;
+  totalBids: number;
+  minimumBid: number;
+  bidIncrement: number;
+}
 
-  // Estado para subastas dinámicas
-  const [auctions, setAuctions] = useState(() => {
-    // Datos iniciales de subastas
-    return [
-      {
-        id: "1",
-        title: "Chanel No. 5 EDP 100ml - Decomisado en Seguridad",
-        image: productLuxuryPerfumes,
-        currentBid: 45,
-        minimumBid: 55,
-        endTime: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hours
-        totalBids: 24,
-        category: "Perfumes",
-        isLive: true,
-        lastBidder: "Carlos M."
-      },
-      {
-        id: "2",
-        title: "Whiskey Macallan 12 años 700ml - Confiscado",
-        image: productPremiumSpirits,
-        currentBid: 89,
-        minimumBid: 99,
-        endTime: new Date(Date.now() + 1 * 60 * 60 * 1000 + 30 * 60 * 1000), // 1.5 hours
-        totalBids: 18,
-        category: "Licores",
-        isLive: true,
-        lastBidder: "Ana R."
-      },
-      {
-        id: "3",
-        title: "Navaja Suiza Victorinox SwissChamp - Decomisada",
-        image: productSwissKnife,
-        currentBid: 25,
-        minimumBid: 35,
-        endTime: new Date(Date.now() + 5 * 60 * 60 * 1000), // 5 hours
-        totalBids: 31,
-        category: "Herramientas",
-        isLive: true,
-        lastBidder: "Miguel S."
-      },
-      {
-        id: "4",
-        title: "Set Cosméticos La Mer - Productos Confiscados",
-        image: productLuxuryMakeup,
-        currentBid: 35,
-        minimumBid: 45,
-        endTime: new Date(Date.now() + 45 * 60 * 1000), // 45 minutes
-        totalBids: 12,
-        category: "Cosméticos",
-        isLive: true,
-        lastBidder: "Laura P."
-      },
-      {
-        id: "6",
-        title: "Cognac Hennessy XO 700ml - Decomisado",
-        image: productLiquor,
-        currentBid: 125,
-        minimumBid: 135,
-        endTime: new Date(Date.now() + 6 * 60 * 60 * 1000), // 6 hours
-        totalBids: 19,
-        category: "Licores",
-        isLive: false,
-        lastBidder: "Fernando L."
-      }
-    ];
-  });
-  
-  // Generadores para ofertas aleatorias
-  const getRandomBidder = () => {
-    const bidders = ["Carlos M.", "Ana R.", "Miguel S.", "Laura P.", "Fernando L.", "Sofia V.", "Diego R.", "Alejandro K.", "Eduardo F.", "Carmen L.", "Ricardo P.", "Javier R.", "Mónica V.", "Carlos E.", "Ana M.", "Roberto L.", "Patricia G.", "Luis H.", "Marina C.", "David S."];
-    return bidders[Math.floor(Math.random() * bidders.length)];
-  };
-
-  const getRandomPrice = (min: number, max: number) => {
-    return Math.floor(Math.random() * (max - min) + min);
-  };
-
-  const getRandomEndTime = () => {
-    const hoursToAdd = Math.floor(Math.random() * 8) + 1; // 1-8 hours
-    const minutesToAdd = Math.floor(Math.random() * 60); // 0-59 minutes
-    return new Date(Date.now() + hoursToAdd * 60 * 60 * 1000 + minutesToAdd * 60 * 1000);
-  };
-
-  const regenerateAuction = (auction: any) => {
-    const newCurrentBid = getRandomPrice(25, 300);
-    return {
-      ...auction,
-      currentBid: newCurrentBid,
-      minimumBid: newCurrentBid + 10,
-      endTime: getRandomEndTime(),
-      totalBids: Math.floor(Math.random() * 50) + 10,
-      lastBidder: getRandomBidder(),
-      isLive: Math.random() > 0.2 // 80% chance of being live
-    };
-  };
-
-  // Efecto para regenerar subastas cuando expiren
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setAuctions(currentAuctions => {
-        const now = Date.now();
-        return currentAuctions.map(auction => {
-          // Si la subasta ha expirado, regenerarla
-          if (auction.endTime.getTime() <= now) {
-            console.log(`Regenerando subasta: ${auction.title}`);
-            return regenerateAuction(auction);
-          }
-          return auction;
-        });
-      });
-    }, 30000); // Verificar cada 30 segundos
-
-    return () => clearInterval(interval);
-  }, []);
-
+const AuctionGrid = () => {
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [auctions, setAuctions] = useState<AuctionItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const { triggerAutoBid } = useAutoBid();
   const { toast } = useToast();
 
-  const handleBid = (itemId: string, amount: number) => {
-    console.log(`Nueva puja de $${amount} para el item ${itemId}`);
-    
-    // Actualizar la subasta con la nueva puja del usuario
-    setAuctions(currentAuctions => {
-      return currentAuctions.map(auction => {
-        if (auction.id === itemId) {
-          const updatedAuction = {
-            ...auction,
-            currentBid: amount,
-            minimumBid: amount + 10,
-            totalBids: auction.totalBids + 1,
-            lastBidder: "Tú" // Indicar que el usuario hizo la puja
-          };
+  const fetchAuctions = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('auctions')
+        .select('*')
+        .eq('status', 'active')
+        .order('end_time', { ascending: true });
 
-          // Activar el sistema de pujas automáticas
-          triggerAutoBid(
-            amount,
-            itemId,
-            {
-              minDelay: 15, // 15-45 segundos de delay
-              maxDelay: 45,
-              chanceToRespond: 0.7, // 70% de probabilidad de respuesta
-              maxBidIncrease: 30 // incremento máximo de $30
-            },
-            handleAutoBid
-          );
+      if (error) {
+        console.error('Error fetching auctions:', error);
+        return;
+      }
 
-          return updatedAuction;
-        }
-        return auction;
-      });
-    });
+      const formattedAuctions: AuctionItem[] = data.map((auction) => ({
+        id: auction.id,
+        title: auction.title,
+        currentBid: Number(auction.current_bid),
+        endTime: new Date(auction.end_time),
+        image: auction.image_url || '/src/assets/product-perfume.jpg',
+        category: auction.category,
+        isLive: auction.status === 'active',
+        description: auction.description,
+        currentBidder: auction.current_bidder,
+        totalBids: auction.total_bids,
+        minimumBid: Number(auction.minimum_bid),
+        bidIncrement: Number(auction.bid_increment),
+      }));
 
-    toast({
-      title: "¡Puja realizada!",
-      description: `Has pujado $${amount.toLocaleString()} por el producto`,
-    });
+      setAuctions(formattedAuctions);
+    } catch (error) {
+      console.error('Error fetching auctions:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAutoBid = (auctionId: string, newBid: number, bidder: string) => {
-    setAuctions(currentAuctions => {
-      return currentAuctions.map(auction => {
-        if (auction.id === auctionId) {
-          // Verificar que la subasta aún esté activa
-          if (auction.endTime.getTime() > Date.now()) {
-            return {
-              ...auction,
-              currentBid: newBid,
-              minimumBid: newBid + 10,
-              totalBids: auction.totalBids + 1,
-              lastBidder: bidder
-            };
-          }
-        }
-        return auction;
-      });
-    });
+  useEffect(() => {
+    fetchAuctions();
 
-    toast({
-      title: "Nueva puja recibida",
-      description: `${bidder} ha pujado $${newBid.toLocaleString()}`,
-      duration: 3000,
-    });
+    // Refresh auctions every 30 seconds
+    const interval = setInterval(fetchAuctions, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleBid = async (itemId: string, amount: number) => {
+    try {
+      // Update the auction in the database
+      const { error } = await supabase
+        .from('auctions')
+        .update({
+          current_bid: amount,
+          current_bidder: "Tu oferta",
+          total_bids: auctions.find(a => a.id === itemId)?.totalBids! + 1,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', itemId);
+
+      if (error) {
+        console.error('Error updating bid:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo realizar la oferta. Inténtalo de nuevo.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update local state
+      setAuctions(prevAuctions =>
+        prevAuctions.map(auction =>
+          auction.id === itemId
+            ? {
+                ...auction,
+                currentBid: amount,
+                currentBidder: "Tu oferta",
+                totalBids: (auction.totalBids || 0) + 1,
+              }
+            : auction
+        )
+      );
+      
+      // Schedule auto-bid after user's bid
+      triggerAutoBid(amount, itemId, {
+        minDelay: 15,
+        maxDelay: 45,
+        chanceToRespond: 0.7,
+        maxBidIncrease: 30
+      }, handleAutoBid);
+      
+      toast({
+        title: "¡Oferta realizada!",
+        description: `Has ofertado $${amount.toFixed(2)} por "${auctions.find(a => a.id === itemId)?.title}"`,
+      });
+    } catch (error) {
+      console.error('Error placing bid:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo realizar la oferta. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const filteredAuctions = selectedCategory === "all" 
+  const handleAutoBid = async (auctionId: string, newBid: number, bidder: string) => {
+    try {
+      // Update the auction in the database
+      const { error } = await supabase
+        .from('auctions')
+        .update({
+          current_bid: newBid,
+          current_bidder: bidder,
+          total_bids: auctions.find(a => a.id === auctionId)?.totalBids! + 1,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', auctionId);
+
+      if (error) {
+        console.error('Error updating auto bid:', error);
+        return;
+      }
+
+      // Update local state
+      setAuctions(prevAuctions =>
+        prevAuctions.map(auction =>
+          auction.id === auctionId
+            ? {
+                ...auction,
+                currentBid: newBid,
+                currentBidder: bidder,
+                totalBids: (auction.totalBids || 0) + 1,
+              }
+            : auction
+        )
+      );
+      
+      toast({
+        title: "Nueva oferta automática",
+        description: `${bidder} ha ofertado $${newBid.toFixed(2)}`,
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('Error processing auto bid:', error);
+    }
+  };
+
+  // Filter auctions based on selected category
+  const filteredAuctions = selectedCategory === "All" 
     ? auctions 
-    : auctions.filter(auction => auction.category.toLowerCase() === selectedCategory);
+    : selectedCategory === "Terminating"
+    ? auctions.filter(auction => {
+        const timeRemaining = auction.endTime.getTime() - Date.now();
+        return timeRemaining <= 30 * 60 * 1000 && timeRemaining > 0; // 30 minutes
+      })
+    : auctions.filter(auction => auction.category === selectedCategory);
 
-  const liveAuctions = auctions.filter(auction => auction.isLive);
+  // Get live auctions (excluding terminating ones for the count)
+  const liveAuctions = auctions.filter(auction => {
+    const timeRemaining = auction.endTime.getTime() - Date.now();
+    return auction.isLive && timeRemaining > 30 * 60 * 1000;
+  });
+  
+  // Get ending soon auctions (less than 30 minutes remaining)
   const endingSoon = auctions.filter(auction => {
-    const timeLeft = auction.endTime.getTime() - Date.now();
-    return timeLeft < 60 * 60 * 1000; // Less than 1 hour
+    const timeRemaining = auction.endTime.getTime() - Date.now();
+    return timeRemaining <= 30 * 60 * 1000 && timeRemaining > 0; // 30 minutes in milliseconds
   });
 
   return (
@@ -228,7 +208,7 @@ export function AuctionGrid() {
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Artículos confiscados en aeropuertos internacionales. 
-            Perfumes, licores, herramientas y más a precios increíbles.
+            Perfumes, licores, vinos, navajas y más a precios increíbles.
           </p>
         </div>
 
@@ -252,13 +232,14 @@ export function AuctionGrid() {
         <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
             <TabsList className="glass-card">
-              <TabsTrigger value="all">Todos los Productos</TabsTrigger>
-              <TabsTrigger value="perfumes">Perfumes</TabsTrigger>
-              <TabsTrigger value="licores">Licores</TabsTrigger>
-              <TabsTrigger value="herramientas">Herramientas</TabsTrigger>
-              <TabsTrigger value="cosméticos">Cosméticos</TabsTrigger>
-              
-              <TabsTrigger value="ending">Terminando Pronto</TabsTrigger>
+              <TabsTrigger value="All">Todos los Productos</TabsTrigger>
+              <TabsTrigger value="Perfumes">Perfumes</TabsTrigger>
+              <TabsTrigger value="Licores">Licores</TabsTrigger>
+              <TabsTrigger value="Vinos">Vinos</TabsTrigger>
+              <TabsTrigger value="Navajas">Navajas</TabsTrigger>
+              <TabsTrigger value="Herramientas">Herramientas</TabsTrigger>
+              <TabsTrigger value="Cosméticos">Cosméticos</TabsTrigger>
+              <TabsTrigger value="Terminating">Terminando Pronto</TabsTrigger>
             </TabsList>
 
             <div className="flex items-center gap-2">
@@ -267,92 +248,41 @@ export function AuctionGrid() {
                 Filtros
               </Button>
               <Button variant="outline" size="sm" className="glass">
-                <SortAsc className="h-4 w-4 mr-2" />
+                <ArrowUpDown className="h-4 w-4 mr-2" />
                 Ordenar
               </Button>
             </div>
           </div>
 
-          <TabsContent value="all" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {auctions.map((auction) => (
-                <AuctionCard
-                  key={auction.id}
-                  item={auction}
-                  onBid={handleBid}
-                />
-              ))}
-            </div>
-          </TabsContent>
+          {["All", "Perfumes", "Licores", "Vinos", "Navajas", "Herramientas", "Cosméticos", "Terminating"].map((category) => (
+            <TabsContent key={category} value={category} className="space-y-6">
+              {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div key={i} className="h-64 bg-muted animate-pulse rounded-lg" />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredAuctions.map((item) => (
+                    <AuctionCard key={item.id} item={item} onBid={handleBid} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          ))}
 
-          <TabsContent value="perfumes" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAuctions.map((auction) => (
-                <AuctionCard
-                  key={auction.id}
-                  item={auction}
-                  onBid={handleBid}
-                />
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="licores" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAuctions.map((auction) => (
-                <AuctionCard
-                  key={auction.id}
-                  item={auction}
-                  onBid={handleBid}
-                />
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="herramientas" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAuctions.map((auction) => (
-                <AuctionCard
-                  key={auction.id}
-                  item={auction}
-                  onBid={handleBid}
-                />
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="cosméticos" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAuctions.map((auction) => (
-                <AuctionCard
-                  key={auction.id}
-                  item={auction}
-                  onBid={handleBid}
-                />
-              ))}
-            </div>
-          </TabsContent>
-
-
-          <TabsContent value="ending" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {endingSoon.map((auction) => (
-                <AuctionCard
-                  key={auction.id}
-                  item={auction}
-                  onBid={handleBid}
-                />
-              ))}
-            </div>
-          </TabsContent>
+          {/* Load more */}
+          <div className="text-center mt-8">
+            <Button variant="outline" size="lg" className="glass">
+              Cargar Más Productos
+            </Button>
+          </div>
         </Tabs>
-        {/* Load more */}
-        <div className="text-center">
-          <Button variant="outline" size="lg" className="glass">
-            Cargar Más Productos
-          </Button>
-        </div>
       </div>
     </section>
   );
-}
+};
+
+export default AuctionGrid;
+export { AuctionGrid };

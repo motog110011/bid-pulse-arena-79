@@ -595,6 +595,7 @@ export function AdminPanelModal() {
           <TabsTrigger value="recharge-requests">Solicitudes de Recarga</TabsTrigger>
           <TabsTrigger value="user-wallets">Billeteras</TabsTrigger>
           <TabsTrigger value="user-management">Gestión de Usuarios</TabsTrigger>
+          <TabsTrigger value="auctions">Subastas</TabsTrigger>
           <TabsTrigger value="notifications">Notificaciones</TabsTrigger>
           <TabsTrigger value="settings">Configuración</TabsTrigger>
           <TabsTrigger value="admin-management">Gestión Admin</TabsTrigger>
@@ -946,6 +947,10 @@ export function AdminPanelModal() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="auctions" className="space-y-4">
+          <AuctionManagement />
         </TabsContent>
 
         <TabsContent value="admin-management" className="space-y-4">

@@ -74,6 +74,57 @@ export type Database = {
         }
         Relationships: []
       }
+      auctions: {
+        Row: {
+          bid_increment: number
+          category: string
+          created_at: string
+          current_bid: number
+          current_bidder: string | null
+          description: string | null
+          end_time: string
+          id: string
+          image_url: string | null
+          minimum_bid: number
+          status: string
+          title: string
+          total_bids: number
+          updated_at: string
+        }
+        Insert: {
+          bid_increment?: number
+          category: string
+          created_at?: string
+          current_bid?: number
+          current_bidder?: string | null
+          description?: string | null
+          end_time: string
+          id?: string
+          image_url?: string | null
+          minimum_bid?: number
+          status?: string
+          title: string
+          total_bids?: number
+          updated_at?: string
+        }
+        Update: {
+          bid_increment?: number
+          category?: string
+          created_at?: string
+          current_bid?: number
+          current_bidder?: string | null
+          description?: string | null
+          end_time?: string
+          id?: string
+          image_url?: string | null
+          minimum_bid?: number
+          status?: string
+          title?: string
+          total_bids?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       balance_transactions: {
         Row: {
           amount: number
