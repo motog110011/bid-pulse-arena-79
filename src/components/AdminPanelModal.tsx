@@ -58,6 +58,7 @@ interface BankDetails {
   account_holder: string
   account_number: string
   clabe: string
+  oxxo_card_number: string
   reference_instructions: string
 }
 
