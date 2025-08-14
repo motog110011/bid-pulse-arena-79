@@ -487,11 +487,12 @@ export function AdminPanelModal() {
     onSave: (details: BankDetails) => void
     onCancel: () => void
   }) => {
-    const [formData, setFormData] = useState<BankDetails>(details || {
+  const [formData, setFormData] = useState<BankDetails>(details || {
       bank_name: '',
       account_holder: '',
       account_number: '',
       clabe: '',
+      oxxo_card_number: '',
       reference_instructions: ''
     })
 
@@ -527,6 +528,14 @@ export function AdminPanelModal() {
             id="clabe"
             value={formData.clabe}
             onChange={(e) => setFormData({ ...formData, clabe: e.target.value })}
+          />
+        </div>
+        <div>
+          <Label htmlFor="oxxo_card_number">Número de tarjeta para depósito en OXXO</Label>
+          <Input
+            id="oxxo_card_number"
+            value={formData.oxxo_card_number}
+            onChange={(e) => setFormData({ ...formData, oxxo_card_number: e.target.value })}
           />
         </div>
         <div>
@@ -956,6 +965,7 @@ export function AdminPanelModal() {
                       <p><strong>Titular:</strong> {bankDetails.account_holder}</p>
                       <p><strong>Número de Cuenta:</strong> {bankDetails.account_number}</p>
                       <p><strong>CLABE:</strong> {bankDetails.clabe}</p>
+                      <p><strong>Número de tarjeta para depósito en OXXO:</strong> {bankDetails.oxxo_card_number}</p>
                       <p><strong>Instrucciones:</strong> {bankDetails.reference_instructions}</p>
                     </div>
                   ) : (
