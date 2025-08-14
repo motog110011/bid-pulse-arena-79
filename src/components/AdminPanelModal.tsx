@@ -67,7 +67,7 @@ interface DetailedUser {
   email_confirmed_at: string | null
   created_at: string
   last_sign_in_at: string | null
-  role: 'admin' | 'user'
+  role: string
   balance: number
   transaction_count: number
   full_name: string | null
@@ -188,7 +188,12 @@ export function AdminPanelModal() {
         return
       }
       
-      setDetailedUsers(data || [])
+      // Ensure role is typed correctly
+      const typedData = (data || []).map((user: any) => ({
+        ...user,
+        role: user.role || 'user' // Ensure role is always a string
+      }))
+      setDetailedUsers(typedData)
     } catch (error) {
       console.error('Error fetching detailed users:', error)
       toast({
@@ -965,9 +970,9 @@ export function AdminPanelModal() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="auctions" className="space-y-4">
-          <AuctionManagement />
-        </TabsContent>
+          <TabsContent value="auctions" className="space-y-4">
+            <AuctionManagement />
+          </TabsContent>
 
         <TabsContent value="admin-management" className="space-y-4">
           <AdminRoleManager />
