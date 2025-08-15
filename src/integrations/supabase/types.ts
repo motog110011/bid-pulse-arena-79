@@ -328,6 +328,10 @@ export type Database = {
           | { role_name: string; user_id: string }
         Returns: boolean
       }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       make_user_admin: {
         Args: { user_email: string }
         Returns: undefined

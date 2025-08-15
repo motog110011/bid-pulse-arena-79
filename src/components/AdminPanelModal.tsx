@@ -248,13 +248,35 @@ export function AdminPanelModal() {
 
   const updateBankDetails = async (newDetails: BankDetails) => {
     try {
-      const { error } = await supabaseAdmin
+      // First check if bank_details record exists
+      const { data: existing } = await supabaseAdmin
         .from('app_settings')
-        .upsert({
-          setting_key: 'bank_details',
-          setting_value: newDetails as any,
-          description: 'Bank details for recharge instructions'
-        })
+        .select('id')
+        .eq('setting_key', 'bank_details')
+        .maybeSingle()
+
+      let error
+      if (existing) {
+        // Update existing record
+        const result = await supabaseAdmin
+          .from('app_settings')
+          .update({ 
+            setting_value: newDetails as any,
+            updated_at: new Date().toISOString()
+          })
+          .eq('setting_key', 'bank_details')
+        error = result.error
+      } else {
+        // Insert new record
+        const result = await supabaseAdmin
+          .from('app_settings')
+          .insert({
+            setting_key: 'bank_details',
+            setting_value: newDetails as any,
+            description: 'Bank details for recharge instructions'
+          })
+        error = result.error
+      }
 
       if (error) {
         throw error
