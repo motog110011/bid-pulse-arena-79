@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/integrations/supabase/client'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -247,7 +248,7 @@ export function AdminPanelModal() {
 
   const updateBankDetails = async (newDetails: BankDetails) => {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('app_settings')
         .upsert({
           setting_key: 'bank_details',
@@ -277,7 +278,7 @@ export function AdminPanelModal() {
 
   const markNotificationAsRead = async (notificationId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('admin_notifications')
         .update({ read: true })
         .eq('id', notificationId)
@@ -300,7 +301,7 @@ export function AdminPanelModal() {
 
   const handleRoleChange = async (userId: string, newRole: 'admin' | 'user') => {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('user_roles')
         .upsert({ 
           user_id: userId, 
@@ -381,7 +382,7 @@ export function AdminPanelModal() {
     try {
       setLoading(true)
       
-      const { error } = await supabase.rpc('admin_update_user_balance', {
+      const { error } = await supabaseAdmin.rpc('admin_update_user_balance', {
         target_user_id: editingBalance.userId,
         new_balance: parseFloat(editingBalance.newBalance),
         admin_notes: editingBalance.notes || null
@@ -435,7 +436,7 @@ export function AdminPanelModal() {
         const newBalance = currentBalance + request.amount
         
         // Update user wallet balance by adding the recharge amount
-        const { error: walletError } = await supabase.rpc('admin_update_user_balance', {
+        const { error: walletError } = await supabaseAdmin.rpc('admin_update_user_balance', {
           target_user_id: request.user_id,
           new_balance: newBalance,
           admin_notes: `Recarga aprobada: $${request.amount} agregados. ${adminNotes || 'Sin notas adicionales'}`
@@ -445,7 +446,7 @@ export function AdminPanelModal() {
       }
 
       // Update request status
-      const { error: requestError } = await supabase
+      const { error: requestError } = await supabaseAdmin
         .from('wallet_recharge_requests')
         .update({ 
           status: action === 'approve' ? 'approved' : 'rejected',
