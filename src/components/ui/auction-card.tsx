@@ -14,6 +14,7 @@ interface AuctionItem {
   image: string;
   currentBid: number;
   minimumBid: number;
+  bidIncrement: number;
   endTime: Date;
   totalBids: number;
   category: string;
@@ -59,7 +60,7 @@ export function AuctionCard({ item, onBid, className }: AuctionCardProps) {
     });
   };
 
-  const nextBidAmount = item.currentBid + 10;
+  const nextBidAmount = item.currentBid + item.bidIncrement;
 
   return (
     <Card className={cn("glass-card smooth-transition hover:auction-glow group", className)}>
@@ -108,7 +109,7 @@ export function AuctionCard({ item, onBid, className }: AuctionCardProps) {
             <div>
               <p className="text-sm text-muted-foreground">Puja actual</p>
               <p className="text-2xl font-bold text-auction-gold">
-                ${item.currentBid.toLocaleString()}
+                ${item.currentBid.toFixed(0)} MXN
               </p>
             </div>
             <div className="text-right">
@@ -132,7 +133,7 @@ export function AuctionCard({ item, onBid, className }: AuctionCardProps) {
             <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
               <TrendingUp className="h-4 w-4 text-auction-success" />
               <span className="text-sm">
-                Última puja: <span className="font-medium">${item.currentBid.toLocaleString()}</span>
+                Última puja: <span className="font-medium">${item.currentBid.toFixed(0)} MXN</span>
               </span>
             </div>
           )}
@@ -143,7 +144,7 @@ export function AuctionCard({ item, onBid, className }: AuctionCardProps) {
         <div className="flex items-center gap-2 w-full">
           <div className="flex-1">
             <p className="text-sm text-muted-foreground mb-1">Siguiente puja mínima</p>
-            <p className="font-bold text-primary">${nextBidAmount.toLocaleString()}</p>
+            <p className="font-bold text-primary">${nextBidAmount.toFixed(0)} MXN</p>
           </div>
         </div>
 
@@ -154,7 +155,7 @@ export function AuctionCard({ item, onBid, className }: AuctionCardProps) {
             disabled={userBalance < nextBidAmount}
           >
             <Gavel className="h-4 w-4 mr-2" />
-            Pujar ${nextBidAmount.toLocaleString()}
+            Pujar ${nextBidAmount.toFixed(0)} MXN
           </Button>
           <Button variant="outline" size="icon" className="glass hover:bg-white/10">
             <Heart className="h-4 w-4" />

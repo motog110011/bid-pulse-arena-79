@@ -120,10 +120,10 @@ const AuctionGrid = () => {
         maxBidIncrease: 30
       }, handleAutoBid);
       
-      toast({
-        title: "¡Oferta realizada!",
-        description: `Has ofertado $${amount.toFixed(2)} por "${auctions.find(a => a.id === itemId)?.title}"`,
-      });
+        toast({
+          title: "¡Oferta realizada!",
+          description: `Has ofertado $${amount.toFixed(0)} MXN por "${auctions.find(a => a.id === itemId)?.title}"`,
+        });
     } catch (error) {
       console.error('Error placing bid:', error);
       toast({
@@ -168,7 +168,7 @@ const AuctionGrid = () => {
       
       toast({
         title: "Nueva oferta automática",
-        description: `${bidder} ha ofertado $${newBid.toFixed(2)}`,
+        description: `${bidder} ha ofertado $${newBid.toFixed(0)} MXN`,
         variant: "default",
       });
     } catch (error) {
@@ -208,7 +208,7 @@ const AuctionGrid = () => {
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Artículos confiscados en aeropuertos internacionales. 
-            Perfumes, licores, vinos, navajas y más a precios increíbles.
+            Vinos, licores, navajas y electrónicos a precios increíbles.
           </p>
         </div>
 
@@ -233,12 +233,9 @@ const AuctionGrid = () => {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
             <TabsList className="glass-card">
               <TabsTrigger value="All">Todos los Productos</TabsTrigger>
-              <TabsTrigger value="Perfumes">Perfumes</TabsTrigger>
-              <TabsTrigger value="Licores">Licores</TabsTrigger>
-              <TabsTrigger value="Vinos">Vinos</TabsTrigger>
+              <TabsTrigger value="Vinos y Licores">Vinos y Licores</TabsTrigger>
               <TabsTrigger value="Navajas">Navajas</TabsTrigger>
-              <TabsTrigger value="Herramientas">Herramientas</TabsTrigger>
-              <TabsTrigger value="Cosméticos">Cosméticos</TabsTrigger>
+              <TabsTrigger value="Electrónicos">Electrónicos</TabsTrigger>
               <TabsTrigger value="Terminating">Terminando Pronto</TabsTrigger>
             </TabsList>
 
@@ -254,7 +251,7 @@ const AuctionGrid = () => {
             </div>
           </div>
 
-          {["All", "Perfumes", "Licores", "Vinos", "Navajas", "Herramientas", "Cosméticos", "Terminating"].map((category) => (
+          {["All", "Vinos y Licores", "Navajas", "Electrónicos", "Terminating"].map((category) => (
             <TabsContent key={category} value={category} className="space-y-6">
               {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
