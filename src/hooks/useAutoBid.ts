@@ -12,7 +12,9 @@ export function useAutoBid() {
     'María L.', 'José R.', 'Carmen G.', 'Roberto H.', 'Patricia M.',
     'Luis A.', 'Elena V.', 'Carlos P.', 'Isabel F.', 'Antonio S.',
     'Rosa T.', 'Francisco D.', 'Teresa C.', 'Manuel B.', 'Pilar N.',
-    'Rafael O.', 'Dolores Q.', 'Ángel W.', 'Esperanza U.', 'Joaquín I.'
+    'Rafael O.', 'Dolores Q.', 'Ángel W.', 'Esperanza U.', 'Joaquín I.',
+    'Diego M.', 'Ana G.', 'Fernando L.', 'Sofía R.', 'Gabriel P.',
+    'Valentina S.', 'Alejandro F.', 'Camila T.', 'Sebastián C.', 'Isabella N.'
   ];
 
   const getRandomUser = useCallback(() => {

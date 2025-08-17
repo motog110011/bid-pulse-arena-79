@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Filter, ArrowUpDown } from "lucide-react";
 import { AuctionCard } from "@/components/ui/auction-card";
 import { useAutoBid } from "@/hooks/useAutoBid";
+import { useActivitySimulation } from "@/hooks/useActivitySimulation";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,6 +29,7 @@ const AuctionGrid = () => {
   const [auctions, setAuctions] = useState<AuctionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { triggerAutoBid } = useAutoBid();
+  const { triggerActivity } = useActivitySimulation();
   const { toast } = useToast();
 
   const fetchAuctions = async () => {

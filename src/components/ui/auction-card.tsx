@@ -67,9 +67,13 @@ export function AuctionCard({ item, onBid, className }: AuctionCardProps) {
       <CardHeader className="p-0">
         <div className="relative overflow-hidden rounded-t-xl">
           <img
-            src={item.image}
+            src={item.image || '/placeholder-image.jpg'}
             alt={item.title}
             className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = `https://via.placeholder.com/400x300/e5e5e5/6b7280?text=${encodeURIComponent(item.title)}`;
+            }}
           />
           <div className="absolute top-3 left-3 flex gap-2">
             <Badge className="bg-gradient-gold text-black font-medium">
