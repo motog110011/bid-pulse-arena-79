@@ -1,42 +1,68 @@
+
 import { useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 export function useActivitySimulation() {
-  const { toast } = useToast();
-
   const triggerActivity = useCallback(async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('auction-activity-simulator');
+      console.log('🎯 Triggering auction activity simulation...');
       
-      if (error) {
-        console.error('Error triggering activity simulation:', error);
-        return;
+      // Call the activity simulator
+      const { data: activityData, error: activityError } = await supabase.functions.invoke('auction-activity-simulator');
+      
+      if (activityError) {
+        console.error('Error triggering activity simulation:', activityError);
+      } else if (activityData?.activeBids > 0) {
+        console.log(`🎉 Activity simulation: ${activityData.activeBids} new bids placed`);
       }
 
-      if (data?.activeBids > 0) {
-        console.log(`🎯 Activity simulation: ${data.activeBids} new bids placed`);
+      // Also trigger auction rotation to renew ended auctions
+      const { data: rotatorData, error: rotatorError } = await supabase.functions.invoke('auction-rotator');
+      
+      if (rotatorError) {
+        console.error('Error triggering auction rotation:', rotatorError);
+      } else if (rotatorData?.renewedCount > 0) {
+        console.log(`🔄 Auction rotation: ${rotatorData.renewedCount} auctions renewed`);
       }
     } catch (error) {
-      console.error('Error in activity simulation:', error);
+      console.error('Error in activity/rotation simulation:', error);
+    }
+  }, []);
+
+  const triggerRotation = useCallback(async () => {
+    try {
+      console.log('🔄 Triggering auction rotation...');
+      const { data, error } = await supabase.functions.invoke('auction-rotator');
+      
+      if (error) {
+        console.error('Error triggering rotation:', error);
+      } else {
+        console.log('✅ Rotation result:', data);
+      }
+    } catch (error) {
+      console.error('Error in rotation:', error);
     }
   }, []);
 
   useEffect(() => {
-    // Initial simulation after 10 seconds
+    // Initial activity simulation after 10 seconds
     const initialTimeout = setTimeout(triggerActivity, 10000);
 
-    // Then every 2-5 minutes
-    const interval = setInterval(() => {
-      const randomDelay = Math.random() * 180000 + 120000; // 2-5 minutes
+    // Then every 3-7 minutes for activity
+    const activityInterval = setInterval(() => {
+      const randomDelay = Math.random() * 240000 + 180000; // 3-7 minutes
       setTimeout(triggerActivity, randomDelay);
-    }, 300000); // Check every 5 minutes
+    }, 360000); // Check every 6 minutes
+
+    // Rotation every 15 minutes
+    const rotationInterval = setInterval(triggerRotation, 900000); // 15 minutes
 
     return () => {
       clearTimeout(initialTimeout);
-      clearInterval(interval);
+      clearInterval(activityInterval);
+      clearInterval(rotationInterval);
     };
-  }, [triggerActivity]);
+  }, [triggerActivity, triggerRotation]);
 
-  return { triggerActivity };
+  return { triggerActivity, triggerRotation };
 }

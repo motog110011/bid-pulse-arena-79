@@ -1,10 +1,11 @@
+
 import { useCallback } from 'react';
 
 export interface AutoBidConfig {
-  minDelay: number; // mínimo delay en segundos
-  maxDelay: number; // máximo delay en segundos
-  chanceToRespond: number; // probabilidad de que respondan (0-1)
-  maxBidIncrease: number; // máximo incremento de la puja
+  minDelay: number;
+  maxDelay: number; 
+  chanceToRespond: number;
+  maxBidIncrease: number;
 }
 
 export function useAutoBid() {
@@ -16,6 +17,19 @@ export function useAutoBid() {
     'Diego M.', 'Ana G.', 'Fernando L.', 'Sofía R.', 'Gabriel P.',
     'Valentina S.', 'Alejandro F.', 'Camila T.', 'Sebastián C.', 'Isabella N.'
   ];
+
+  const getAutoBidConfig = useCallback((category: string): AutoBidConfig => {
+    switch (category) {
+      case 'Vinos y Licores':
+        return { minDelay: 15, maxDelay: 45, chanceToRespond: 0.6, maxBidIncrease: 40 };
+      case 'Navajas':
+        return { minDelay: 20, maxDelay: 60, chanceToRespond: 0.5, maxBidIncrease: 30 };
+      case 'Electrónicos':
+        return { minDelay: 10, maxDelay: 35, chanceToRespond: 0.8, maxBidIncrease: 60 };
+      default:
+        return { minDelay: 15, maxDelay: 50, chanceToRespond: 0.65, maxBidIncrease: 45 };
+    }
+  }, []);
 
   const getRandomUser = useCallback(() => {
     return fictionalUsers[Math.floor(Math.random() * fictionalUsers.length)];
@@ -32,35 +46,40 @@ export function useAutoBid() {
   const triggerAutoBid = useCallback((
     currentBid: number,
     auctionId: string,
-    config: AutoBidConfig,
+    category: string,
     onBidPlaced: (auctionId: string, newBid: number, bidder: string) => void
   ) => {
-    // Solo responder si la probabilidad lo permite
+    const config = getAutoBidConfig(category);
+    
+    // Only respond if probability allows
     if (!shouldRespondToBid(config.chanceToRespond)) {
+      console.log(`🎲 Auto-bid skipped for category ${category} (${Math.round(config.chanceToRespond * 100)}% chance)`);
       return;
     }
 
-    const delay = getRandomDelay(config.minDelay, config.maxDelay) * 1000; // convertir a ms
-    const bidIncrease = Math.floor(Math.random() * config.maxBidIncrease) + 10; // mínimo +10
+    const delay = getRandomDelay(config.minDelay, config.maxDelay) * 1000;
+    const bidIncrease = Math.floor(Math.random() * config.maxBidIncrease) + 10;
     const newBid = currentBid + bidIncrease;
     const bidder = getRandomUser();
 
-    console.log(`Usuario ficticio programado para pujar en ${delay/1000}s:`, {
+    console.log(`🤖 Auto-bid scheduled for ${delay/1000}s:`, {
       auctionId,
+      category,
       currentBid,
       newBid,
       bidder,
-      delay: delay/1000
+      config
     });
 
     setTimeout(() => {
       onBidPlaced(auctionId, newBid, bidder);
-      console.log(`Puja automática realizada: ${bidder} pujó $${newBid} en subasta ${auctionId}`);
+      console.log(`✅ Auto-bid placed: ${bidder} bid $${newBid} in ${category} auction`);
     }, delay);
-  }, [getRandomUser, getRandomDelay, shouldRespondToBid]);
+  }, [getAutoBidConfig, getRandomUser, getRandomDelay, shouldRespondToBid]);
 
   return {
     triggerAutoBid,
-    getRandomUser
+    getRandomUser,
+    getAutoBidConfig
   };
 }

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,6 +33,19 @@ const AuctionGrid = () => {
   const { triggerActivity } = useActivitySimulation();
   const { toast } = useToast();
 
+  const getImageFallback = (category: string): string => {
+    switch (category) {
+      case 'Vinos y Licores':
+        return 'https://images.unsplash.com/photo-1514362545857-3bc16c4c76d3?q=80&w=800&auto=format&fit=crop';
+      case 'Navajas':
+        return 'https://images.unsplash.com/photo-1617979745825-2b3e9a219ddb?q=80&w=800&auto=format&fit=crop';
+      case 'Electrónicos':
+        return 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=800&auto=format&fit=crop';
+      default:
+        return 'https://images.unsplash.com/photo-1554080353-a576cf803bda?q=80&w=800&auto=format&fit=crop';
+    }
+  };
+
   const fetchAuctions = async () => {
     try {
       setLoading(true);
@@ -51,7 +65,7 @@ const AuctionGrid = () => {
         title: auction.title,
         currentBid: Number(auction.current_bid),
         endTime: new Date(auction.end_time),
-        image: auction.image_url || '/src/assets/product-perfume.jpg',
+        image: auction.image_url || getImageFallback(auction.category),
         category: auction.category,
         isLive: auction.status === 'active',
         description: auction.description,
@@ -74,7 +88,23 @@ const AuctionGrid = () => {
 
     // Refresh auctions every 30 seconds
     const interval = setInterval(fetchAuctions, 30000);
-    return () => clearInterval(interval);
+    
+    // Set up real-time subscription for auction updates
+    const subscription = supabase
+      .channel('auctions_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'auctions' },
+        (payload) => {
+          console.log('🔔 Real-time auction update:', payload);
+          fetchAuctions(); // Refresh all auctions when any changes
+        }
+      )
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleBid = async (itemId: string, amount: number) => {
@@ -100,7 +130,7 @@ const AuctionGrid = () => {
         return;
       }
 
-      // Update local state
+      // Update local state immediately
       setAuctions(prevAuctions =>
         prevAuctions.map(auction =>
           auction.id === itemId
@@ -114,18 +144,14 @@ const AuctionGrid = () => {
         )
       );
       
-      // Schedule auto-bid after user's bid
-      triggerAutoBid(amount, itemId, {
-        minDelay: 15,
-        maxDelay: 45,
-        chanceToRespond: 0.7,
-        maxBidIncrease: 30
-      }, handleAutoBid);
+      // Schedule auto-bid response
+      const auctionCategory = auctions.find(a => a.id === itemId)?.category || '';
+      triggerAutoBid(amount, itemId, auctionCategory, handleAutoBid);
       
-        toast({
-          title: "¡Oferta realizada!",
-          description: `Has ofertado $${amount.toFixed(0)} MXN por "${auctions.find(a => a.id === itemId)?.title}"`,
-        });
+      toast({
+        title: "¡Oferta realizada!",
+        description: `Has ofertado $${amount.toFixed(0)} MXN por "${auctions.find(a => a.id === itemId)?.title}"`,
+      });
     } catch (error) {
       console.error('Error placing bid:', error);
       toast({
@@ -184,20 +210,18 @@ const AuctionGrid = () => {
     : selectedCategory === "Terminating"
     ? auctions.filter(auction => {
         const timeRemaining = auction.endTime.getTime() - Date.now();
-        return timeRemaining <= 30 * 60 * 1000 && timeRemaining > 0; // 30 minutes
+        return timeRemaining <= 30 * 60 * 1000 && timeRemaining > 0;
       })
     : auctions.filter(auction => auction.category === selectedCategory);
 
-  // Get live auctions (excluding terminating ones for the count)
   const liveAuctions = auctions.filter(auction => {
     const timeRemaining = auction.endTime.getTime() - Date.now();
     return auction.isLive && timeRemaining > 30 * 60 * 1000;
   });
   
-  // Get ending soon auctions (less than 30 minutes remaining)
   const endingSoon = auctions.filter(auction => {
     const timeRemaining = auction.endTime.getTime() - Date.now();
-    return timeRemaining <= 30 * 60 * 1000 && timeRemaining > 0; // 30 minutes in milliseconds
+    return timeRemaining <= 30 * 60 * 1000 && timeRemaining > 0;
   });
 
   return (

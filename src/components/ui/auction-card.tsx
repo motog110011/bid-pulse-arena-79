@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,7 @@ interface AuctionItem {
   totalBids: number;
   category: string;
   isLive: boolean;
-  lastBidder?: string;
+  currentBidder?: string;
 }
 
 interface AuctionCardProps {
@@ -30,12 +31,13 @@ interface AuctionCardProps {
 
 export function AuctionCard({ item, onBid, className }: AuctionCardProps) {
   const [isFavorited, setIsFavorited] = useState(false);
-  const [bidAmount, setBidAmount] = useState(item.currentBid + 10);
   const { balance: userBalance } = useUserBalance();
   const { toast } = useToast();
 
   const handleBid = () => {
-    if (bidAmount > userBalance) {
+    const nextBidAmount = item.currentBid + item.bidIncrement;
+    
+    if (nextBidAmount > userBalance) {
       toast({
         title: "Saldo insuficiente",
         description: "No tienes suficiente saldo para realizar esta puja.",
@@ -44,20 +46,7 @@ export function AuctionCard({ item, onBid, className }: AuctionCardProps) {
       return;
     }
 
-    if (bidAmount <= item.currentBid) {
-      toast({
-        title: "Puja inválida",
-        description: "Tu puja debe ser mayor a la puja actual.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    onBid?.(item.id, bidAmount);
-    toast({
-      title: "¡Puja realizada!",
-      description: `Has pujado $${bidAmount.toLocaleString()} por ${item.title}`,
-    });
+    onBid?.(item.id, nextBidAmount);
   };
 
   const nextBidAmount = item.currentBid + item.bidIncrement;
@@ -67,12 +56,25 @@ export function AuctionCard({ item, onBid, className }: AuctionCardProps) {
       <CardHeader className="p-0">
         <div className="relative overflow-hidden rounded-t-xl">
           <img
-            src={item.image || '/placeholder-image.jpg'}
+            src={item.image}
             alt={item.title}
             className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.src = `https://via.placeholder.com/400x300/e5e5e5/6b7280?text=${encodeURIComponent(item.title)}`;
+              // Fallback to category-specific image if main image fails
+              switch (item.category) {
+                case 'Vinos y Licores':
+                  target.src = 'https://images.unsplash.com/photo-1514362545857-3bc16c4c76d3?q=80&w=800&auto=format&fit=crop';
+                  break;
+                case 'Navajas':
+                  target.src = 'https://images.unsplash.com/photo-1617979745825-2b3e9a219ddb?q=80&w=800&auto=format&fit=crop';
+                  break;
+                case 'Electrónicos':
+                  target.src = 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=800&auto=format&fit=crop';
+                  break;
+                default:
+                  target.src = 'https://images.unsplash.com/photo-1554080353-a576cf803bda?q=80&w=800&auto=format&fit=crop';
+              }
             }}
           />
           <div className="absolute top-3 left-3 flex gap-2">
@@ -129,15 +131,15 @@ export function AuctionCard({ item, onBid, className }: AuctionCardProps) {
             </div>
             <div className="flex items-center gap-1">
               <Users className="h-4 w-4" />
-              <span>Pujador: {item.lastBidder || "Sin pujas"}</span>
+              <span>Pujador: {item.currentBidder || "Sin pujas"}</span>
             </div>
           </div>
 
-          {item.lastBidder && (
+          {item.currentBidder && (
             <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
               <TrendingUp className="h-4 w-4 text-auction-success" />
               <span className="text-sm">
-                Última puja: <span className="font-medium">${item.currentBid.toFixed(0)} MXN</span>
+                Última puja: <span className="font-medium">{item.currentBidder}</span> con <span className="font-bold">${item.currentBid.toFixed(0)} MXN</span>
               </span>
             </div>
           )}
