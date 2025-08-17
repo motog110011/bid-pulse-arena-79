@@ -84,6 +84,7 @@ export type Database = {
           description: string | null
           end_time: string
           id: string
+          image_file: string | null
           image_url: string | null
           minimum_bid: number
           status: string
@@ -100,6 +101,7 @@ export type Database = {
           description?: string | null
           end_time: string
           id?: string
+          image_file?: string | null
           image_url?: string | null
           minimum_bid?: number
           status?: string
@@ -116,6 +118,7 @@ export type Database = {
           description?: string | null
           end_time?: string
           id?: string
+          image_file?: string | null
           image_url?: string | null
           minimum_bid?: number
           status?: string
