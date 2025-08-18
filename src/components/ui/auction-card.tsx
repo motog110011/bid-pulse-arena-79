@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Heart, Gavel, Users, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useUserBalance } from "@/hooks/useUserBalance";
+import { getImageWithFallbacks } from "@/lib/imageUtils";
 
 interface AuctionItem {
   id: string;
@@ -55,26 +56,14 @@ export function AuctionCard({ item, onBid, className }: AuctionCardProps) {
     <Card className={cn("glass-card smooth-transition hover:auction-glow group", className)}>
       <CardHeader className="p-0">
         <div className="relative overflow-hidden rounded-t-xl">
-          <img
-            src={item.image}
+          <img 
+            src={getImageWithFallbacks(item.title, item.category, item.image)} 
             alt={item.title}
             className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              // Fallback to category-specific image if main image fails
-              switch (item.category) {
-                case 'Vinos y Licores':
-                  target.src = 'https://images.unsplash.com/photo-1514362545857-3bc16c4c76d3?q=80&w=800&auto=format&fit=crop';
-                  break;
-                case 'Navajas':
-                  target.src = 'https://images.unsplash.com/photo-1617979745825-2b3e9a219ddb?q=80&w=800&auto=format&fit=crop';
-                  break;
-                case 'Electrónicos':
-                  target.src = 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=800&auto=format&fit=crop';
-                  break;
-                default:
-                  target.src = 'https://images.unsplash.com/photo-1554080353-a576cf803bda?q=80&w=800&auto=format&fit=crop';
-              }
+              // Generate a different fallback image for this specific item
+              target.src = getImageWithFallbacks(item.title, item.category);
             }}
           />
           <div className="absolute top-3 left-3 flex gap-2">

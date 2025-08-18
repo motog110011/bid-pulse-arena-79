@@ -9,6 +9,7 @@ import { useAutoBid } from "@/hooks/useAutoBid";
 import { useActivitySimulation } from "@/hooks/useActivitySimulation";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getImageWithFallbacks, getImageFallback } from "@/lib/imageUtils";
 
 interface AuctionItem {
   id: string;
@@ -65,7 +66,7 @@ const AuctionGrid = () => {
         title: auction.title,
         currentBid: Number(auction.current_bid),
         endTime: new Date(auction.end_time),
-        image: auction.image_url || getImageFallback(auction.category),
+        image: getImageWithFallbacks(auction.title, auction.category, auction.image_url),
         category: auction.category,
         isLive: auction.status === 'active',
         description: auction.description,
