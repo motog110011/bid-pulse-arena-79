@@ -307,6 +307,10 @@ export type Database = {
         }
         Returns: string
       }
+      generate_specific_image_url: {
+        Args: { category: string; fallback_index?: number; title: string }
+        Returns: string
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
