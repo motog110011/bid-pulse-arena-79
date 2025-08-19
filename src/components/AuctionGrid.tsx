@@ -9,7 +9,7 @@ import { useAutoBid } from "@/hooks/useAutoBid";
 import { useActivitySimulation } from "@/hooks/useActivitySimulation";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { getImageWithFallbacks, getImageFallback } from "@/lib/imageUtils";
+import { getImageWithFallbacks } from "@/lib/imageUtils";
 
 interface AuctionItem {
   id: string;
@@ -34,18 +34,6 @@ const AuctionGrid = () => {
   const { triggerActivity } = useActivitySimulation();
   const { toast } = useToast();
 
-  const getImageFallback = (category: string): string => {
-    switch (category) {
-      case 'Vinos y Licores':
-        return 'https://images.unsplash.com/photo-1514362545857-3bc16c4c76d3?q=80&w=800&auto=format&fit=crop';
-      case 'Navajas':
-        return 'https://images.unsplash.com/photo-1617979745825-2b3e9a219ddb?q=80&w=800&auto=format&fit=crop';
-      case 'Electrónicos':
-        return 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=800&auto=format&fit=crop';
-      default:
-        return 'https://images.unsplash.com/photo-1554080353-a576cf803bda?q=80&w=800&auto=format&fit=crop';
-    }
-  };
 
   const fetchAuctions = async () => {
     try {

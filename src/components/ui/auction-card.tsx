@@ -58,12 +58,15 @@ export function AuctionCard({ item, onBid, className }: AuctionCardProps) {
         <div className="relative overflow-hidden rounded-t-xl">
           <img 
             src={getImageWithFallbacks(item.title, item.category, item.image)} 
-            alt={item.title}
+            alt={`${item.title} - ${item.category}`}
             className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
+            decoding="async"
+            sizes="(max-width: 768px) 100vw, 33vw"
             onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              // Generate a different fallback image for this specific item
-              target.src = getImageWithFallbacks(item.title, item.category);
+              const target = e.currentTarget as HTMLImageElement;
+              target.onerror = null;
+              target.src = '/placeholder.svg';
             }}
           />
           <div className="absolute top-3 left-3 flex gap-2">

@@ -154,12 +154,11 @@ function generateSearchTerm(title: string, category: string): string {
 function generateFallbackUrls(category: string, count: number = 3): string[] {
   const categoryKeywords = CATEGORY_KEYWORDS[category] || [category.toLowerCase()];
   const urls: string[] = [];
-  
+  const dims = '800x600';
   for (let i = 0; i < count && i < categoryKeywords.length; i++) {
-    const keyword = categoryKeywords[i];
-    urls.push(`https://images.unsplash.com/photo-${generateImageId()}?w=400&h=300&fit=crop&q=80&auto=format&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&cs=tinysrgb&dpr=2&fm=webp&crop=entropy&${encodeURIComponent(keyword)}`);
+    const keyword = categoryKeywords[i].replace(/\s+/g, ',');
+    urls.push(`https://source.unsplash.com/${dims}/?${encodeURIComponent(keyword)}&sig=${i}`);
   }
-  
   return urls;
 }
 
@@ -179,32 +178,11 @@ function generateImageId(): string {
  * Main function to generate specific image URL based on auction title and category
  */
 export function generateSpecificImageUrl(title: string, category: string, fallbackIndex: number = 0): string {
-  const searchTerm = generateSearchTerm(title, category);
-  
-  // Add some randomization to avoid repeated images
-  const randomSeed = Math.floor(Math.random() * 1000) + fallbackIndex;
-  
-  // Create Unsplash URL with specific search terms
-  const baseUrl = 'https://images.unsplash.com/photo-';
-  const imageId = generateImageId();
-  const params = new URLSearchParams({
-    w: '400',
-    h: '300',
-    fit: 'crop',
-    q: '80',
-    auto: 'format',
-    ixlib: 'rb-4.0.3',
-    ixid: 'M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    cs: 'tinysrgb',
-    dpr: '2',
-    fm: 'webp',
-    crop: 'entropy',
-    sig: randomSeed.toString(),
-    q_auto: 'good',
-    fm_auto: 'webp'
-  });
-  
-  return `${baseUrl}${imageId}?${params.toString()}&${encodeURIComponent(searchTerm)}`;
+  const rawTerm = generateSearchTerm(title, category);
+  const searchTerm = rawTerm.replace(/\s+/g, ',');
+  const dims = '800x600';
+  const sig = Math.floor(Math.random() * 1000) + fallbackIndex;
+  return `https://source.unsplash.com/${dims}/?${encodeURIComponent(searchTerm)}&sig=${sig}`;
 }
 
 /**
