@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { Heart, Gavel, Users, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useUserBalance } from "@/hooks/useUserBalance";
-import { getImageWithFallbacks } from "@/lib/imageUtils";
+import { getImageCandidates } from "@/lib/imageUtils";
 
 interface AuctionItem {
   id: string;
@@ -34,7 +34,9 @@ export function AuctionCard({ item, onBid, className }: AuctionCardProps) {
   const [isFavorited, setIsFavorited] = useState(false);
   const { balance: userBalance } = useUserBalance();
   const { toast } = useToast();
-
+  const [imgIndex, setImgIndex] = useState(0);
+  const candidates = useMemo(() => getImageCandidates(item.title, item.category, item.image), [item.title, item.category, item.image]);
+  const currentSrc = candidates[imgIndex] || '/placeholder.svg';
   const handleBid = () => {
     const nextBidAmount = item.currentBid + item.bidIncrement;
     

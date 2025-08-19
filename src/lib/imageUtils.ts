@@ -1,5 +1,16 @@
 // Smart image URL generation system for auction items
 // Generates specific Unsplash URLs based on product titles and brands
+import productElectronics from "@/assets/product-electronics.jpg";
+import productLaptop from "@/assets/product-laptop.jpg";
+import productPhone from "@/assets/product-phone.jpg";
+import productSwissKnife from "@/assets/product-swiss-knife.jpg";
+import productTacticalGear from "@/assets/product-tactical-gear.jpg";
+import productPremiumSpirits from "@/assets/product-premium-spirits.jpg";
+import productLiquor from "@/assets/product-liquor.jpg";
+import productCosmetics from "@/assets/product-cosmetics.jpg";
+import productLuxuryPerfumes from "@/assets/product-luxury-perfumes.jpg";
+import productLuxuryJewelry from "@/assets/product-luxury-jewelry.jpg";
+import productWatch from "@/assets/product-watch.jpg";
 
 interface BrandMapping {
   [key: string]: {
