@@ -169,6 +169,92 @@ export type Database = {
           },
         ]
       }
+      product_image_mappings: {
+        Row: {
+          active: boolean
+          brand: string | null
+          category: string
+          contains_keywords: string[] | null
+          created_at: string
+          id: string
+          image_id: string
+          priority: number
+          product_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          brand?: string | null
+          category: string
+          contains_keywords?: string[] | null
+          created_at?: string
+          id?: string
+          image_id: string
+          priority?: number
+          product_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          brand?: string | null
+          category?: string
+          contains_keywords?: string[] | null
+          created_at?: string
+          id?: string
+          image_id?: string
+          priority?: number
+          product_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_image_mappings_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "product_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_images: {
+        Row: {
+          active: boolean
+          brand: string | null
+          category: string
+          created_at: string
+          file_path: string
+          id: string
+          label: string | null
+          product_type: string | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          brand?: string | null
+          category: string
+          created_at?: string
+          file_path: string
+          id?: string
+          label?: string | null
+          product_type?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          brand?: string | null
+          category?: string
+          created_at?: string
+          file_path?: string
+          id?: string
+          label?: string | null
+          product_type?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

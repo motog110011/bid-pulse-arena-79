@@ -1,61 +1,78 @@
 
-import { useState, useMemo } from "react";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Timer } from "@/components/ui/timer";
-import { cn } from "@/lib/utils";
 import { Heart, Gavel, Users, TrendingUp } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useUserBalance } from "@/hooks/useUserBalance";
-import { getImageCandidates } from "@/lib/imageUtils";
+import { toast } from "sonner";
+import { useProductImageMappings } from '@/hooks/useProductImages';
+import { resolveDeterministicImage, getFallbackCandidates } from '@/lib/deterministicImageResolver';
 
 interface AuctionItem {
   id: string;
   title: string;
-  image: string;
   currentBid: number;
-  minimumBid: number;
-  bidIncrement: number;
   endTime: Date;
-  totalBids: number;
+  image: string;
   category: string;
   isLive: boolean;
+  description?: string;
   currentBidder?: string;
+  totalBids: number;
+  minimumBid: number;
+  bidIncrement: number;
 }
 
 interface AuctionCardProps {
   item: AuctionItem;
-  onBid?: (itemId: string, amount: number) => void;
-  className?: string;
+  onBid: (itemId: string, amount: number) => void;
 }
 
-export function AuctionCard({ item, onBid, className }: AuctionCardProps) {
-  const [isFavorited, setIsFavorited] = useState(false);
-  const { balance: userBalance } = useUserBalance();
-  const { toast } = useToast();
-  const [imgIndex, setImgIndex] = useState(0);
-  const candidates = useMemo(() => getImageCandidates(item.title, item.category, item.image), [item.title, item.category, item.image]);
-  const currentSrc = candidates[imgIndex] || '/placeholder.svg';
+export const AuctionCard = ({ item, onBid }: AuctionCardProps) => {
+  const [newBidAmount, setNewBidAmount] = useState(item.currentBid + item.bidIncrement);
+  const [imgError, setImgError] = useState(false);
+  const [fallbackIndex, setFallbackIndex] = useState(0);
+  
+  const { data: mappings } = useProductImageMappings();
+
+  // Resolver imagen de forma determinística
+  const primaryImage = resolveDeterministicImage(
+    item.title,
+    item.category,
+    item.image,
+    mappings
+  );
+
+  const fallbackCandidates = getFallbackCandidates(item.category, item.title);
+  const currentSrc = imgError && fallbackIndex < fallbackCandidates.length 
+    ? fallbackCandidates[fallbackIndex] 
+    : primaryImage;
+
+  // Reset error state when item changes
+  useEffect(() => {
+    setImgError(false);
+    setFallbackIndex(0);
+  }, [item.id]);
+
+  // Update bid amount when current bid changes
+  useEffect(() => {
+    setNewBidAmount(item.currentBid + item.bidIncrement);
+  }, [item.currentBid, item.bidIncrement]);
+
   const handleBid = () => {
-    const nextBidAmount = item.currentBid + item.bidIncrement;
-    
-    if (nextBidAmount > userBalance) {
-      toast({
-        title: "Saldo insuficiente",
-        description: "No tienes suficiente saldo para realizar esta puja.",
-        variant: "destructive",
-      });
+    if (newBidAmount <= item.currentBid) {
+      toast.error("La oferta debe ser mayor a la oferta actual");
       return;
     }
-
-    onBid?.(item.id, nextBidAmount);
+    onBid(item.id, newBidAmount);
   };
 
-  const nextBidAmount = item.currentBid + item.bidIncrement;
+  const timeRemaining = item.endTime.getTime() - Date.now();
+  const isEndingSoon = timeRemaining <= 30 * 60 * 1000; // 30 minutes
 
   return (
-    <Card className={cn("glass-card smooth-transition hover:auction-glow group", className)}>
+    <Card className="group glass-card hover:shadow-xl transition-all duration-300 overflow-hidden border-0">
       <CardHeader className="p-0">
         <div className="relative overflow-hidden rounded-t-xl">
           <img 
@@ -67,114 +84,102 @@ export function AuctionCard({ item, onBid, className }: AuctionCardProps) {
             sizes="(max-width: 768px) 100vw, 33vw"
             referrerPolicy="no-referrer"
             crossOrigin="anonymous"
-            onError={(e) => {
-              const target = e.currentTarget as HTMLImageElement;
-              const nextIndex = imgIndex + 1;
-              if (nextIndex < candidates.length) {
-                setImgIndex(nextIndex);
-              } else {
-                target.onerror = null;
-                target.src = '/placeholder.svg';
+            onError={() => {
+              if (!imgError) {
+                setImgError(true);
+              } else if (fallbackIndex < fallbackCandidates.length - 1) {
+                setFallbackIndex(prev => prev + 1);
               }
             }}
           />
           <div className="absolute top-3 left-3 flex gap-2">
-            <Badge className="bg-gradient-gold text-black font-medium">
-              {item.category}
-            </Badge>
             {item.isLive && (
               <Badge className="bg-destructive animate-pulse-auction">
-                <div className="w-2 h-2 bg-white rounded-full mr-2"></div>
                 EN VIVO
+              </Badge>
+            )}
+            {isEndingSoon && (
+              <Badge className="bg-auction-warning">
+                TERMINANDO
               </Badge>
             )}
           </div>
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-3 right-3 glass hover:bg-white/20"
-            onClick={() => setIsFavorited(!isFavorited)}
+            className="absolute top-3 right-3 glass text-white hover:text-destructive"
           >
-            <Heart className={cn(
-              "h-5 w-5 transition-colors",
-              isFavorited ? "fill-red-500 text-red-500" : "text-white"
-            )} />
-          </Button>
-          <div className="absolute bottom-2 right-2">
-            <span className="text-xs text-white/70 bg-black/50 px-2 py-1 rounded">
-              *Imagen para fines ilustrativos
-            </span>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="p-4">
-        <h3 className="font-semibold text-lg mb-2 line-clamp-2">{item.title}</h3>
-        
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Puja actual</p>
-              <p className="text-2xl font-bold text-auction-gold">
-                ${item.currentBid.toFixed(0)} MXN
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-muted-foreground">Tiempo restante</p>
-              <Timer endTime={item.endTime} variant="urgent" />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Gavel className="h-4 w-4" />
-              <span>{item.totalBids} pujas</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              <span>Pujador: {item.currentBidder || "Sin pujas"}</span>
-            </div>
-          </div>
-
-          {item.currentBidder && (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
-              <TrendingUp className="h-4 w-4 text-auction-success" />
-              <span className="text-sm">
-                Última puja: <span className="font-medium">{item.currentBidder}</span> con <span className="font-bold">${item.currentBid.toFixed(0)} MXN</span>
-              </span>
-            </div>
-          )}
-        </div>
-      </CardContent>
-
-      <CardFooter className="p-4 pt-0 flex flex-col gap-3">
-        <div className="flex items-center gap-2 w-full">
-          <div className="flex-1">
-            <p className="text-sm text-muted-foreground mb-1">Siguiente puja mínima</p>
-            <p className="font-bold text-primary">${nextBidAmount.toFixed(0)} MXN</p>
-          </div>
-        </div>
-
-        <div className="flex gap-2 w-full">
-          <Button
-            onClick={handleBid}
-            className="flex-1 bg-gradient-primary hover:shadow-glow smooth-transition"
-            disabled={userBalance < nextBidAmount}
-          >
-            <Gavel className="h-4 w-4 mr-2" />
-            Pujar ${nextBidAmount.toFixed(0)} MXN
-          </Button>
-          <Button variant="outline" size="icon" className="glass hover:bg-white/10">
             <Heart className="h-4 w-4" />
           </Button>
         </div>
+      </CardHeader>
 
-        {userBalance < nextBidAmount && (
-          <p className="text-sm text-destructive text-center">
-            Saldo insuficiente. Recarga tu cuenta para participar.
-          </p>
-        )}
-      </CardFooter>
+      <CardContent className="p-6 space-y-4">
+        {/* Title and Category */}
+        <div>
+          <h3 className="font-semibold text-lg line-clamp-2 mb-1">
+            {item.title}
+          </h3>
+          <Badge variant="secondary" className="text-xs">
+            {item.category}
+          </Badge>
+        </div>
+
+        {/* Current Bid Info */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Oferta actual:</span>
+            <span className="font-bold text-xl text-primary">
+              ${item.currentBid.toFixed(0)} MXN
+            </span>
+          </div>
+          
+          {item.currentBidder && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Users className="h-4 w-4" />
+              <span>{item.currentBidder}</span>
+              <span>•</span>
+              <span>{item.totalBids} ofertas</span>
+            </div>
+          )}
+        </div>
+
+        {/* Timer */}
+        <div className="text-center py-2">
+          <Timer endTime={item.endTime} />
+        </div>
+
+        {/* Bid Input */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              value={newBidAmount}
+              onChange={(e) => setNewBidAmount(Number(e.target.value))}
+              min={item.currentBid + item.bidIncrement}
+              step={item.bidIncrement}
+              className="flex-1 px-3 py-2 rounded-lg border border-border bg-background"
+              placeholder="Tu oferta"
+            />
+            <span className="text-sm text-muted-foreground">MXN</span>
+          </div>
+          
+          <Button 
+            onClick={handleBid}
+            className="w-full glass-gradient"
+            disabled={timeRemaining <= 0}
+          >
+            <Gavel className="h-4 w-4 mr-2" />
+            {timeRemaining <= 0 ? "Subasta Finalizada" : "Realizar Oferta"}
+          </Button>
+        </div>
+
+        {/* Bid Increment Info */}
+        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+          <TrendingUp className="h-3 w-3" />
+          <span>Incremento mínimo: ${item.bidIncrement.toFixed(0)} MXN</span>
+        </div>
+      </CardContent>
     </Card>
   );
-}
+};
