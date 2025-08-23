@@ -59,16 +59,23 @@ export function AuctionCard({ item, onBid, className }: AuctionCardProps) {
       <CardHeader className="p-0">
         <div className="relative overflow-hidden rounded-t-xl">
           <img 
-            src={getImageWithFallbacks(item.title, item.category, item.image)} 
+            src={currentSrc}
             alt={`${item.title} - ${item.category}`}
             className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
             decoding="async"
             sizes="(max-width: 768px) 100vw, 33vw"
+            referrerPolicy="no-referrer"
+            crossOrigin="anonymous"
             onError={(e) => {
               const target = e.currentTarget as HTMLImageElement;
-              target.onerror = null;
-              target.src = '/placeholder.svg';
+              const nextIndex = imgIndex + 1;
+              if (nextIndex < candidates.length) {
+                setImgIndex(nextIndex);
+              } else {
+                target.onerror = null;
+                target.src = '/placeholder.svg';
+              }
             }}
           />
           <div className="absolute top-3 left-3 flex gap-2">

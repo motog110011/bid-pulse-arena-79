@@ -210,6 +210,63 @@ export function getImageWithFallbacks(title: string, category: string, customIma
 }
 
 /**
+ * Get local asset image for category
+ */
+function getLocalAssetForCategory(category: string): string {
+  switch (category.toLowerCase()) {
+    case 'electrónicos':
+    case 'electronics':
+      return Math.random() > 0.5 ? productElectronics : (Math.random() > 0.5 ? productLaptop : productPhone);
+    case 'navajas':
+    case 'knives':
+      return Math.random() > 0.5 ? productSwissKnife : productTacticalGear;
+    case 'vinos y licores':
+    case 'liquor':
+      return Math.random() > 0.5 ? productPremiumSpirits : productLiquor;
+    case 'cosméticos':
+    case 'cosmetics':
+      return Math.random() > 0.5 ? productCosmetics : productLuxuryPerfumes;
+    case 'joyería':
+    case 'jewelry':
+      return Math.random() > 0.5 ? productLuxuryJewelry : productWatch;
+    default:
+      return productElectronics;
+  }
+}
+
+/**
+ * Generate multiple image candidates with fallbacks
+ */
+export function getImageCandidates(title: string, category: string, customImageUrl?: string): string[] {
+  const candidates: string[] = [];
+  
+  // 1. Custom/Database image URL (if exists)
+  if (customImageUrl && customImageUrl.trim() !== '' && customImageUrl !== '/placeholder.svg') {
+    candidates.push(customImageUrl);
+  }
+  
+  // 2. Unsplash Source URLs (multiple variations)
+  const searchTerm = generateSearchTerm(title, category);
+  for (let i = 0; i < 3; i++) {
+    const term = searchTerm.replace(/\s+/g, ',');
+    candidates.push(`https://source.unsplash.com/800x600/?${encodeURIComponent(term)}&sig=${Math.floor(Math.random() * 1000) + i}`);
+  }
+  
+  // 3. Picsum Photos (random high-quality images)
+  for (let i = 0; i < 2; i++) {
+    candidates.push(`https://picsum.photos/800/600?random=${Math.floor(Math.random() * 1000) + i}`);
+  }
+  
+  // 4. Local category assets
+  candidates.push(getLocalAssetForCategory(category));
+  
+  // 5. Final fallback
+  candidates.push('/placeholder.svg');
+  
+  return candidates;
+}
+
+/**
  * Legacy fallback function for backward compatibility
  */
 export function getImageFallback(category: string): string {
