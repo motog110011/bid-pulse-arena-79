@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast'
 import { CheckCircle, XCircle, DollarSign, Users, Clock, TrendingUp, Search, Crown, User, Shield, Edit2, Mail, Ban, Trash2, MoreHorizontal } from 'lucide-react'
 import { AdminRoleManager } from '@/components/AdminRoleManager'
 import { AuctionManagement } from '@/components/AuctionManagement'
+import { ImageBankManagement } from '@/components/ImageBankManagement'
 
 interface RechargeRequest {
   id: string
@@ -641,11 +642,12 @@ export function AdminPanelModal() {
 
       {/* Main Content */}
       <Tabs defaultValue="recharge-requests" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8">
           <TabsTrigger value="recharge-requests" className="text-xs sm:text-sm">Solicitudes</TabsTrigger>
           <TabsTrigger value="user-wallets" className="text-xs sm:text-sm">Billeteras</TabsTrigger>
           <TabsTrigger value="user-management" className="text-xs sm:text-sm">Usuarios</TabsTrigger>
           <TabsTrigger value="auctions" className="text-xs sm:text-sm">Subastas</TabsTrigger>
+          <TabsTrigger value="image-bank" className="text-xs sm:text-sm">Imágenes</TabsTrigger>
           <TabsTrigger value="notifications" className="text-xs sm:text-sm">Notificaciones</TabsTrigger>
           <TabsTrigger value="settings" className="text-xs sm:text-sm">Config</TabsTrigger>
           <TabsTrigger value="admin-management" className="text-xs sm:text-sm">Admins</TabsTrigger>
@@ -1004,9 +1006,13 @@ export function AdminPanelModal() {
           </Card>
         </TabsContent>
 
-          <TabsContent value="auctions" className="space-y-4">
-            <AuctionManagement />
-          </TabsContent>
+        <TabsContent value="auctions" className="space-y-4">
+          <AuctionManagement />
+        </TabsContent>
+
+        <TabsContent value="image-bank" className="space-y-4">
+          <ImageBankManagement />
+        </TabsContent>
 
         <TabsContent value="admin-management" className="space-y-4">
           <AdminRoleManager />
