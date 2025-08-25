@@ -76,14 +76,24 @@ export function ImageBankManagement() {
     try {
       setUploading(true)
       
-      // Generate unique filename
+      // Sanitize filename - remove accents and special characters
       const fileExt = newImage.file.name.split('.').pop()
-      const fileName = `${newImage.category.toLowerCase()}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
+      const sanitizedCategory = newImage.category
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove accents
+        .replace(/[^a-z0-9]/g, '-') // Replace special chars with hyphens
       
-      // Upload to storage
+      const fileName = `${sanitizedCategory}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
+      
+      // Upload to storage with proper options
       const { error: uploadError } = await supabase.storage
         .from('product-images')
-        .upload(fileName, newImage.file)
+        .upload(fileName, newImage.file, {
+          contentType: newImage.file.type,
+          cacheControl: '3600',
+          upsert: false
+        })
 
       if (uploadError) throw uploadError
 
@@ -116,11 +126,11 @@ export function ImageBankManagement() {
         tags: ''
       })
       refetchImages()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading image:', error)
       toast({
         title: "Error",
-        description: "No se pudo subir la imagen",
+        description: error?.message || "No se pudo subir la imagen",
         variant: "destructive"
       })
     } finally {
