@@ -9,11 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/hooks/use-toast'
-import { Upload, Image, Plus, Edit2, Trash2, Eye, EyeOff } from 'lucide-react'
+import { Upload, Image, Plus, Edit2, Trash2, Eye, EyeOff, X } from 'lucide-react'
 
 interface NewImageForm {
-  file: File | null
+  files: File[]
   label: string
   category: string
   brand: string
@@ -44,10 +45,12 @@ export function ImageBankManagement() {
   const { data: mappings, refetch: refetchMappings } = useProductImageMappings()
   
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [currentUpload, setCurrentUpload] = useState('')
   const [showImageDialog, setShowImageDialog] = useState(false)
   const [showMappingDialog, setShowMappingDialog] = useState(false)
   const [newImage, setNewImage] = useState<NewImageForm>({
-    file: null,
+    files: [],
     label: '',
     category: '',
     brand: '',
@@ -64,10 +67,10 @@ export function ImageBankManagement() {
   })
 
   const handleImageUpload = async () => {
-    if (!newImage.file || !newImage.category) {
+    if (newImage.files.length === 0 || !newImage.category) {
       toast({
         title: "Error",
-        description: "Archivo y categoría son requeridos",
+        description: "Al menos un archivo y categoría son requeridos",
         variant: "destructive"
       })
       return
@@ -75,67 +78,121 @@ export function ImageBankManagement() {
 
     try {
       setUploading(true)
+      setUploadProgress(0)
       
-      // Sanitize filename - remove accents and special characters
-      const fileExt = newImage.file.name.split('.').pop()
+      const totalFiles = newImage.files.length
+      let uploadedCount = 0
+      let errorCount = 0
+      const errors: string[] = []
+
+      // Sanitize category for folder name
       const sanitizedCategory = newImage.category
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '') // Remove accents
         .replace(/[^a-z0-9]/g, '-') // Replace special chars with hyphens
-      
-      const fileName = `${sanitizedCategory}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
-      
-      // Upload to storage with proper options
-      const { error: uploadError } = await supabase.storage
-        .from('product-images')
-        .upload(fileName, newImage.file, {
-          contentType: newImage.file.type,
-          cacheControl: '3600',
-          upsert: false
+
+      // Process files sequentially to avoid overwhelming the server
+      for (let i = 0; i < newImage.files.length; i++) {
+        const file = newImage.files[i]
+        setCurrentUpload(`Subiendo ${file.name} (${i + 1}/${totalFiles})`)
+        
+        try {
+          // Validate file
+          if (!file.type.startsWith('image/')) {
+            throw new Error(`${file.name} no es una imagen válida`)
+          }
+          
+          if (file.size > 10 * 1024 * 1024) { // 10MB limit
+            throw new Error(`${file.name} es demasiado grande (máximo 10MB)`)
+          }
+
+          const fileExt = file.name.split('.').pop()
+          const fileName = `${sanitizedCategory}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
+          
+          // Upload to storage
+          const { error: uploadError } = await supabase.storage
+            .from('product-images')
+            .upload(fileName, file, {
+              contentType: file.type,
+              cacheControl: '3600',
+              upsert: false
+            })
+
+          if (uploadError) throw uploadError
+
+          // Create database record
+          const { error: dbError } = await supabase
+            .from('product_images')
+            .insert({
+              file_path: fileName,
+              label: newImage.label || null,
+              category: newImage.category,
+              brand: newImage.brand || null,
+              product_type: newImage.product_type || null,
+              tags: newImage.tags ? newImage.tags.split(',').map(t => t.trim()) : null
+            })
+
+          if (dbError) throw dbError
+          
+          uploadedCount++
+        } catch (error: any) {
+          console.error(`Error uploading ${file.name}:`, error)
+          errors.push(`${file.name}: ${error.message}`)
+          errorCount++
+        }
+        
+        // Update progress
+        setUploadProgress(((i + 1) / totalFiles) * 100)
+      }
+
+      // Show results
+      if (uploadedCount > 0) {
+        toast({
+          title: "Subida completada",
+          description: `${uploadedCount} imagen${uploadedCount > 1 ? 'es' : ''} subida${uploadedCount > 1 ? 's' : ''} correctamente${errorCount > 0 ? ` (${errorCount} errores)` : ''}`
         })
-
-      if (uploadError) throw uploadError
-
-      // Create database record
-      const { error: dbError } = await supabase
-        .from('product_images')
-        .insert({
-          file_path: fileName,
-          label: newImage.label || null,
-          category: newImage.category,
-          brand: newImage.brand || null,
-          product_type: newImage.product_type || null,
-          tags: newImage.tags ? newImage.tags.split(',').map(t => t.trim()) : null
+      }
+      
+      if (errorCount > 0 && uploadedCount === 0) {
+        toast({
+          title: "Error en la subida",
+          description: `No se pudo subir ninguna imagen. ${errors.slice(0, 2).join(', ')}${errors.length > 2 ? '...' : ''}`,
+          variant: "destructive"
         })
+      }
 
-      if (dbError) throw dbError
-
-      toast({
-        title: "Éxito",
-        description: "Imagen subida correctamente"
-      })
-
-      setShowImageDialog(false)
-      setNewImage({
-        file: null,
-        label: '',
-        category: '',
-        brand: '',
-        product_type: '',
-        tags: ''
-      })
-      refetchImages()
+      if (uploadedCount > 0) {
+        setShowImageDialog(false)
+        setNewImage({
+          files: [],
+          label: '',
+          category: '',
+          brand: '',
+          product_type: '',
+          tags: ''
+        })
+        refetchImages()
+      }
     } catch (error: any) {
-      console.error('Error uploading image:', error)
+      console.error('Error in upload process:', error)
       toast({
         title: "Error",
-        description: error?.message || "No se pudo subir la imagen",
+        description: error?.message || "Error inesperado durante la subida",
         variant: "destructive"
       })
     } finally {
       setUploading(false)
+      setUploadProgress(0)
+      setCurrentUpload('')
     }
+  }
+
+  const removeFile = (index: number) => {
+    setNewImage(prev => ({
+      ...prev,
+      files: prev.files.filter((_, i) => i !== index)
+    }))
   }
 
   const handleCreateMapping = async () => {
@@ -299,25 +356,77 @@ export function ImageBankManagement() {
                 Subir Imagen
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Subir Nueva Imagen</DialogTitle>
+                <DialogTitle>Subir Múltiples Imágenes</DialogTitle>
+                <DialogDescription>
+                  Selecciona múltiples archivos que compartirán la misma configuración
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="image-file">Archivo</Label>
+                  <Label htmlFor="image-files">Archivos (múltiples)</Label>
                   <Input
-                    id="image-file"
+                    id="image-files"
                     type="file"
                     accept="image/*"
-                    onChange={(e) => setNewImage(prev => ({ 
-                      ...prev, 
-                      file: e.target.files?.[0] || null 
-                    }))}
+                    multiple
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || [])
+                      setNewImage(prev => ({ 
+                        ...prev, 
+                        files: files
+                      }))
+                    }}
                   />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Máximo 10MB por archivo. Formatos: JPG, PNG, WEBP
+                  </p>
                 </div>
+                
+                {/* File previews */}
+                {newImage.files.length > 0 && (
+                  <div>
+                    <Label>Archivos seleccionados ({newImage.files.length})</Label>
+                    <div className="mt-2 space-y-2 max-h-32 overflow-y-auto">
+                      {newImage.files.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center">
+                              <Image className="h-4 w-4 text-primary" />
+                            </div>
+                            <span className="text-sm truncate max-w-xs">{file.name}</span>
+                            <Badge variant="outline" className="text-xs">
+                              {(file.size / 1024 / 1024).toFixed(1)}MB
+                            </Badge>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeFile(index)}
+                            className="h-6 w-6 p-0"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Upload progress */}
+                {uploading && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">{currentUpload}</span>
+                      <span className="font-medium">{Math.round(uploadProgress)}%</span>
+                    </div>
+                    <Progress value={uploadProgress} className="h-2" />
+                  </div>
+                )}
+                
                 <div>
-                  <Label htmlFor="image-label">Etiqueta (opcional)</Label>
+                  <Label htmlFor="image-label">Etiqueta compartida (opcional)</Label>
                   <Input
                     id="image-label"
                     value={newImage.label}
@@ -325,8 +434,11 @@ export function ImageBankManagement() {
                       ...prev, 
                       label: e.target.value 
                     }))}
-                    placeholder="Ej: iPhone 15 Pro"
+                    placeholder="Ej: Productos premium"
                   />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Esta etiqueta se aplicará a todas las imágenes
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="image-category">Categoría</Label>
@@ -385,11 +497,21 @@ export function ImageBankManagement() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setShowImageDialog(false)}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowImageDialog(false)}
+                  disabled={uploading}
+                >
                   Cancelar
                 </Button>
-                <Button onClick={handleImageUpload} disabled={uploading}>
-                  {uploading ? 'Subiendo...' : 'Subir'}
+                <Button 
+                  onClick={handleImageUpload} 
+                  disabled={uploading || newImage.files.length === 0}
+                >
+                  {uploading 
+                    ? `Subiendo ${newImage.files.length} imagen${newImage.files.length > 1 ? 'es' : ''}...` 
+                    : `Subir ${newImage.files.length} imagen${newImage.files.length > 1 ? 'es' : ''}`
+                  }
                 </Button>
               </DialogFooter>
             </DialogContent>
