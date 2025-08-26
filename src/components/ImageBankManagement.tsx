@@ -605,6 +605,16 @@ export function ImageBankManagement() {
                       <Button
                         size="sm"
                         variant="outline"
+                        onClick={() => {
+                          setEditingImage(image)
+                          setEditImageDialog(true)
+                        }}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
                         onClick={() => toggleImageActive(image.id, image.active)}
                       >
                         {image.active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -828,6 +838,107 @@ export function ImageBankManagement() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Edit Image Dialog */}
+      <Dialog open={editImageDialog} onOpenChange={setEditImageDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Imagen</DialogTitle>
+            <DialogDescription>
+              Modifica los metadatos de la imagen
+            </DialogDescription>
+          </DialogHeader>
+          {editingImage && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <img 
+                  src={getImageUrl(editingImage.file_path)}
+                  alt={editingImage.label || 'Product'}
+                  className="w-16 h-16 object-cover rounded"
+                />
+                <div>
+                  <p className="font-medium">{editingImage.category}</p>
+                  <p className="text-sm text-muted-foreground">{editingImage.file_path}</p>
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="edit-label">Etiqueta</Label>
+                <Input
+                  id="edit-label"
+                  defaultValue={editingImage.label || ''}
+                  placeholder="Ej: Productos premium"
+                  onChange={(e) => {
+                    if (editingImage) {
+                      setEditingImage({ ...editingImage, label: e.target.value })
+                    }
+                  }}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-brand">Marca</Label>
+                <Input
+                  id="edit-brand"
+                  defaultValue={editingImage.brand || ''}
+                  placeholder="Ej: Apple"
+                  onChange={(e) => {
+                    if (editingImage) {
+                      setEditingImage({ ...editingImage, brand: e.target.value })
+                    }
+                  }}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-type">Tipo de Producto</Label>
+                <Input
+                  id="edit-type"
+                  defaultValue={editingImage.product_type || ''}
+                  placeholder="Ej: smartphone"
+                  onChange={(e) => {
+                    if (editingImage) {
+                      setEditingImage({ ...editingImage, product_type: e.target.value })
+                    }
+                  }}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-tags">Tags (separados por coma)</Label>
+                <Input
+                  id="edit-tags"
+                  defaultValue={editingImage.tags?.join(', ') || ''}
+                  placeholder="Ej: premium, nuevo, 128gb"
+                  onChange={(e) => {
+                    if (editingImage) {
+                      const tags = e.target.value ? e.target.value.split(',').map(t => t.trim()) : []
+                      setEditingImage({ ...editingImage, tags })
+                    }
+                  }}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="edit-active"
+                  checked={editingImage.active}
+                  onChange={(e) => {
+                    if (editingImage) {
+                      setEditingImage({ ...editingImage, active: e.target.checked })
+                    }
+                  }}
+                />
+                <Label htmlFor="edit-active">Imagen activa</Label>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditImageDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={() => handleUpdateImage(editingImage!)}>
+              Guardar Cambios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
