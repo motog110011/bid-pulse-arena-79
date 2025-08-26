@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useProductImages, useProductImageMappings, type ProductImage, type ProductImageMapping } from '@/hooks/useProductImages'
+import { useAutoMappingRules } from '@/hooks/useAutoMappingRules'
 import { supabase } from '@/integrations/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/hooks/use-toast'
-import { Upload, Image, Plus, Edit2, Trash2, Eye, EyeOff, X } from 'lucide-react'
+import { Upload, Image, Plus, Edit2, Trash2, Eye, EyeOff, X, Sparkles } from 'lucide-react'
 
 interface NewImageForm {
   files: File[]
@@ -43,6 +44,7 @@ export function ImageBankManagement() {
   const { toast } = useToast()
   const { data: images, refetch: refetchImages } = useProductImages()
   const { data: mappings, refetch: refetchMappings } = useProductImageMappings()
+  const { generateAutoRules, isGenerating, detectBrandFromTitle, detectCategoryFromTitle } = useAutoMappingRules()
   
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -464,12 +466,15 @@ export function ImageBankManagement() {
                   <Input
                     id="image-brand"
                     value={newImage.brand}
-                    onChange={(e) => setNewImage(prev => ({ 
-                      ...prev, 
-                      brand: e.target.value 
-                    }))}
-                    placeholder="Ej: Apple"
-                  />
+                  onChange={(e) => setNewImage(prev => ({ 
+                    ...prev, 
+                    brand: e.target.value 
+                  }))}
+                  placeholder="Ej: Apple"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  💡 Se detectará automáticamente si dejas vacío
+                </p>
                 </div>
                 <div>
                   <Label htmlFor="image-type">Tipo de Producto (opcional)</Label>
@@ -480,8 +485,11 @@ export function ImageBankManagement() {
                       ...prev, 
                       product_type: e.target.value 
                     }))}
-                    placeholder="Ej: smartphone"
-                  />
+                  placeholder="Ej: smartphone"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  💡 Se sugerirá automáticamente basado en la etiqueta
+                </p>
                 </div>
                 <div>
                   <Label htmlFor="image-tags">Tags (separados por coma)</Label>
@@ -583,9 +591,30 @@ export function ImageBankManagement() {
       {/* Mapping Rules Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Reglas de Mapeo</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Reglas de Mapeo</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={generateAutoRules}
+              disabled={isGenerating}
+              className="gap-2"
+            >
+              {isGenerating ? (
+                <>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div>
+                  Generando...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-3 w-3" />
+                  Auto-generar
+                </>
+              )}
+            </Button>
+          </CardTitle>
           <CardDescription>
-            Define qué imagen usar para cada combinación de producto
+            Define qué imagen usar para cada combinación de producto. Usa Auto-generar para crear reglas inteligentes.
           </CardDescription>
           <Dialog open={showMappingDialog} onOpenChange={setShowMappingDialog}>
             <DialogTrigger asChild>
