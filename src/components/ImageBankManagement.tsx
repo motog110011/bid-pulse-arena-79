@@ -67,6 +67,8 @@ export function ImageBankManagement() {
     contains_keywords: '',
     priority: 100
   })
+  const [editingImage, setEditingImage] = useState<ProductImage | null>(null)
+  const [editImageDialog, setEditImageDialog] = useState(false)
 
   const handleImageUpload = async () => {
     if (newImage.files.length === 0 || !newImage.category) {
@@ -337,6 +339,41 @@ export function ImageBankManagement() {
   const getImageUrl = (filePath: string) => {
     const supabaseUrl = "https://qxodekhmjymqyzudfbtv.supabase.co"
     return `${supabaseUrl}/storage/v1/object/public/product-images/${filePath}`
+  }
+
+  const handleUpdateImage = async (imageData: Partial<ProductImage>) => {
+    if (!editingImage) return
+
+    try {
+      const { error } = await supabase
+        .from('product_images')
+        .update({
+          label: imageData.label || null,
+          brand: imageData.brand || null,
+          product_type: imageData.product_type || null,
+          tags: imageData.tags,
+          active: imageData.active
+        })
+        .eq('id', editingImage.id)
+
+      if (error) throw error
+
+      toast({
+        title: "Éxito",
+        description: "Imagen actualizada correctamente"
+      })
+
+      setEditImageDialog(false)
+      setEditingImage(null)
+      refetchImages()
+    } catch (error) {
+      console.error('Error updating image:', error)
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la imagen",
+        variant: "destructive"
+      })
+    }
   }
 
   return (
