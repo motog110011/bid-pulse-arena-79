@@ -5,8 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Filter, ArrowUpDown } from "lucide-react";
 import { AuctionCard } from "@/components/ui/auction-card";
 import { useAutoBid } from "@/hooks/useAutoBid";
+import { useAuctionRenewal } from "@/hooks/useAuctionRenewal";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+
+// Import test utilities for browser console access
+import '@/utils/testAuctionRenewal';
 
 interface AuctionItem {
   id: string;
@@ -29,6 +33,14 @@ const AuctionGrid = () => {
   const [loading, setLoading] = useState(true);
   const { triggerAutoBid } = useAutoBid();
   const { toast } = useToast();
+
+  // Initialize auction renewal system
+  useAuctionRenewal({
+    minExtensionMinutes: 15, // Minimum 15 minutes extension
+    maxExtensionMinutes: 60, // Maximum 60 minutes extension (less than 1 hour)
+    checkIntervalSeconds: 30, // Check every 30 seconds
+    enabled: true // Enable automatic renewal
+  });
 
   const fetchAuctions = async () => {
     try {
@@ -167,7 +179,7 @@ const AuctionGrid = () => {
       );
       
       toast({
-        title: "Nueva oferta automática",
+        title: "Nueva oferta",
         description: `${bidder} ha ofertado $${newBid.toFixed(2)}`,
         variant: "default",
       });

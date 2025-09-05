@@ -43,17 +43,12 @@ export function useAutoBid() {
     const newBid = currentBid + bidIncrease;
     const bidder = getRandomUser();
 
-    console.log(`Usuario ficticio programado para pujar en ${delay/1000}s:`, {
-      auctionId,
-      currentBid,
-      newBid,
-      bidder,
-      delay: delay/1000
-    });
+    // Auto-bid scheduled (discrete logging)
+    console.log(`Bid scheduled: ${bidder} will bid $${newBid} in ${delay/1000}s`);
 
     setTimeout(() => {
       onBidPlaced(auctionId, newBid, bidder);
-      console.log(`Puja automática realizada: ${bidder} pujó $${newBid} en subasta ${auctionId}`);
+      console.log(`New bid: ${bidder} placed $${newBid}`);
     }, delay);
   }, [getRandomUser, getRandomDelay, shouldRespondToBid]);
 

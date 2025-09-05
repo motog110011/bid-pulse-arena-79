@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
-import { CheckCircle, XCircle, DollarSign, Users, Clock, TrendingUp, Search, Crown, User, Shield, Edit2, Mail, Ban, Trash2, MoreHorizontal } from 'lucide-react'
+import { CheckCircle, XCircle, DollarSign, Users, Clock, TrendingUp, Search, Crown, User, Shield, Edit2, Mail, Ban, Trash2, MoreHorizontal, Key } from 'lucide-react'
 import { AdminRoleManager } from '@/components/AdminRoleManager'
 import { AuctionManagement } from '@/components/AuctionManagement'
 
@@ -67,7 +67,7 @@ interface DetailedUser {
   email_confirmed_at: string | null
   created_at: string
   last_sign_in_at: string | null
-  role: 'admin' | 'user'
+  role: string
   balance: number
   transaction_count: number
   full_name: string | null
@@ -78,6 +78,12 @@ interface EditingBalance {
   currentBalance: number
   newBalance: string
   notes: string
+}
+
+interface EditingPassword {
+  userId: string
+  userEmail: string
+  newPassword: string
 }
 
 export function AdminPanelModal() {
@@ -94,6 +100,9 @@ export function AdminPanelModal() {
   const [filterRole, setFilterRole] = useState<'all' | 'admin' | 'user'>('all')
   const [editingBankDetails, setEditingBankDetails] = useState(false)
   const [editingBalance, setEditingBalance] = useState<EditingBalance | null>(null)
+  const [balanceDialogOpen, setBalanceDialogOpen] = useState(false)
+  const [editingPassword, setEditingPassword] = useState<EditingPassword | null>(null)
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
 
   const fetchData = () => {
     fetchRechargeRequests()
@@ -367,6 +376,7 @@ export function AdminPanelModal() {
       newBalance: user.balance.toString(),
       notes: ''
     })
+    setBalanceDialogOpen(true)
   }
 
   const handleBalanceUpdate = async () => {
@@ -385,24 +395,77 @@ export function AdminPanelModal() {
         console.error('Error updating balance:', error)
         toast({
           title: "Error",
-          description: "Failed to update user balance",
+          description: `Error updating balance: ${error.message}`,
           variant: "destructive",
         })
         return
       }
       
       toast({
-        title: "Success",
-        description: "User balance updated successfully",
+        title: "Éxito",
+        description: "Balance actualizado correctamente",
       })
       
       setEditingBalance(null)
+      setBalanceDialogOpen(false)
       fetchData()
     } catch (error) {
       console.error('Error updating balance:', error)
       toast({
         title: "Error",
-        description: "Failed to update user balance",
+        description: "Error al actualizar el balance",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePasswordEdit = (user: DetailedUser) => {
+    setEditingPassword({
+      userId: user.id,
+      userEmail: user.email,
+      newPassword: ''
+    })
+    setPasswordDialogOpen(true)
+  }
+
+  const handlePasswordUpdate = async () => {
+    if (!editingPassword || !editingPassword.newPassword) return
+    
+    try {
+      setLoading(true)
+      
+      const { data, error } = await supabase.functions.invoke('admin-user-management', {
+        body: {
+          action: 'change_password',
+          userId: editingPassword.userId,
+          newPassword: editingPassword.newPassword,
+        },
+      })
+      
+      if (error) {
+        console.error('Error changing password:', error)
+        toast({
+          title: "Error",
+          description: `Error cambiando contraseña: ${error.message}`,
+          variant: "destructive",
+        })
+        return
+      }
+      
+      toast({
+        title: "Éxito",
+        description: "Contraseña cambiada correctamente",
+      })
+      
+      setEditingPassword(null)
+      setPasswordDialogOpen(false)
+    } catch (error) {
+      console.error('Error changing password:', error)
+      toast({
+        title: "Error",
+        description: "Error al cambiar la contraseña",
         variant: "destructive",
       })
     } finally {
@@ -603,9 +666,8 @@ export function AdminPanelModal() {
 
       {/* Main Content */}
       <Tabs defaultValue="recharge-requests" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
           <TabsTrigger value="recharge-requests" className="text-xs sm:text-sm">Solicitudes</TabsTrigger>
-          <TabsTrigger value="user-wallets" className="text-xs sm:text-sm">Billeteras</TabsTrigger>
           <TabsTrigger value="user-management" className="text-xs sm:text-sm">Usuarios</TabsTrigger>
           <TabsTrigger value="auctions" className="text-xs sm:text-sm">Subastas</TabsTrigger>
           <TabsTrigger value="notifications" className="text-xs sm:text-sm">Notificaciones</TabsTrigger>
@@ -686,52 +748,6 @@ export function AdminPanelModal() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="user-wallets" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Billeteras de Usuarios</CardTitle>
-              <CardDescription>
-                Vista general de los balances de todos los usuarios
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {userWallets.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-4">
-                    No hay billeteras registradas
-                  </p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Usuario</TableHead>
-                          <TableHead>Balance</TableHead>
-                          <TableHead>Fecha de Creación</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {userWallets.map((wallet) => (
-                          <TableRow key={wallet.id}>
-                            <TableCell>
-                              {wallet.profiles?.full_name || 'Usuario sin nombre'}
-                            </TableCell>
-                            <TableCell className="font-medium">
-                              ${wallet.balance.toFixed(2)}
-                            </TableCell>
-                            <TableCell>
-                              {new Date(wallet.created_at).toLocaleDateString()}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="user-management" className="space-y-4">
           <Card>
@@ -796,46 +812,17 @@ export function AdminPanelModal() {
                         </Select>
                       </TableCell>
                       <TableCell>
-                        {editingBalance?.userId === user.id ? (
-                          <div className="flex items-center space-x-2">
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={editingBalance.newBalance}
-                              onChange={(e) => setEditingBalance({
-                                ...editingBalance,
-                                newBalance: e.target.value
-                              })}
-                              className="w-24"
-                            />
-                            <Button
-                              size="sm"
-                              onClick={handleBalanceUpdate}
-                              disabled={loading}
-                            >
-                              Guardar
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setEditingBalance(null)}
-                            >
-                              Cancelar
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center space-x-2">
-                            <span>${user.balance.toFixed(2)}</span>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleBalanceEdit(user)}
-                              className="h-6 w-6 p-0"
-                            >
-                              <Edit2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        )}
+                        <div className="flex items-center space-x-2">
+                          <span>${user.balance.toFixed(2)}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleBalanceEdit(user)}
+                            className="h-6 w-6 p-0"
+                          >
+                            <Edit2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </TableCell>
                       <TableCell>{user.transaction_count}</TableCell>
                       <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
@@ -859,6 +846,10 @@ export function AdminPanelModal() {
                             <DropdownMenuItem onClick={() => handleUserAction(user.id, 'activate')}>
                               <CheckCircle className="mr-2 h-4 w-4" />
                               Activar Cuenta
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handlePasswordEdit(user)}>
+                              <Key className="mr-2 h-4 w-4" />
+                              Cambiar Contraseña
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
@@ -973,6 +964,126 @@ export function AdminPanelModal() {
           <AdminRoleManager />
         </TabsContent>
       </Tabs>
+
+      {/* Balance editing dialog */}
+      {editingBalance && (
+        <Dialog open={balanceDialogOpen} onOpenChange={(open) => {
+          setBalanceDialogOpen(open)
+          if (!open) setEditingBalance(null)
+        }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Editar Balance de Usuario</DialogTitle>
+              <DialogDescription>
+                Actualizar el balance de la billetera del usuario.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="currentBalance">Balance Actual</Label>
+                <Input
+                  id="currentBalance"
+                  value={`$${editingBalance.currentBalance.toFixed(2)}`}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
+              <div>
+                <Label htmlFor="newBalance">Nuevo Balance</Label>
+                <Input
+                  id="newBalance"
+                  type="number"
+                  step="0.01"
+                  placeholder="Ingrese el nuevo balance"
+                  value={editingBalance.newBalance}
+                  onChange={(e) => setEditingBalance({
+                    ...editingBalance,
+                    newBalance: e.target.value
+                  })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="notes">Notas Administrativas (Opcional)</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Razón del cambio de balance..."
+                  value={editingBalance.notes}
+                  onChange={(e) => setEditingBalance({
+                    ...editingBalance,
+                    notes: e.target.value
+                  })}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setBalanceDialogOpen(false)
+                  setEditingBalance(null)
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleBalanceUpdate}
+                disabled={loading || !editingBalance.newBalance}
+              >
+                {loading ? 'Actualizando...' : 'Actualizar Balance'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Password editing dialog */}
+      {editingPassword && (
+        <Dialog open={passwordDialogOpen} onOpenChange={(open) => {
+          setPasswordDialogOpen(open)
+          if (!open) setEditingPassword(null)
+        }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Cambiar Contraseña de Usuario</DialogTitle>
+              <DialogDescription>
+                Establecer una nueva contraseña para {editingPassword.userEmail}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="newPassword">Nueva Contraseña</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  placeholder="Ingrese la nueva contraseña"
+                  value={editingPassword.newPassword}
+                  onChange={(e) => setEditingPassword({
+                    ...editingPassword,
+                    newPassword: e.target.value
+                  })}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setPasswordDialogOpen(false)
+                  setEditingPassword(null)
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handlePasswordUpdate}
+                disabled={loading || !editingPassword.newPassword || editingPassword.newPassword.length < 6}
+              >
+                {loading ? 'Cambiando...' : 'Cambiar Contraseña'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
