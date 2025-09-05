@@ -8,6 +8,7 @@ import { Heart, Gavel, Users, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { useProductImageMappings } from '@/hooks/useProductImages';
 import { resolveDeterministicImage, getFallbackCandidates } from '@/lib/deterministicImageResolver';
+import { calculateNextBidAmount, calculateSmartBidIncrement, validateBidAmount, formatBidAmount } from '@/utils/bidUtils';
 
 interface AuctionItem {
   id: string;
@@ -30,7 +31,11 @@ interface AuctionCardProps {
 }
 
 export const AuctionCard = ({ item, onBid }: AuctionCardProps) => {
-  const [newBidAmount, setNewBidAmount] = useState(item.currentBid + item.bidIncrement);
+  // Calculate smart bid increment based on current bid amount
+  const smartIncrement = calculateSmartBidIncrement(item.currentBid);
+  const suggestedBidAmount = calculateNextBidAmount(item.currentBid, smartIncrement);
+  
+  const [newBidAmount, setNewBidAmount] = useState(suggestedBidAmount);
   const [imgError, setImgError] = useState(false);
   const [fallbackIndex, setFallbackIndex] = useState(0);
   
@@ -55,16 +60,21 @@ export const AuctionCard = ({ item, onBid }: AuctionCardProps) => {
     setFallbackIndex(0);
   }, [item.id]);
 
-  // Update bid amount when current bid changes
+  // Update bid amount when current bid changes - use smart increments
   useEffect(() => {
-    setNewBidAmount(item.currentBid + item.bidIncrement);
-  }, [item.currentBid, item.bidIncrement]);
+    const smartIncrement = calculateSmartBidIncrement(item.currentBid);
+    const suggestedAmount = calculateNextBidAmount(item.currentBid, smartIncrement);
+    setNewBidAmount(suggestedAmount);
+  }, [item.currentBid]);
 
   const handleBid = () => {
-    if (newBidAmount <= item.currentBid) {
-      toast.error("La oferta debe ser mayor a la oferta actual");
+    const validation = validateBidAmount(newBidAmount, item.currentBid, smartIncrement);
+    
+    if (!validation.valid) {
+      toast.error(validation.message || "Oferta inválida");
       return;
     }
+    
     onBid(item.id, newBidAmount);
   };
 
@@ -156,8 +166,8 @@ export const AuctionCard = ({ item, onBid }: AuctionCardProps) => {
               type="number"
               value={newBidAmount}
               onChange={(e) => setNewBidAmount(Number(e.target.value))}
-              min={item.currentBid + item.bidIncrement}
-              step={item.bidIncrement}
+              min={suggestedBidAmount}
+              step={smartIncrement}
               className="flex-1 px-3 py-2 rounded-lg border border-border bg-background"
               placeholder="Tu oferta"
             />
@@ -177,7 +187,7 @@ export const AuctionCard = ({ item, onBid }: AuctionCardProps) => {
         {/* Bid Increment Info */}
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <TrendingUp className="h-3 w-3" />
-          <span>Incremento mínimo: ${item.bidIncrement.toFixed(0)} MXN</span>
+          <span>Incremento mínimo: ${smartIncrement} MXN</span>
         </div>
       </CardContent>
     </Card>

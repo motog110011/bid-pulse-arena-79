@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { calculateAutoBidIncrement } from '@/utils/bidUtils';
 
 export interface AutoBidConfig {
   minDelay: number; // mínimo delay en segundos
@@ -39,7 +40,9 @@ export function useAutoBid() {
     }
 
     const delay = getRandomDelay(config.minDelay, config.maxDelay) * 1000; // convertir a ms
-    const bidIncrease = Math.floor(Math.random() * config.maxBidIncrease) + 10; // mínimo +10
+    
+    // Use smart bid increment that results in round numbers (multiples of 5 and 10)
+    const bidIncrease = calculateAutoBidIncrement(currentBid, config.maxBidIncrease);
     const newBid = currentBid + bidIncrease;
     const bidder = getRandomUser();
 

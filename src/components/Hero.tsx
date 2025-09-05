@@ -5,18 +5,18 @@ import { Timer } from "@/components/ui/timer";
 import { ArrowRight, Gavel, TrendingUp, Users, Star } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserBalance } from "@/hooks/useUserBalance";
+import { useDynamicStats } from "@/hooks/useDynamicStats";
 import { AuthDialog } from "@/components/auth/AuthDialog";
 import { useToast } from "@/hooks/use-toast";
+import { calculateNextBidAmount, calculateSmartBidIncrement } from '@/utils/bidUtils';
 import heroImage from "@/assets/hero-mexican-airport.jpg";
 
 export function Hero() {
   const { user } = useAuth();
   const { balance } = useUserBalance();
   const { toast } = useToast();
+  const { stats, loading } = useDynamicStats();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
-  const [activeUsers] = useState(247);
-  const [totalAuctions] = useState(24);
-  const [liveAuctions] = useState(8);
 
   // Simulación de subasta destacada que cambia cada vez
   const featuredAuctions = [
@@ -83,15 +83,21 @@ export function Hero() {
             {/* Stats */}
             <div className="flex items-center gap-8 bg-background/80 backdrop-blur-sm p-4 rounded-lg border border-border/20">
               <div className="text-center">
-                <div className="text-2xl font-bold text-primary">{activeUsers.toLocaleString()}</div>
+                <div className="text-2xl font-bold text-primary">
+                  {loading ? "..." : stats.activeUsers.toLocaleString()}
+                </div>
                 <div className="text-sm text-foreground">Usuarios Activos</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-auction-gold">{totalAuctions}</div>
+                <div className="text-2xl font-bold text-auction-gold">
+                  {loading ? "..." : stats.totalAuctionsToday}
+                </div>
                 <div className="text-sm text-foreground">Subastas Hoy</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-auction-success">{liveAuctions}</div>
+                <div className="text-2xl font-bold text-auction-success">
+                  {loading ? "..." : stats.liveAuctions}
+                </div>
                 <div className="text-sm text-foreground">En Vivo</div>
               </div>
             </div>
@@ -201,7 +207,9 @@ export function Hero() {
       return;
     }
 
-    const nextBidAmount = featuredAuction.currentBid + 10;
+    // Calculate smart bid increment for the featured auction
+    const smartIncrement = calculateSmartBidIncrement(featuredAuction.currentBid);
+    const nextBidAmount = calculateNextBidAmount(featuredAuction.currentBid, smartIncrement);
     
     if (balance < nextBidAmount) {
       toast({
