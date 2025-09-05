@@ -41,9 +41,12 @@ export function useAutoBid() {
 
     const delay = getRandomDelay(config.minDelay, config.maxDelay) * 1000; // convertir a ms
     
+    // Round the current bid to remove fractional values
+    const roundedCurrentBid = Math.floor(currentBid);
+    
     // Use smart bid increment that results in round numbers (multiples of 5 and 10)
-    const bidIncrease = calculateAutoBidIncrement(currentBid, config.maxBidIncrease);
-    const newBid = currentBid + bidIncrease;
+    const bidIncrease = calculateAutoBidIncrement(roundedCurrentBid, config.maxBidIncrease);
+    const newBid = roundedCurrentBid + bidIncrease;
     const bidder = getRandomUser();
 
     // Auto-bid scheduled (discrete logging)

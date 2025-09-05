@@ -31,9 +31,12 @@ interface AuctionCardProps {
 }
 
 export const AuctionCard = ({ item, onBid }: AuctionCardProps) => {
-  // Calculate smart bid increment based on current bid amount
-  const smartIncrement = calculateSmartBidIncrement(item.currentBid);
-  const suggestedBidAmount = calculateNextBidAmount(item.currentBid, smartIncrement);
+  // Round the current bid to remove fractional values
+  const roundedCurrentBid = Math.floor(item.currentBid);
+  
+  // Calculate smart bid increment based on rounded current bid amount
+  const smartIncrement = calculateSmartBidIncrement(roundedCurrentBid);
+  const suggestedBidAmount = calculateNextBidAmount(roundedCurrentBid, smartIncrement);
   
   const [newBidAmount, setNewBidAmount] = useState(suggestedBidAmount);
   const [imgError, setImgError] = useState(false);
@@ -62,8 +65,9 @@ export const AuctionCard = ({ item, onBid }: AuctionCardProps) => {
 
   // Update bid amount when current bid changes - use smart increments
   useEffect(() => {
-    const smartIncrement = calculateSmartBidIncrement(item.currentBid);
-    const suggestedAmount = calculateNextBidAmount(item.currentBid, smartIncrement);
+    const roundedBid = Math.floor(item.currentBid);
+    const smartIncrement = calculateSmartBidIncrement(roundedBid);
+    const suggestedAmount = calculateNextBidAmount(roundedBid, smartIncrement);
     setNewBidAmount(suggestedAmount);
   }, [item.currentBid]);
 
@@ -140,7 +144,7 @@ export const AuctionCard = ({ item, onBid }: AuctionCardProps) => {
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Oferta actual:</span>
             <span className="font-bold text-xl text-primary">
-              ${item.currentBid.toFixed(0)} MXN
+              ${Math.floor(item.currentBid)} MXN
             </span>
           </div>
           

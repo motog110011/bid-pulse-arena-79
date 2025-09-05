@@ -207,9 +207,12 @@ export function Hero() {
       return;
     }
 
+    // Round the current bid to remove fractional values
+    const roundedCurrentBid = Math.floor(featuredAuction.currentBid);
+    
     // Calculate smart bid increment for the featured auction
-    const smartIncrement = calculateSmartBidIncrement(featuredAuction.currentBid);
-    const nextBidAmount = calculateNextBidAmount(featuredAuction.currentBid, smartIncrement);
+    const smartIncrement = calculateSmartBidIncrement(roundedCurrentBid);
+    const nextBidAmount = calculateNextBidAmount(roundedCurrentBid, smartIncrement);
     
     if (balance < nextBidAmount) {
       toast({
