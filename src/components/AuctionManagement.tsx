@@ -36,9 +36,10 @@ interface AuctionForm {
   bid_increment: number;
   end_time: string;
   image_url: string;
+  image_file?: File | null;
 }
 
-const CATEGORIES = ['Perfumes', 'Licores', 'Vinos', 'Navajas', 'Herramientas', 'Cosméticos'];
+const CATEGORIES = ['Vinos y Licores', 'Navajas', 'Electrónicos'];
 
 export const AuctionManagement = () => {
   const [auctions, setAuctions] = useState<Auction[]>([]);
@@ -55,7 +56,8 @@ export const AuctionManagement = () => {
     minimum_bid: 0,
     bid_increment: 1,
     end_time: '',
-    image_url: ''
+    image_url: '',
+    image_file: null
   });
   const { toast } = useToast();
 
@@ -93,15 +95,59 @@ export const AuctionManagement = () => {
       minimum_bid: 0,
       bid_increment: 1,
       end_time: '',
-      image_url: ''
+      image_url: '',
+      image_file: null
     });
     setEditingAuction(null);
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `auctions/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('auction-images')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        return null;
+      }
+
+      const { data } = supabase.storage
+        .from('auction-images')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      return null;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
+      let imageUrl = formData.image_url;
+      
+      // Upload image if a new file is selected
+      if (formData.image_file) {
+        const uploadedUrl = await uploadImage(formData.image_file);
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl;
+        } else {
+          toast({
+            title: 'Error',
+            description: 'Failed to upload image',
+            variant: 'destructive'
+          });
+          return;
+        }
+      }
+
       if (editingAuction) {
         // Update existing auction
         const { error } = await supabase
@@ -113,7 +159,8 @@ export const AuctionManagement = () => {
             minimum_bid: formData.minimum_bid,
             bid_increment: formData.bid_increment,
             end_time: formData.end_time,
-            image_url: formData.image_url
+            image_url: imageUrl,
+            image_file: imageUrl !== formData.image_url ? imageUrl : undefined
           })
           .eq('id', editingAuction.id);
 
@@ -134,7 +181,8 @@ export const AuctionManagement = () => {
             minimum_bid: formData.minimum_bid,
             bid_increment: formData.bid_increment,
             end_time: formData.end_time,
-            image_url: formData.image_url,
+            image_url: imageUrl,
+            image_file: imageUrl,
             current_bid: formData.minimum_bid,
             status: 'active'
           });
@@ -327,14 +375,29 @@ export const AuctionManagement = () => {
                 />
               </div>
 
-              <div>
-                <Label htmlFor="image_url">Image URL</Label>
-                <Input
-                  id="image_url"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  placeholder="/src/assets/product-example.jpg"
-                />
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="image_file">Upload Image</Label>
+                  <Input
+                    id="image_file"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setFormData({ ...formData, image_file: file });
+                    }}
+                  />
+                </div>
+                <div className="text-center text-muted-foreground">OR</div>
+                <div>
+                  <Label htmlFor="image_url">Image URL</Label>
+                  <Input
+                    id="image_url"
+                    value={formData.image_url}
+                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                    placeholder="/src/assets/product-example.jpg"
+                  />
+                </div>
               </div>
 
               <div className="flex justify-end space-x-2">

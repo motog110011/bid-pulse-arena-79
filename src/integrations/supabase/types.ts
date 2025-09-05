@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -84,6 +84,7 @@ export type Database = {
           description: string | null
           end_time: string
           id: string
+          image_file: string | null
           image_url: string | null
           minimum_bid: number
           status: string
@@ -100,6 +101,7 @@ export type Database = {
           description?: string | null
           end_time: string
           id?: string
+          image_file?: string | null
           image_url?: string | null
           minimum_bid?: number
           status?: string
@@ -116,6 +118,7 @@ export type Database = {
           description?: string | null
           end_time?: string
           id?: string
+          image_file?: string | null
           image_url?: string | null
           minimum_bid?: number
           status?: string
@@ -165,6 +168,92 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      product_image_mappings: {
+        Row: {
+          active: boolean
+          brand: string | null
+          category: string
+          contains_keywords: string[] | null
+          created_at: string
+          id: string
+          image_id: string
+          priority: number
+          product_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          brand?: string | null
+          category: string
+          contains_keywords?: string[] | null
+          created_at?: string
+          id?: string
+          image_id: string
+          priority?: number
+          product_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          brand?: string | null
+          category?: string
+          contains_keywords?: string[] | null
+          created_at?: string
+          id?: string
+          image_id?: string
+          priority?: number
+          product_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_image_mappings_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "product_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_images: {
+        Row: {
+          active: boolean
+          brand: string | null
+          category: string
+          created_at: string
+          file_path: string
+          id: string
+          label: string | null
+          product_type: string | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          brand?: string | null
+          category: string
+          created_at?: string
+          file_path: string
+          id?: string
+          label?: string | null
+          product_type?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          brand?: string | null
+          category?: string
+          created_at?: string
+          file_path?: string
+          id?: string
+          label?: string | null
+          product_type?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -284,20 +373,28 @@ export type Database = {
     Functions: {
       admin_update_user_balance: {
         Args: {
-          target_user_id: string
-          new_balance: number
           admin_notes?: string
+          new_balance: number
+          target_user_id: string
         }
         Returns: undefined
       }
+      check_admin_role: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
       create_admin_notification: {
         Args: {
-          notification_type: string
-          notification_title: string
-          notification_message: string
           notification_data?: Json
+          notification_message: string
+          notification_title: string
+          notification_type: string
           triggering_user_id?: string
         }
+        Returns: string
+      }
+      generate_specific_image_url: {
+        Args: { category: string; fallback_index?: number; title: string }
         Returns: string
       }
       get_current_user_role: {
@@ -307,22 +404,25 @@ export type Database = {
       get_detailed_users: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
+          balance: number
+          created_at: string
           email: string
           email_confirmed_at: string
-          created_at: string
-          last_sign_in_at: string
-          role: Database["public"]["Enums"]["app_role"]
-          balance: number
-          transaction_count: number
           full_name: string
+          id: string
+          last_sign_in_at: string
+          role: string
+          transaction_count: number
         }[]
       }
       has_role: {
-        Args: {
-          _user_id: string
-          _role: Database["public"]["Enums"]["app_role"]
-        }
+        Args:
+          | { _role: Database["public"]["Enums"]["app_role"]; _user_id: string }
+          | { role_name: string; user_id: string }
+        Returns: boolean
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
         Returns: boolean
       }
       make_user_admin: {

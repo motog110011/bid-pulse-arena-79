@@ -14,8 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 const rechargeSchema = z.object({
   amount: z.number()
-    .min(50, "El monto mínimo es $50")
-    .max(50000, "El monto máximo es $50,000"),
+    .min(1000, "El monto mínimo es $1,000")
+    .max(15000, "El monto máximo es $15,000"),
   contactMethod: z.enum(["email", "whatsapp", "phone"], {
     required_error: "Selecciona un método de contacto",
   }),
@@ -30,6 +30,7 @@ interface BankDetails {
   account_holder: string
   account_number: string
   clabe: string
+  oxxo_card_number: string
   reference_instructions: string
 }
 
@@ -43,9 +44,9 @@ export function WalletRechargeForm() {
   const form = useForm<RechargeFormData>({
     resolver: zodResolver(rechargeSchema),
     defaultValues: {
-      amount: 500,
+      amount: 1000,
       contactMethod: "email",
-      contactValue: "",
+      contactValue: user?.email || "",
     },
   });
 
@@ -79,9 +80,8 @@ export function WalletRechargeForm() {
   }, [])
 
   const generateReference = () => {
-    const timestamp = Date.now().toString().slice(-6);
-    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-    return `REC-${timestamp}-${random}`;
+    const random = Math.random().toString(36).substring(2, 7).toUpperCase();
+    return random;
   };
 
   const onSubmit = async (data: RechargeFormData) => {
@@ -194,6 +194,9 @@ export function WalletRechargeForm() {
               <div>
                 <span className="font-medium">CLABE:</span> {bankDetails.clabe}
               </div>
+              <div>
+                <span className="font-medium">Número de tarjeta para depósito en OXXO:</span> {bankDetails.oxxo_card_number}
+              </div>
               <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded text-amber-800">
                 <span className="font-medium">Importante:</span> {bankDetails.reference_instructions}
               </div>
@@ -212,16 +215,16 @@ export function WalletRechargeForm() {
                   <FormControl>
                     <Input
                       type="number"
-                      placeholder="500"
-                      min={50}
-                      max={50000}
-                      step={50}
+                      placeholder="1000"
+                      min={1000}
+                      max={15000}
+                      step={100}
                       {...field}
                       onChange={(e) => field.onChange(Number(e.target.value))}
                     />
                   </FormControl>
                   <FormDescription>
-                    Monto mínimo: $50 - Monto máximo: $50,000
+                    Monto mínimo: $1,000 - Monto máximo: $15,000
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
