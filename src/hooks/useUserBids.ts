@@ -83,6 +83,22 @@ export const useUserBids = () => {
         return acc;
       }, {} as Record<string, typeof bids[0]>);
 
+      // For each auction, get the highest bid to determine the true winner
+      const auctionHighestBids: Record<string, any> = {};
+      for (const auctionId of auctionIds) {
+        const { data: highestBidData } = await supabase
+          .from('bids')
+          .select('user_id, amount')
+          .eq('auction_id', auctionId)
+          .order('amount', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (highestBidData) {
+          auctionHighestBids[auctionId] = highestBidData;
+        }
+      }
+
       // Transform to UserBid format
       const userBids: UserBid[] = Object.values(userHighestBids).map(bid => {
         const auction = bid.auctions;
@@ -90,8 +106,11 @@ export const useUserBids = () => {
         const endTime = new Date(auction.end_time);
         const auctionEnded = now > endTime || auction.status === 'completed';
         
+        // Get the actual highest bidder for this auction
+        const highestBidInfo = auctionHighestBids[bid.auction_id];
+        const isCurrentHighestBidder = highestBidInfo && highestBidInfo.user_id === user.id;
+        
         // Determine if user is winning or has been outbid
-        const isCurrentHighestBidder = bid.amount >= auction.current_bid;
         const isWinning = !auctionEnded && isCurrentHighestBidder;
         const isOutbid = !auctionEnded && !isCurrentHighestBidder;
         const userWon = auctionEnded && isCurrentHighestBidder;
