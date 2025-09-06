@@ -28,14 +28,23 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserBalance } from "@/hooks/useUserBalance";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useUserLimitations } from "@/hooks/useUserLimitations";
 import { AuthDialog } from "@/components/auth/AuthDialog";
 import { WalletRechargeForm } from "@/components/WalletRechargeForm";
 import { AdminPanelModal } from "@/components/AdminPanelModal";
+import { UserCTA, UserTierBadge } from "@/components/UserCTA";
 
 export function Header() {
   const { user, loading, signOut } = useAuth();
   const { balance, loading: balanceLoading } = useUserBalance();
   const { isAdmin } = useUserRole();
+  const { 
+    userTier, 
+    isAnonymous, 
+    hasFunds, 
+    ctaAction, 
+    ctaMessage 
+  } = useUserLimitations();
   const navigate = useNavigate();
   const location = useLocation();
   const [notifications] = useState(0);
@@ -225,23 +234,37 @@ export function Header() {
             {/* User Authentication/Profile */}
             {user ? (
               <div className="flex items-center gap-2">
-                {/* Balance */}
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <div className="hidden sm:flex items-center gap-2 glass px-3 py-2 rounded-lg cursor-pointer hover:bg-white/10 transition-colors">
-                      <Wallet className="h-4 w-4 text-auction-gold" />
-                      <span className="text-sm font-medium">
-                        ${userBalance.toLocaleString()}
-                      </span>
-                      <Button size="sm" variant="secondary" className="h-6 text-xs">
-                        Recargar
-                      </Button>
-                    </div>
-                  </DialogTrigger>
-                  <DialogContent className="glass-card max-w-md max-h-[90vh] overflow-y-auto">
-                    <WalletRechargeForm />
-                  </DialogContent>
-                </Dialog>
+                {/* Tier Badge and Balance */}
+                <div className="hidden sm:flex items-center gap-2">
+                  <UserTierBadge />
+                  
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <div className={`flex items-center gap-2 glass px-3 py-2 rounded-lg cursor-pointer hover:bg-white/10 transition-colors ${
+                        !hasFunds ? 'ring-2 ring-yellow-400/50 animate-pulse' : ''
+                      }`}>
+                        <Wallet className={`h-4 w-4 ${
+                          hasFunds ? 'text-auction-gold' : 'text-yellow-400'
+                        }`} />
+                        <span className="text-sm font-medium">
+                          ${userBalance.toLocaleString()}
+                        </span>
+                        <Button 
+                          size="sm" 
+                          variant={hasFunds ? "secondary" : "default"}
+                          className={`h-6 text-xs ${
+                            !hasFunds ? 'bg-yellow-500 hover:bg-yellow-600 text-black font-medium' : ''
+                          }`}
+                        >
+                          {hasFunds ? 'Recargar' : '¡Recarga!'}
+                        </Button>
+                      </div>
+                    </DialogTrigger>
+                    <DialogContent className="glass-card max-w-md max-h-[90vh] overflow-y-auto">
+                      <WalletRechargeForm />
+                    </DialogContent>
+                  </Dialog>
+                </div>
 
                 {/* User Menu */}
                 <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
@@ -258,11 +281,21 @@ export function Header() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="glass-card w-56">
                       <DropdownMenuLabel className="font-normal">
-                        <div className="flex flex-col space-y-1">
-                          <p className="text-sm font-medium leading-none">{user.user_metadata?.full_name || 'Usuario'}</p>
-                          <p className="text-xs leading-none text-muted-foreground">
-                            Saldo: ${userBalance.toLocaleString()}
-                          </p>
+                        <div className="flex flex-col space-y-2">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium leading-none">{user.user_metadata?.full_name || 'Usuario'}</p>
+                            <UserTierBadge className="text-xs" />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs leading-none text-muted-foreground">
+                              Saldo: ${userBalance.toLocaleString()}
+                            </p>
+                            {!hasFunds && (
+                              <Badge variant="outline" className="text-xs bg-yellow-100 text-yellow-800 border-yellow-300">
+                                Sin fondos
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
@@ -426,13 +459,29 @@ export function Header() {
                   </Dialog>
                 </div>
               ) : (
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" asChild>
-                  <Link to="/auth">Iniciar Sesión</Link>
-                </Button>
-                <Button variant="secondary" asChild>
-                  <Link to="/auth">Crear Cuenta</Link>
-                </Button>
+              <div className="flex items-center gap-3">
+                {/* CTA motivacional para usuarios anónimos */}
+                <div className="hidden md:flex items-center gap-2 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-200 px-3 py-1 rounded-lg">
+                  <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200 text-xs">
+                    Visitante
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {ctaMessage || 'Regístrate para acceder a todas las subastas'}
+                  </span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" asChild className="text-sm">
+                    <Link to="/auth">Iniciar Sesión</Link>
+                  </Button>
+                  <Button 
+                    variant="default" 
+                    asChild 
+                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-sm font-medium"
+                  >
+                    <Link to="/auth">¡Únete Gratis!</Link>
+                  </Button>
+                </div>
               </div>
             )}
           </div>

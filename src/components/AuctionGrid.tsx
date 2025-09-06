@@ -8,6 +8,9 @@ import { useAutoBid } from "@/hooks/useAutoBid";
 import { useAuctionRenewal } from "@/hooks/useAuctionRenewal";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserLimitations } from "@/hooks/useUserLimitations";
+import { UserCTA } from "@/components/UserCTA";
+import { RestrictedActionModal, useRestrictedAction } from "@/components/RestrictedActionModal";
 
 // Import test utilities for browser console access
 import '@/utils/testAuctionRenewal';
@@ -33,6 +36,16 @@ const AuctionGrid = () => {
   const [loading, setLoading] = useState(true);
   const { triggerAutoBid } = useAutoBid();
   const { toast } = useToast();
+  
+  // User limitations and restriction handling
+  const { 
+    maxVisibleAuctions, 
+    canViewAllAuctions, 
+    canPlaceBids,
+    isAnonymous,
+    ctaAction 
+  } = useUserLimitations();
+  const { checkAndExecute, modalProps } = useRestrictedAction();
 
   // Initialize auction renewal system
   useAuctionRenewal({
@@ -88,62 +101,64 @@ const AuctionGrid = () => {
   }, []);
 
   const handleBid = async (itemId: string, amount: number) => {
-    try {
-      // Update the auction in the database
-      const { error } = await supabase
-        .from('auctions')
-        .update({
-          current_bid: amount,
-          current_bidder: "Tu oferta",
-          total_bids: auctions.find(a => a.id === itemId)?.totalBids! + 1,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', itemId);
+    checkAndExecute('place-bid', async () => {
+      try {
+        // Update the auction in the database
+        const { error } = await supabase
+          .from('auctions')
+          .update({
+            current_bid: amount,
+            current_bidder: "Tu oferta",
+            total_bids: auctions.find(a => a.id === itemId)?.totalBids! + 1,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', itemId);
 
-      if (error) {
-        console.error('Error updating bid:', error);
+        if (error) {
+          console.error('Error updating bid:', error);
+          toast({
+            title: "Error",
+            description: "No se pudo realizar la oferta. Inténtalo de nuevo.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Update local state
+        setAuctions(prevAuctions =>
+          prevAuctions.map(auction =>
+            auction.id === itemId
+              ? {
+                  ...auction,
+                  currentBid: amount,
+                  currentBidder: "Tu oferta",
+                  totalBids: (auction.totalBids || 0) + 1,
+                }
+              : auction
+          )
+        );
+        
+        // Schedule auto-bid after user's bid
+        triggerAutoBid(amount, itemId, {
+          minDelay: 15,
+          maxDelay: 45,
+          chanceToRespond: 0.7,
+          maxBidIncrease: 30
+        }, handleAutoBid);
+        
+        toast({
+          title: "¡Oferta realizada!",
+          description: `Has ofertado $${amount.toFixed(2)} por "${auctions.find(a => a.id === itemId)?.title}"`,
+        });
+      } catch (error) {
+        console.error('Error placing bid:', error);
         toast({
           title: "Error",
           description: "No se pudo realizar la oferta. Inténtalo de nuevo.",
           variant: "destructive",
         });
-        return;
       }
-
-      // Update local state
-      setAuctions(prevAuctions =>
-        prevAuctions.map(auction =>
-          auction.id === itemId
-            ? {
-                ...auction,
-                currentBid: amount,
-                currentBidder: "Tu oferta",
-                totalBids: (auction.totalBids || 0) + 1,
-              }
-            : auction
-        )
-      );
-      
-      // Schedule auto-bid after user's bid
-      triggerAutoBid(amount, itemId, {
-        minDelay: 15,
-        maxDelay: 45,
-        chanceToRespond: 0.7,
-        maxBidIncrease: 30
-      }, handleAutoBid);
-      
-      toast({
-        title: "¡Oferta realizada!",
-        description: `Has ofertado $${amount.toFixed(2)} por "${auctions.find(a => a.id === itemId)?.title}"`,
-      });
-    } catch (error) {
-      console.error('Error placing bid:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo realizar la oferta. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    }
+    });
   };
 
   const handleAutoBid = async (auctionId: string, newBid: number, bidder: string) => {
@@ -189,7 +204,7 @@ const AuctionGrid = () => {
   };
 
   // Filter auctions based on selected category
-  const filteredAuctions = selectedCategory === "All" 
+  let filteredAuctions = selectedCategory === "All" 
     ? auctions 
     : selectedCategory === "Terminating"
     ? auctions.filter(auction => {
@@ -197,6 +212,11 @@ const AuctionGrid = () => {
         return timeRemaining <= 30 * 60 * 1000 && timeRemaining > 0; // 30 minutes
       })
     : auctions.filter(auction => auction.category === selectedCategory);
+
+  // Apply user limitations
+  if (!canViewAllAuctions && maxVisibleAuctions < Infinity) {
+    filteredAuctions = filteredAuctions.slice(0, maxVisibleAuctions);
+  }
 
   // Get live auctions (excluding terminating ones for the count)
   const liveAuctions = auctions.filter(auction => {
@@ -276,9 +296,26 @@ const AuctionGrid = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredAuctions.map((item) => (
-                    <AuctionCard key={item.id} item={item} onBid={handleBid} />
+                  {filteredAuctions.map((item, index) => (
+                    <AuctionCard 
+                      key={item.id} 
+                      item={item} 
+                      onBid={handleBid}
+                      isBlurred={!canViewAllAuctions && index >= maxVisibleAuctions - 1}
+                      showRestrictedOverlay={!canViewAllAuctions}
+                    />
                   ))}
+                  
+                  {/* Show CTA card for anonymous users */}
+                  {!canViewAllAuctions && (
+                    <div className="md:col-span-2 lg:col-span-3">
+                      <UserCTA 
+                        variant="card" 
+                        className="mx-auto max-w-lg"
+                        showBenefits={true}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </TabsContent>
@@ -286,12 +323,19 @@ const AuctionGrid = () => {
 
           {/* Load more */}
           <div className="text-center mt-8">
-            <Button variant="outline" size="lg" className="glass">
-              Cargar Más Productos
-            </Button>
+            {canViewAllAuctions ? (
+              <Button variant="outline" size="lg" className="glass">
+                Cargar Más Productos
+              </Button>
+            ) : (
+              <UserCTA variant="banner" showBenefits={false} />
+            )}
           </div>
         </Tabs>
       </div>
+      
+      {/* Restricted Action Modal */}
+      <RestrictedActionModal {...modalProps} />
     </section>
   );
 };

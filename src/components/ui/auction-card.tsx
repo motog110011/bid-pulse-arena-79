@@ -4,11 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Timer } from "@/components/ui/timer";
-import { Heart, Gavel, Users, TrendingUp } from "lucide-react";
+import { Heart, Gavel, Users, TrendingUp, Lock, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { useProductImageMappings } from '@/hooks/useProductImages';
 import { resolveDeterministicImage, getFallbackCandidates } from '@/lib/deterministicImageResolver';
 import { calculateNextBidAmount, calculateSmartBidIncrement, validateBidAmount, formatBidAmount } from '@/utils/bidUtils';
+import { useUserLimitations } from '@/hooks/useUserLimitations';
+import { useRestrictedAction } from '@/components/RestrictedActionModal';
 
 interface AuctionItem {
   id: string;
@@ -28,9 +30,11 @@ interface AuctionItem {
 interface AuctionCardProps {
   item: AuctionItem;
   onBid: (itemId: string, amount: number) => void;
+  isBlurred?: boolean;
+  showRestrictedOverlay?: boolean;
 }
 
-export const AuctionCard = ({ item, onBid }: AuctionCardProps) => {
+export const AuctionCard = ({ item, onBid, isBlurred = false, showRestrictedOverlay = false }: AuctionCardProps) => {
   // Round the current bid to remove fractional values
   const roundedCurrentBid = Math.floor(item.currentBid);
   
@@ -43,6 +47,8 @@ export const AuctionCard = ({ item, onBid }: AuctionCardProps) => {
   const [fallbackIndex, setFallbackIndex] = useState(0);
   
   const { data: mappings } = useProductImageMappings();
+  const { canViewHighResImages, canViewAuctionDetails, isAnonymous } = useUserLimitations();
+  const { checkAndExecute } = useRestrictedAction();
 
   // Resolver imagen de forma determinística
   const primaryImage = resolveDeterministicImage(
@@ -72,27 +78,46 @@ export const AuctionCard = ({ item, onBid }: AuctionCardProps) => {
   }, [item.currentBid]);
 
   const handleBid = () => {
-    const validation = validateBidAmount(newBidAmount, item.currentBid, smartIncrement);
-    
-    if (!validation.valid) {
-      toast.error(validation.message || "Oferta inválida");
-      return;
-    }
-    
-    onBid(item.id, newBidAmount);
+    checkAndExecute('place-bid', () => {
+      const validation = validateBidAmount(newBidAmount, item.currentBid, smartIncrement);
+      
+      if (!validation.valid) {
+        toast.error(validation.message || "Oferta inválida");
+        return;
+      }
+      
+      onBid(item.id, newBidAmount);
+    });
+  };
+
+  const handleViewDetails = () => {
+    checkAndExecute('view-details', () => {
+      // Navigate to auction details page
+      console.log('Navigate to details:', item.id);
+    });
+  };
+
+  const handleSaveToWatchlist = () => {
+    checkAndExecute('save-watchlist', () => {
+      toast.success('Subasta guardada en favoritos');
+    });
   };
 
   const timeRemaining = item.endTime.getTime() - Date.now();
   const isEndingSoon = timeRemaining <= 30 * 60 * 1000; // 30 minutes
 
   return (
-    <Card className="group glass-card hover:shadow-xl transition-all duration-300 overflow-hidden border-0">
+    <Card className={`group glass-card hover:shadow-xl transition-all duration-300 overflow-hidden border-0 relative ${
+      isBlurred ? 'filter blur-sm' : ''
+    }`}>
       <CardHeader className="p-0">
         <div className="relative overflow-hidden rounded-t-xl">
           <img 
             src={currentSrc}
             alt={`${item.title} - ${item.category}`}
-            className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+            className={`w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105 ${
+              (!canViewHighResImages || isBlurred) ? 'filter blur-sm' : ''
+            }`}
             loading="lazy"
             decoding="async"
             sizes="(max-width: 768px) 100vw, 33vw"
@@ -122,9 +147,28 @@ export const AuctionCard = ({ item, onBid }: AuctionCardProps) => {
             variant="ghost"
             size="icon"
             className="absolute top-3 right-3 glass text-white hover:text-destructive"
+            onClick={handleSaveToWatchlist}
           >
             <Heart className="h-4 w-4" />
           </Button>
+          
+          {/* Restricted overlay for anonymous users */}
+          {showRestrictedOverlay && isBlurred && (
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-t-xl">
+              <div className="text-center text-white space-y-2">
+                <Lock className="w-8 h-8 mx-auto" />
+                <p className="text-sm font-medium">Regístrate para ver</p>
+                <Button 
+                  size="sm" 
+                  onClick={handleViewDetails}
+                  className="bg-white text-black hover:bg-gray-100"
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Ver Detalles
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </CardHeader>
 
@@ -148,12 +192,19 @@ export const AuctionCard = ({ item, onBid }: AuctionCardProps) => {
             </span>
           </div>
           
-          {item.currentBidder && (
+          {item.currentBidder && canViewAuctionDetails && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Users className="h-4 w-4" />
               <span>{item.currentBidder}</span>
               <span>•</span>
               <span>{item.totalBids} ofertas</span>
+            </div>
+          )}
+          
+          {!canViewAuctionDetails && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Lock className="h-4 w-4" />
+              <span>Regístrate para ver detalles</span>
             </div>
           )}
         </div>
@@ -184,7 +235,12 @@ export const AuctionCard = ({ item, onBid }: AuctionCardProps) => {
             disabled={timeRemaining <= 0}
           >
             <Gavel className="h-4 w-4 mr-2" />
-            {timeRemaining <= 0 ? "Subasta Finalizada" : "Realizar Oferta"}
+            {timeRemaining <= 0 
+              ? "Subasta Finalizada" 
+              : isAnonymous 
+              ? "Regístrate para Pujar" 
+              : "Realizar Oferta"
+            }
           </Button>
         </div>
 
