@@ -4,14 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Clock,
   Calendar,
   DollarSign,
   Tag,
   Eye,
-  Edit,
   Trash2,
   PlayCircle,
   AlertTriangle,
@@ -30,29 +29,29 @@ export const UpcomingAuctionsView = () => {
     publishScheduledAuctions,
     deleteScheduledAuction,
     cancelScheduledAuction,
-    rescheduleAuction,
     isDeleting,
     isCancelling,
-    isRescheduling,
     refetchUpcoming,
   } = useScheduledAuctions();
 
   const [selectedAuction, setSelectedAuction] = useState<UpcomingAuction | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
+  // Helper functions for time formatting and styling
   const formatTimeUntil = (timeUntilPublish: string) => {
-    // Parse PostgreSQL interval format
-    const match = timeUntilPublish.match(/(?:(-?\d+) days?)?\s*(?:(-?\d+):)?(\d{2}):(\d{2})/);
+    // Parse custom format from hook
+    if (timeUntilPublish === 'Ready to publish') {
+      return { text: 'Listo para publicar', isReady: true, isUrgent: true };
+    }
+
+    // Parse format like "2 days 14:30:00" or "2:30:00"
+    const match = timeUntilPublish.match(/(?:(\d+) days\s+)?(\d+):(\d+):(\d+)/);
     if (!match) return { text: 'Formato inválido', isReady: false, isUrgent: false };
 
     const [, daysStr, hoursStr, minutesStr] = match;
     const days = parseInt(daysStr || '0');
     const hours = parseInt(hoursStr || '0');
     const minutes = parseInt(minutesStr || '0');
-
-    if (days < 0 || hours < 0 || minutes < 0) {
-      return { text: 'Listo para publicar', isReady: true, isUrgent: true };
-    }
 
     let text = '';
     let isUrgent = false;
@@ -104,7 +103,7 @@ export const UpcomingAuctionsView = () => {
     try {
       const result = await publishScheduledAuctions();
       
-      if (result.published_count > 0) {
+      if (result?.published_count > 0) {
         toast.success(`✅ ${result.published_count} subastas publicadas`);
       } else {
         toast.info('ℹ️ No hay subastas listas para publicar');
@@ -307,6 +306,47 @@ const AuctionTimelineItem = ({
   isDeleting,
   isCancelling
 }: AuctionTimelineItemProps) => {
+  const formatTimeUntil = (timeUntilPublish: string) => {
+    if (timeUntilPublish === 'Ready to publish') {
+      return { text: 'Listo para publicar', isReady: true, isUrgent: true };
+    }
+
+    const match = timeUntilPublish.match(/(?:(\d+) days\s+)?(\d+):(\d+):(\d+)/);
+    if (!match) return { text: 'Formato inválido', isReady: false, isUrgent: false };
+
+    const [, daysStr, hoursStr, minutesStr] = match;
+    const days = parseInt(daysStr || '0');
+    const hours = parseInt(hoursStr || '0');
+    const minutes = parseInt(minutesStr || '0');
+
+    let text = '';
+    let isUrgent = false;
+
+    if (days > 0) {
+      text = `${days}d ${hours}h ${minutes}m`;
+    } else if (hours > 0) {
+      text = `${hours}h ${minutes}m`;
+      isUrgent = hours < 2;
+    } else {
+      text = `${minutes}m`;
+      isUrgent = true;
+    }
+
+    return { text, isReady: false, isUrgent };
+  };
+
+  const getTimelineColor = (timeInfo: { isReady: boolean; isUrgent: boolean }) => {
+    if (timeInfo.isReady) return 'bg-red-500';
+    if (timeInfo.isUrgent) return 'bg-yellow-500';
+    return 'bg-blue-500';
+  };
+
+  const getTimelineTextColor = (timeInfo: { isReady: boolean; isUrgent: boolean }) => {
+    if (timeInfo.isReady) return 'text-red-700';
+    if (timeInfo.isUrgent) return 'text-yellow-700';
+    return 'text-blue-700';
+  };
+
   const timeInfo = formatTimeUntil(auction.time_until_publish);
 
   return (
@@ -390,6 +430,35 @@ interface AuctionDetailsProps {
 }
 
 const AuctionDetails = ({ auction, onClose }: AuctionDetailsProps) => {
+  const formatTimeUntil = (timeUntilPublish: string) => {
+    if (timeUntilPublish === 'Ready to publish') {
+      return { text: 'Listo para publicar', isReady: true, isUrgent: true };
+    }
+
+    const match = timeUntilPublish.match(/(?:(\d+) days\s+)?(\d+):(\d+):(\d+)/);
+    if (!match) return { text: 'Formato inválido', isReady: false, isUrgent: false };
+
+    const [, daysStr, hoursStr, minutesStr] = match;
+    const days = parseInt(daysStr || '0');
+    const hours = parseInt(hoursStr || '0');
+    const minutes = parseInt(minutesStr || '0');
+
+    let text = '';
+    let isUrgent = false;
+
+    if (days > 0) {
+      text = `${days}d ${hours}h ${minutes}m`;
+    } else if (hours > 0) {
+      text = `${hours}h ${minutes}m`;
+      isUrgent = hours < 2;
+    } else {
+      text = `${minutes}m`;
+      isUrgent = true;
+    }
+
+    return { text, isReady: false, isUrgent };
+  };
+
   const timeInfo = formatTimeUntil(auction.time_until_publish);
 
   return (

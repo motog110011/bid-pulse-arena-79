@@ -59,7 +59,7 @@ export const ScheduledAuctionsManager = () => {
         auctions_per_day: perDay 
       });
       
-      toast.success(`✅ ${result.created_count} subastas programadas generadas para los próximos ${days} días`);
+      toast.success(`✅ ${result?.created_count || 0} subastas programadas generadas para los próximos ${days} días`);
       setShowGenerateDialog(false);
     } catch (error) {
       console.error('Error generating auctions:', error);
@@ -71,7 +71,7 @@ export const ScheduledAuctionsManager = () => {
     try {
       const result = await publishScheduledAuctions();
       
-      if (result.published_count > 0) {
+      if (result?.published_count > 0) {
         toast.success(`✅ ${result.published_count} subastas publicadas automáticamente`);
       } else {
         toast.info('ℹ️ No hay subastas listas para publicar en este momento');

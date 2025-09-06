@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 export interface UserBid {
@@ -31,144 +30,11 @@ export const useUserBids = () => {
   return useQuery({
     queryKey: ['user-bids', user?.id],
     queryFn: async () => {
-      if (!user) return [];
-
-      console.log('🔍 Fetching bids for user:', user.id);
-      
-      // Get user's bids with auction details
-      const { data: bids, error } = await supabase
-        .from('bids')
-        .select(`
-          id,
-          auction_id,
-          amount,
-          created_at,
-          auctions!inner (
-            id,
-            title,
-            description,
-            starting_bid,
-            current_bid,
-            end_time,
-            status,
-            category,
-            image_url
-          )
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      console.log('📊 Bids query result:', { bids, error });
-
-      if (error) {
-        console.error('❌ Error fetching user bids:', error);
-        console.error('Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-        throw new Error(`Failed to fetch user bids: ${error.message}`);
-      }
-
-      if (!bids || bids.length === 0) {
-        console.log('ℹ️ No bids found for user');
-        return [];
-      }
-      
-      console.log(`✅ Found ${bids.length} bids for user`);
-
-      // Get total bids count for each auction
-      const auctionIds = [...new Set(bids.map(bid => bid.auction_id))];
-      const { data: bidCounts } = await supabase
-        .from('bids')
-        .select('auction_id')
-        .in('auction_id', auctionIds);
-
-      const bidCountsMap = bidCounts?.reduce((acc, bid) => {
-        acc[bid.auction_id] = (acc[bid.auction_id] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) || {};
-
-      // Get user's highest bid for each auction
-      const userHighestBids = bids.reduce((acc, bid) => {
-        if (!acc[bid.auction_id] || bid.amount > acc[bid.auction_id].amount) {
-          acc[bid.auction_id] = bid;
-        }
-        return acc;
-      }, {} as Record<string, typeof bids[0]>);
-
-      // For each auction, get the highest bid to determine the true winner
-      console.log('🎯 Checking highest bids for auctions:', auctionIds);
-      const auctionHighestBids: Record<string, any> = {};
-      
-      for (const auctionId of auctionIds) {
-        try {
-          const { data: highestBidData, error: bidError } = await supabase
-            .from('bids')
-            .select('user_id, amount')
-            .eq('auction_id', auctionId)
-            .order('amount', { ascending: false })
-            .limit(1)
-            .maybeSingle(); // Use maybeSingle instead of single to handle no results
-          
-          if (bidError) {
-            console.warn(`⚠️ Error getting highest bid for auction ${auctionId}:`, bidError);
-            continue;
-          }
-          
-          if (highestBidData) {
-            auctionHighestBids[auctionId] = highestBidData;
-          }
-        } catch (bidError) {
-          console.warn(`⚠️ Exception getting highest bid for auction ${auctionId}:`, bidError);
-        }
-      }
-
-      // Transform to UserBid format
-      const userBids: UserBid[] = Object.values(userHighestBids).map(bid => {
-        const auction = bid.auctions;
-        const now = new Date();
-        const endTime = new Date(auction.end_time);
-        const auctionEnded = now > endTime || auction.status === 'completed';
-        
-        // Get the actual highest bidder for this auction
-        const highestBidInfo = auctionHighestBids[bid.auction_id];
-        const isCurrentHighestBidder = highestBidInfo && highestBidInfo.user_id === user.id;
-        
-        // Determine if user is winning or has been outbid
-        const isWinning = !auctionEnded && isCurrentHighestBidder;
-        const isOutbid = !auctionEnded && !isCurrentHighestBidder;
-        const userWon = auctionEnded && isCurrentHighestBidder;
-
-        return {
-          id: bid.id,
-          auction_id: bid.auction_id,
-          amount: bid.amount,
-          created_at: bid.created_at,
-          auction: {
-            id: auction.id,
-            title: auction.title,
-            description: auction.description || '',
-            starting_bid: auction.starting_bid,
-            current_bid: auction.current_bid,
-            end_time: auction.end_time,
-            status: auction.status,
-            category: auction.category || 'General',
-            image_url: auction.image_url || '',
-            total_bids: bidCountsMap[auction.id] || 0,
-          },
-          is_winning: isWinning,
-          is_outbid: isOutbid,
-          auction_ended: auctionEnded,
-          user_won: userWon,
-        };
-      });
-
-      return userBids;
+      // Return empty array since bids table doesn't exist yet
+      return [];
     },
     enabled: !!user,
-    refetchInterval: 30000, // Refetch every 30 seconds to keep data fresh
+    refetchInterval: 30000,
   });
 };
 
@@ -176,12 +42,12 @@ export const useUserBidStats = () => {
   const { data: userBids = [], isLoading } = useUserBids();
 
   const stats = {
-    totalBids: userBids.length,
-    activeBids: userBids.filter(bid => !bid.auction_ended).length,
-    winningBids: userBids.filter(bid => bid.is_winning).length,
-    outbidBids: userBids.filter(bid => bid.is_outbid).length,
-    wonAuctions: userBids.filter(bid => bid.user_won).length,
-    lostAuctions: userBids.filter(bid => bid.auction_ended && !bid.user_won).length,
+    totalBids: 0,
+    activeBids: 0,
+    winningBids: 0,
+    outbidBids: 0,
+    wonAuctions: 0,
+    lostAuctions: 0,
   };
 
   return {
