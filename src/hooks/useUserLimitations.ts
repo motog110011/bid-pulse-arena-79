@@ -33,7 +33,7 @@ export interface UserLimitations {
 }
 
 export const useUserLimitations = (): UserLimitations => {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { balance, loading: balanceLoading } = useUserBalance();
 
   return useMemo(() => {
