@@ -26,11 +26,7 @@ export function useAuctionRenewal(config: Partial<AuctionRenewalConfig> = {}) {
   ]);
   const { toast } = useToast();
 
-  const getRandomExtensionTime = useCallback((min: number, max: number) => {
-    const randomMinutes = Math.floor(Math.random() * (max - min + 1)) + min;
-    return randomMinutes * 60 * 1000; // Convert to milliseconds
-  }, []);
-
+  // Centralized function to handle auction renewal logic
   const renewExpiredAuctions = useCallback(async () => {
     if (!finalConfig.enabled) return;
 
@@ -55,10 +51,8 @@ export function useAuctionRenewal(config: Partial<AuctionRenewalConfig> = {}) {
 
       // Renew each expired auction
       for (const auction of expiredAuctions) {
-        const extensionTime = getRandomExtensionTime(
-          finalConfig.minExtensionMinutes,
-          finalConfig.maxExtensionMinutes
-        );
+        const randomMinutes = Math.floor(Math.random() * (finalConfig.maxExtensionMinutes - finalConfig.minExtensionMinutes + 1)) + finalConfig.minExtensionMinutes;
+        const extensionTime = randomMinutes * 60 * 1000; // Convert to milliseconds
         
         const newEndTime = new Date(Date.now() + extensionTime);
         
@@ -76,15 +70,13 @@ export function useAuctionRenewal(config: Partial<AuctionRenewalConfig> = {}) {
           console.error(`❌ Failed to renew auction ${auction.id}:`, updateError);
         } else {
           console.log(`✅ Successfully renewed auction: ${auction.title}`);
-          
-          // Renewal is done silently in the background - no user notification
         }
       }
 
     } catch (error) {
       console.error('❌ Error in auction renewal process:', error);
     }
-  }, [finalConfig.enabled, finalConfig.minExtensionMinutes, finalConfig.maxExtensionMinutes, getRandomExtensionTime]);
+  }, [finalConfig.enabled, finalConfig.minExtensionMinutes, finalConfig.maxExtensionMinutes]);
 
   const manualRenewalCheck = useCallback(async () => {
     console.log('🔧 Manual renewal check triggered');
@@ -100,69 +92,17 @@ export function useAuctionRenewal(config: Partial<AuctionRenewalConfig> = {}) {
 
     console.log(`🚀 Starting auction renewal system (checking every ${finalConfig.checkIntervalSeconds}s)`);
     
-    // Create a stable function that doesn't change on every render
-    const checkAuctions = async () => {
-      if (!finalConfig.enabled) return;
-
-      try {
-        // Get all active auctions that have expired
-        const { data: expiredAuctions, error } = await supabase
-          .from('auctions')
-          .select('*')
-          .eq('status', 'active')
-          .lt('end_time', new Date().toISOString());
-
-        if (error) {
-          console.error('Auction renewal error:', error);
-          return;
-        }
-
-        if (!expiredAuctions || expiredAuctions.length === 0) {
-          return; // Silent when no expired auctions
-        }
-
-        console.log(`Auto-extending ${expiredAuctions.length} expired auction(s)`);
-
-        // Renew each expired auction
-        for (const auction of expiredAuctions) {
-          const randomMinutes = Math.floor(Math.random() * (finalConfig.maxExtensionMinutes - finalConfig.minExtensionMinutes + 1)) + finalConfig.minExtensionMinutes;
-          const extensionTime = randomMinutes * 60 * 1000;
-          
-          const newEndTime = new Date(Date.now() + extensionTime);
-          
-          console.log(`⏰ Extending auction "${auction.title}" by ${Math.round(extensionTime / (1000 * 60))} minutes`);
-
-          const { error: updateError } = await supabase
-            .from('auctions')
-            .update({
-              end_time: newEndTime.toISOString(),
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', auction.id);
-
-          if (updateError) {
-            console.error(`❌ Failed to renew auction ${auction.id}:`, updateError);
-          } else {
-            console.log(`✅ Successfully renewed auction: ${auction.title}`);
-          }
-        }
-
-      } catch (error) {
-        console.error('❌ Error in auction renewal process:', error);
-      }
-    };
-    
     // Initial check
-    checkAuctions();
+    renewExpiredAuctions();
 
     // Set up interval for periodic checks
-    const interval = setInterval(checkAuctions, finalConfig.checkIntervalSeconds * 1000);
+    const interval = setInterval(renewExpiredAuctions, finalConfig.checkIntervalSeconds * 1000);
 
     return () => {
       console.log('🛑 Stopping auction renewal system');
       clearInterval(interval);
     };
-  }, [finalConfig.enabled, finalConfig.checkIntervalSeconds, finalConfig.minExtensionMinutes, finalConfig.maxExtensionMinutes]);
+  }, [renewExpiredAuctions, finalConfig.enabled, finalConfig.checkIntervalSeconds]);
 
   return {
     renewExpiredAuctions: manualRenewalCheck,

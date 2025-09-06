@@ -45,11 +45,9 @@ const AuctionGrid = () => {
   const fetchAuctions = async () => {
     try {
       setLoading(true);
+      // Use PostgreSQL random() function to shuffle auctions on each load
       const { data, error } = await supabase
-        .from('auctions')
-        .select('*')
-        .eq('status', 'active')
-        .order('end_time', { ascending: true });
+        .rpc('get_random_auctions');
 
       if (error) {
         console.error('Error fetching auctions:', error);
