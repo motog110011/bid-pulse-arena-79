@@ -52,18 +52,47 @@ const JEWELRY = [
   'Anillo de Compromiso', 'Pulsera Tiffany & Co', 'Collar Cartier', 'Anillo Bulgari'
 ];
 
-// Condition variations
-const CONDITIONS = [
-  'Decomisado en Seguridad Aeroportuaria',
+// Condition variations by product type
+
+// Para navajas, licores, perfumes y cosméticos
+const SECURITY_CHECKPOINT_CONDITIONS = [
+  'Decomisado en Arco de Seguridad',
+  'Confiscado en Control de Seguridad',
+  'Retenido en Revisión de Equipaje de Mano',
+  'Confiscado por Prohibición en Cabina',
+  'Decomisado en Control de Líquidos',
+  'Retenido por Exceder Límites de Líquidos',
+  'Decomisado por Políticas de Seguridad Aérea'
+];
+
+// Para electrónicos, relojes, joyas
+const FORGOTTEN_ITEMS_CONDITIONS = [
+  'Olvidado en Vuelo Comercial',
+  'Encontrado en Asiento de Avión',
+  'Abandonado en Compartimento Superior',
+  'Olvidado en Bolsillo de Asiento',
+  'Encontrado Durante Limpieza de Cabina',
+  'Dejado en Sala de Espera',
+  'Olvidado en Terminal'
+];
+
+// Para cualquier tipo de producto
+const CUSTOMS_CONDITIONS = [
   'Confiscado por Aduana',
-  'Incautado en Operativo',
-  'Abandono en Aeropuerto',
-  'Decomiso Fiscal',
-  'Confiscación Legal',
-  'Abandono de Viajero',
-  'Retención Aduanera',
-  'Decomiso Administrativo',
-  'Confiscación Preventiva'
+  'Retenido por Impuestos No Pagados',
+  'Incautado por Documentación Incompleta',
+  'Decomisado por Exceder Límite de Importación',
+  'Retenido por Regulaciones de Importación',
+  'Confiscado por Importación No Declarada'
+];
+
+// Para equipaje extraviado
+const LOST_BAGGAGE_CONDITIONS = [
+  'Equipaje No Reclamado',
+  'Maleta Sin Identificación',
+  'Equipaje en Depósito de Objetos Perdidos',
+  'Equipaje Sin Reclamar (6+ meses)',
+  'Contenido de Equipaje Extraviado'
 ];
 
 // Size/volume variations
@@ -78,10 +107,41 @@ const COLORS = [
 ];
 
 /**
+ * Get appropriate condition for a product category
+ */
+const getConditionForCategory = (category: string): string => {
+  category = category.toLowerCase();
+  
+  // Productos que típicamente se decomisan en arcos de seguridad
+  if (category.includes('perfume') || 
+      category.includes('fragancia') ||
+      category.includes('licor') ||
+      category.includes('vino') ||
+      category.includes('navaja') ||
+      category.includes('herramienta') ||
+      category.includes('cosmet')) {
+    return SECURITY_CHECKPOINT_CONDITIONS[Math.floor(Math.random() * SECURITY_CHECKPOINT_CONDITIONS.length)];
+  }
+  
+  // Electrónicos y objetos de valor típicamente olvidados
+  if (category.includes('electr') || 
+      category.includes('reloj') ||
+      category.includes('joya') ||
+      category.includes('tecnolog')) {
+    return FORGOTTEN_ITEMS_CONDITIONS[Math.floor(Math.random() * FORGOTTEN_ITEMS_CONDITIONS.length)];
+  }
+  
+  // Para cualquier categoría, 50/50 entre aduanas y equipaje perdido
+  return Math.random() > 0.5 ? 
+    CUSTOMS_CONDITIONS[Math.floor(Math.random() * CUSTOMS_CONDITIONS.length)] :
+    LOST_BAGGAGE_CONDITIONS[Math.floor(Math.random() * LOST_BAGGAGE_CONDITIONS.length)];
+};
+
+/**
  * Generate a random product variant for each category
  */
 export const generateProductVariant = (category: string): ProductVariant => {
-  const condition = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
+  const condition = getConditionForCategory(category);
   
   switch (category.toLowerCase()) {
     case 'perfumes':

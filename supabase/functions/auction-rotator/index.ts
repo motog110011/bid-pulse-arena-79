@@ -55,15 +55,31 @@ const JEWELRY = [
   'Aretes de Esmeralda', 'Cadena de Oro Blanco', 'Pulsera Tiffany & Co'
 ];
 
-const CONDITIONS = [
-  'Decomisado en Seguridad Aeroportuaria',
+// Condition variations by product type
+const SECURITY_CHECKPOINT_CONDITIONS = [
+  'Decomisado en Arco de Seguridad',
+  'Confiscado en Control de Seguridad',
+  'Retenido en Revisión de Equipaje de Mano',
+  'Confiscado por Prohibición en Cabina'
+];
+
+const FORGOTTEN_ITEMS_CONDITIONS = [
+  'Olvidado en Vuelo Comercial',
+  'Encontrado en Asiento de Avión',
+  'Abandonado en Compartimento Superior',
+  'Olvidado en Terminal'
+];
+
+const CUSTOMS_CONDITIONS = [
   'Confiscado por Aduana',
-  'Incautado en Operativo',
-  'Abandono en Aeropuerto',
-  'Decomiso Fiscal',
-  'Confiscación Legal',
-  'Abandono de Viajero',
-  'Retención Aduanera'
+  'Retenido por Impuestos No Pagados',
+  'Incautado por Documentación Incompleta'
+];
+
+const LOST_BAGGAGE_CONDITIONS = [
+  'Equipaje No Reclamado',
+  'Maleta Sin Identificación',
+  'Equipaje Sin Reclamar (6+ meses)'
 ];
 
 const PERFUME_SIZES = ['30ml', '50ml', '100ml', '125ml'];
@@ -72,8 +88,32 @@ const STORAGE_SIZES = ['64GB', '128GB', '256GB', '512GB'];
 const COLORS = ['Negro', 'Blanco', 'Plateado', 'Dorado', 'Azul Marino', 'Rojo'];
 
 // Product generation functions
+const getConditionForCategory = (category: string): string => {
+  category = category.toLowerCase();
+  
+  // Productos que típicamente se decomisan en arcos de seguridad
+  if (category.includes('perfume') || 
+      category.includes('licor') ||
+      category.includes('vino') ||
+      category.includes('navaja')) {
+    return SECURITY_CHECKPOINT_CONDITIONS[Math.floor(Math.random() * SECURITY_CHECKPOINT_CONDITIONS.length)];
+  }
+  
+  // Electrónicos y objetos de valor típicamente olvidados
+  if (category.includes('electr') || 
+      category.includes('reloj') ||
+      category.includes('joya')) {
+    return FORGOTTEN_ITEMS_CONDITIONS[Math.floor(Math.random() * FORGOTTEN_ITEMS_CONDITIONS.length)];
+  }
+  
+  // Para cualquier categoría, 50/50 entre aduanas y equipaje perdido
+  return Math.random() > 0.5 ? 
+    CUSTOMS_CONDITIONS[Math.floor(Math.random() * CUSTOMS_CONDITIONS.length)] :
+    LOST_BAGGAGE_CONDITIONS[Math.floor(Math.random() * LOST_BAGGAGE_CONDITIONS.length)];
+};
+
 const generateProductVariant = (category: string): ProductVariant => {
-  const condition = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
+  const condition = getConditionForCategory(category);
   
   switch (category.toLowerCase()) {
     case 'perfumes':

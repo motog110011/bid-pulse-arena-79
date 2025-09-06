@@ -33,6 +33,8 @@ export const useUserBids = () => {
     queryFn: async () => {
       if (!user) return [];
 
+      console.log('🔍 Fetching bids for user:', user.id);
+      
       // Get user's bids with auction details
       const { data: bids, error } = await supabase
         .from('bids')
@@ -56,12 +58,25 @@ export const useUserBids = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
+      console.log('📊 Bids query result:', { bids, error });
+
       if (error) {
-        console.error('Error fetching user bids:', error);
-        throw error;
+        console.error('❌ Error fetching user bids:', error);
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw new Error(`Failed to fetch user bids: ${error.message}`);
       }
 
-      if (!bids) return [];
+      if (!bids || bids.length === 0) {
+        console.log('ℹ️ No bids found for user');
+        return [];
+      }
+      
+      console.log(`✅ Found ${bids.length} bids for user`);
 
       // Get total bids count for each auction
       const auctionIds = [...new Set(bids.map(bid => bid.auction_id))];
@@ -84,18 +99,29 @@ export const useUserBids = () => {
       }, {} as Record<string, typeof bids[0]>);
 
       // For each auction, get the highest bid to determine the true winner
+      console.log('🎯 Checking highest bids for auctions:', auctionIds);
       const auctionHighestBids: Record<string, any> = {};
+      
       for (const auctionId of auctionIds) {
-        const { data: highestBidData } = await supabase
-          .from('bids')
-          .select('user_id, amount')
-          .eq('auction_id', auctionId)
-          .order('amount', { ascending: false })
-          .limit(1)
-          .single();
-        
-        if (highestBidData) {
-          auctionHighestBids[auctionId] = highestBidData;
+        try {
+          const { data: highestBidData, error: bidError } = await supabase
+            .from('bids')
+            .select('user_id, amount')
+            .eq('auction_id', auctionId)
+            .order('amount', { ascending: false })
+            .limit(1)
+            .maybeSingle(); // Use maybeSingle instead of single to handle no results
+          
+          if (bidError) {
+            console.warn(`⚠️ Error getting highest bid for auction ${auctionId}:`, bidError);
+            continue;
+          }
+          
+          if (highestBidData) {
+            auctionHighestBids[auctionId] = highestBidData;
+          }
+        } catch (bidError) {
+          console.warn(`⚠️ Exception getting highest bid for auction ${auctionId}:`, bidError);
         }
       }
 
