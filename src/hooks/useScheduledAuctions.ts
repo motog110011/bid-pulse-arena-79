@@ -49,11 +49,19 @@ export const useScheduledAuctions = () => {
   } = useQuery({
     queryKey: ['upcoming-scheduled-auctions'],
     queryFn: async (): Promise<UpcomingAuction[]> => {
-      const { data, error } = await supabase.rpc('get_upcoming_scheduled_auctions', {
+      // Try simplified function first
+      const { data, error } = await supabase.rpc('get_upcoming_scheduled_auctions_simple', {
         limit_count: 20
       });
 
-      if (error) throw error;
+      if (error) {
+        // Fallback to original function
+        const { data: fallbackData, error: fallbackError } = await supabase.rpc('get_upcoming_scheduled_auctions', {
+          limit_count: 20
+        });
+        if (fallbackError) throw fallbackError;
+        return fallbackData || [];
+      }
       return data || [];
     },
     enabled: !!user,
@@ -122,7 +130,7 @@ export const useScheduledAuctions = () => {
           duration_hours: auctionData.duration_hours || 6,
           scheduled_publish_time: auctionData.scheduled_publish_time,
           status: 'scheduled',
-          created_by: user?.id,
+          // Omitir created_by temporalmente para evitar problemas de foreign key
         })
         .select()
         .single();
@@ -140,12 +148,22 @@ export const useScheduledAuctions = () => {
   // Generate scheduled auctions automatically
   const generateScheduledAuctionsMutation = useMutation({
     mutationFn: async (params: GenerateScheduledAuctionsParams = {}) => {
-      const { data, error } = await supabase.rpc('generate_scheduled_auctions', {
+      // Try the simplified function first, fallback to original
+      const { data, error } = await supabase.rpc('generate_scheduled_auctions_simple', {
         days_ahead: params.days_ahead || 7,
         auctions_per_day: params.auctions_per_day || 3,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Fallback to original function
+        const { data: fallbackData, error: fallbackError } = await supabase.rpc('generate_scheduled_auctions', {
+          days_ahead: params.days_ahead || 7,
+          auctions_per_day: params.auctions_per_day || 3,
+        });
+        
+        if (fallbackError) throw fallbackError;
+        return fallbackData;
+      }
       return data;
     },
     onSuccess: () => {
