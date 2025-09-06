@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -17,7 +17,13 @@ const DEFAULT_CONFIG: AuctionRenewalConfig = {
 };
 
 export function useAuctionRenewal(config: Partial<AuctionRenewalConfig> = {}) {
-  const finalConfig = { ...DEFAULT_CONFIG, ...config };
+  // Memoize finalConfig to prevent recreation on every render
+  const finalConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [
+    config.enabled,
+    config.minExtensionMinutes,
+    config.maxExtensionMinutes,
+    config.checkIntervalSeconds
+  ]);
   const { toast } = useToast();
 
   const getRandomExtensionTime = useCallback((min: number, max: number) => {
@@ -78,7 +84,7 @@ export function useAuctionRenewal(config: Partial<AuctionRenewalConfig> = {}) {
     } catch (error) {
       console.error('❌ Error in auction renewal process:', error);
     }
-  }, [finalConfig, getRandomExtensionTime, toast]);
+  }, [finalConfig.enabled, finalConfig.minExtensionMinutes, finalConfig.maxExtensionMinutes, getRandomExtensionTime]);
 
   const manualRenewalCheck = useCallback(async () => {
     console.log('🔧 Manual renewal check triggered');
