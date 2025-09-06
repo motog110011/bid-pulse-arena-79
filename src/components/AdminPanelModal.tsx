@@ -15,7 +15,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from '@/hooks/use-toast'
 import { CheckCircle, XCircle, DollarSign, Users, Clock, TrendingUp, Search, Crown, User, Shield, Edit2, Mail, Ban, Trash2, MoreHorizontal, Key } from 'lucide-react'
 import { AdminRoleManager } from '@/components/AdminRoleManager'
-import { AuctionManagement } from '@/components/AuctionManagement'
+import { AuctionManager } from '@/components/AuctionManager'
+import { ScheduledAuctionsManager } from '@/components/ScheduledAuctionsManager'
 
 interface RechargeRequest {
   id: string
@@ -666,10 +667,11 @@ export function AdminPanelModal() {
 
       {/* Main Content */}
       <Tabs defaultValue="recharge-requests" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-7">
           <TabsTrigger value="recharge-requests" className="text-xs sm:text-sm">Solicitudes</TabsTrigger>
           <TabsTrigger value="user-management" className="text-xs sm:text-sm">Usuarios</TabsTrigger>
           <TabsTrigger value="auctions" className="text-xs sm:text-sm">Subastas</TabsTrigger>
+          <TabsTrigger value="scheduled-auctions" className="text-xs sm:text-sm">Programadas</TabsTrigger>
           <TabsTrigger value="notifications" className="text-xs sm:text-sm">Notificaciones</TabsTrigger>
           <TabsTrigger value="settings" className="text-xs sm:text-sm">Config</TabsTrigger>
           <TabsTrigger value="admin-management" className="text-xs sm:text-sm">Admins</TabsTrigger>
@@ -957,7 +959,11 @@ export function AdminPanelModal() {
         </TabsContent>
 
         <TabsContent value="auctions" className="space-y-4">
-          <AuctionManagement />
+          <AuctionManager />
+        </TabsContent>
+
+        <TabsContent value="scheduled-auctions" className="space-y-4">
+          <ScheduledAuctionsManager />
         </TabsContent>
 
         <TabsContent value="admin-management" className="space-y-4">
