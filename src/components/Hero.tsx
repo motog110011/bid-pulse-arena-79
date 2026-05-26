@@ -1,15 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Timer } from "@/components/ui/timer";
-import { ArrowRight, Gavel, TrendingUp, Users, Star } from "lucide-react";
+import { ArrowRight, Gavel, TrendingUp, Users, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserBalance } from "@/hooks/useUserBalance";
 import { useDynamicStats } from "@/hooks/useDynamicStats";
 import { AuthDialog } from "@/components/auth/AuthDialog";
 import { useToast } from "@/hooks/use-toast";
-import { calculateNextBidAmount, calculateSmartBidIncrement } from '@/utils/bidUtils';
 import heroImage from "@/assets/hero-mexican-airport.jpg";
+
+const featuredAuctions = [
+  { title: "Whiskey Macallan 18 años – Decomisado", currentBid: 1850, bidders: 47, hoursLeft: 2, minsLeft: 45 },
+  { title: "Chanel No. 5 EDP 100 ml – Confiscado",  currentBid: 125,  bidders: 28, hoursLeft: 1, minsLeft: 30 },
+  { title: "Cognac Hennessy XO 700 ml – Decomisado", currentBid: 285,  bidders: 35, hoursLeft: 3, minsLeft: 15 },
+  { title: "Mezcal Clase Azul Reposado – Confiscado", currentBid: 195,  bidders: 22, hoursLeft: 4, minsLeft: 20 },
+];
 
 export function Hero() {
   const { user } = useAuth();
@@ -18,223 +24,187 @@ export function Hero() {
   const { stats, loading } = useDynamicStats();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
-  // Simulación de subasta destacada que cambia cada vez
-  const featuredAuctions = [
-    {
-      title: "Whiskey Macallan 18 años - Decomisado",
-      currentBid: 1850,
-      endTime: new Date(Date.now() + 2 * 60 * 60 * 1000 + 45 * 60 * 1000),
-      bidders: 47
-    },
-    {
-      title: "Chanel No. 5 EDP 100ml - Confiscado",
-      currentBid: 125,
-      endTime: new Date(Date.now() + 1 * 60 * 60 * 1000 + 30 * 60 * 1000),
-      bidders: 28
-    },
-    {
-      title: "Cognac Hennessy XO 700ml - Decomisado",
-      currentBid: 285,
-      endTime: new Date(Date.now() + 3 * 60 * 60 * 1000 + 15 * 60 * 1000),
-      bidders: 35
-    },
-    {
-      title: "Mezcal Clase Azul Reposado - Confiscado",
-      currentBid: 195,
-      endTime: new Date(Date.now() + 4 * 60 * 60 * 1000 + 20 * 60 * 1000),
-      bidders: 22
-    }
-  ];
-
-  // Seleccionar subasta destacada basada en el tiempo para que cambie
   const [featuredIndex] = useState(() => Math.floor(Date.now() / 60000) % featuredAuctions.length);
-  const featuredAuction = featuredAuctions[featuredIndex];
+  const featured = featuredAuctions[featuredIndex];
+  const endTime = new Date(Date.now() + featured.hoursLeft * 3_600_000 + featured.minsLeft * 60_000);
+
+  function handleBid() {
+    if (!user) { setAuthDialogOpen(true); return; }
+    if (balance < featured.currentBid + 50) {
+      toast({ title: "Saldo insuficiente", description: "Recarga tu cuenta para participar.", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Puja registrada", description: `Ofertaste por ${featured.title}` });
+    document.getElementById("auction-grid")?.scrollIntoView({ behavior: "smooth" });
+  }
 
   return (
-    <section className="relative min-h-[80vh] flex items-center overflow-hidden">
-      {/* Background with glassmorphism overlay */}
-      <div 
+    <section className="relative overflow-hidden">
+      {/* Imagen de fondo con overlay claro */}
+      <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${heroImage})` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-background/98 via-background/85 to-background/60" />
-      
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <div className="absolute inset-0 bg-gradient-to-r from-white/97 via-white/90 to-white/60" />
+
+      {/* Banda dorada decorativa superior */}
+      <div className="relative h-1 bg-gobierno-dorado" />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left content */}
+
+          {/* Columna izquierda */}
           <div className="space-y-8">
-            <div className="space-y-4 bg-background/80 backdrop-blur-sm p-6 rounded-lg border border-border/20">
-              <Badge className="bg-gradient-gold text-black font-medium text-sm px-4 py-2">
-                ✨ Plataforma Premium de Subastas
-              </Badge>
-              
-              <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
+            {/* Sello institucional */}
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-1 bg-gobierno-guinda rounded-full" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-widest text-gobierno-gris">
+                  Gobierno de México
+                </p>
+                <p className="text-xs text-gobierno-gris/70 tracking-wide">
+                  Administración General de Aduanas
+                </p>
+              </div>
+            </div>
+
+            {/* Titular */}
+            <div className="space-y-4">
+              <h1 className="text-4xl lg:text-5xl font-extrabold leading-tight text-gobierno-guinda">
                 Subastas de
-                <span className="block bg-gradient-primary bg-clip-text text-transparent">
-                  Productos Decomisados
-                </span>
+                <span className="block text-foreground">Productos Decomisados</span>
               </h1>
-              
-              <p className="text-xl text-foreground max-w-lg">
-                Productos decomisados legalmente en aeropuertos de México por motivos de seguridad. Todos los artículos son 100% legales y están disponibles para subasta al público general.
+              <p className="text-base text-gobierno-gris max-w-lg leading-relaxed">
+                Artículos confiscados en aeropuertos internacionales de México.
+                Proceso oficial, transparente y 100% legal, supervisado por la
+                Administración General de Aduanas.
               </p>
             </div>
 
-            {/* Stats */}
-            <div className="flex items-center gap-8 bg-background/80 backdrop-blur-sm p-4 rounded-lg border border-border/20">
+            {/* Indicadores */}
+            <div className="flex items-center gap-6 py-4 border-y border-border">
               <div className="text-center">
-                <div className="text-2xl font-bold text-primary">
-                  {loading ? "..." : stats.activeUsers.toLocaleString()}
+                <div className="text-2xl font-bold text-gobierno-guinda">
+                  {loading ? "—" : stats.activeUsers.toLocaleString("es-MX")}
                 </div>
-                <div className="text-sm text-foreground">Usuarios Activos</div>
+                <div className="text-xs text-gobierno-gris uppercase tracking-wide mt-0.5">Usuarios activos</div>
               </div>
+              <div className="w-px h-8 bg-border" />
               <div className="text-center">
-                <div className="text-2xl font-bold text-auction-gold">
-                  {loading ? "..." : stats.totalAuctionsToday}
+                <div className="text-2xl font-bold text-gobierno-dorado-oscuro">
+                  {loading ? "—" : stats.totalAuctionsToday}
                 </div>
-                <div className="text-sm text-foreground">Subastas Hoy</div>
+                <div className="text-xs text-gobierno-gris uppercase tracking-wide mt-0.5">Subastas hoy</div>
               </div>
+              <div className="w-px h-8 bg-border" />
               <div className="text-center">
-                <div className="text-2xl font-bold text-auction-success">
-                  {loading ? "..." : stats.liveAuctions}
+                <div className="text-2xl font-bold text-gobierno-guinda">
+                  {loading ? "—" : stats.liveAuctions}
                 </div>
-                <div className="text-sm text-foreground">En Vivo</div>
+                <div className="text-xs text-gobierno-gris uppercase tracking-wide mt-0.5">En vivo</div>
               </div>
             </div>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
-                size="lg" 
-                className="bg-gradient-primary hover:shadow-glow text-lg px-8"
-                onClick={() => {
-                  const auctionGrid = document.getElementById('auction-grid');
-                  if (auctionGrid) {
-                    auctionGrid.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                size="lg"
+                className="bg-gobierno-guinda hover:bg-gobierno-guinda-oscuro text-white text-base px-8 font-semibold"
+                onClick={() => document.getElementById("auction-grid")?.scrollIntoView({ behavior: "smooth" })}
               >
                 <Gavel className="mr-2 h-5 w-5" />
-                Comenzar a Pujar
+                Participar Ahora
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="text-lg px-8"
-                onClick={() => {
-                  const auctionGrid = document.getElementById('auction-grid');
-                  if (auctionGrid) {
-                    auctionGrid.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-gobierno-guinda text-gobierno-guinda hover:bg-gobierno-claro text-base px-8"
+                onClick={() => document.getElementById("auction-grid")?.scrollIntoView({ behavior: "smooth" })}
               >
-                Ver Subastas
+                Ver Catálogo
               </Button>
             </div>
 
-            {/* Trust indicators */}
-            <div className="flex items-center gap-6 pt-4 bg-background/80 backdrop-blur-sm p-4 rounded-lg border border-border/20">
-              <div className="flex items-center gap-2">
-                <Star className="h-5 w-5 text-auction-gold" />
-                <span className="text-sm text-foreground">Calificación 4.9/5</span>
+            {/* Sellos de confianza */}
+            <div className="flex items-center gap-4 text-xs text-gobierno-gris">
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="h-4 w-4 text-gobierno-guinda" />
+                <span>Proceso oficial verificado</span>
               </div>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-auction-success" />
-                <span className="text-sm text-foreground">+35% más ganancias</span>
+              <div className="flex items-center gap-1.5">
+                <TrendingUp className="h-4 w-4 text-gobierno-dorado-oscuro" />
+                <span>Hasta 70% de descuento</span>
               </div>
             </div>
           </div>
 
-          {/* Right content - Featured auction card */}
-          <div className="lg:flex justify-center hidden">
-            <div className="glass-card max-w-sm w-full space-y-6">
-              <div className="space-y-2">
-                <Badge className="bg-destructive animate-pulse-auction">
-                  <div className="w-2 h-2 bg-white rounded-full mr-2"></div>
-                  SUBASTA EN VIVO
+          {/* Columna derecha — tarjeta de subasta destacada */}
+          <div className="hidden lg:flex justify-center">
+            <div className="w-full max-w-sm bg-white border border-border rounded shadow-md overflow-hidden">
+              {/* Cabecera guinda */}
+              <div className="bg-gobierno-guinda px-5 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
+                  <span className="text-xs font-bold text-white uppercase tracking-widest">
+                    Subasta en Vivo
+                  </span>
+                </div>
+                <Badge className="bg-gobierno-dorado text-gobierno-guinda-oscuro text-xs font-bold">
+                  DESTACADA
                 </Badge>
-                <h3 className="text-xl font-bold">{featuredAuction.title}</h3>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
+              {/* Contenido */}
+              <div className="p-5 space-y-5">
+                <h3 className="font-bold text-base text-foreground leading-snug">
+                  {featured.title}
+                </h3>
+
+                <div className="flex justify-between items-end">
                   <div>
-                    <p className="text-sm text-muted-foreground">Puja actual</p>
-                    <p className="text-3xl font-bold text-auction-gold">
-                      ${featuredAuction.currentBid.toLocaleString()}
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Puja actual</p>
+                    <p className="text-3xl font-extrabold text-gobierno-guinda">
+                      ${featured.currentBid.toLocaleString("es-MX")}
+                      <span className="text-sm font-normal text-muted-foreground ml-1">MXN</span>
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-muted-foreground">Termina en</p>
-                    <Timer endTime={featuredAuction.endTime} variant="urgent" />
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Termina en</p>
+                    <Timer endTime={endTime} variant="urgent" />
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    <span>{featuredAuction.bidders} pujadores</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <TrendingUp className="h-4 w-4" />
-                    <span>+12% última hora</span>
-                  </div>
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground border-t border-border pt-3">
+                  <Users className="h-4 w-4" />
+                  <span>{featured.bidders} participantes</span>
                 </div>
 
-                <Button 
-                  className="w-full bg-gradient-primary hover:shadow-glow"
-                  onClick={() => handleFeaturedBid()}
+                <Button
+                  className="w-full bg-gobierno-guinda hover:bg-gobierno-guinda-oscuro text-white font-semibold"
+                  onClick={handleBid}
                 >
                   <Gavel className="mr-2 h-4 w-4" />
                   Pujar Ahora
                 </Button>
               </div>
+
+              {/* Pie con sello */}
+              <div className="bg-gobierno-claro px-5 py-2 border-t border-border flex items-center gap-2">
+                <ShieldCheck className="h-3.5 w-3.5 text-gobierno-guinda" />
+                <span className="text-xs text-gobierno-gris">
+                  Artículo certificado por la Aduana
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      
-      {/* Auth Dialog */}
+
+      {/* Banda dorada decorativa inferior */}
+      <div className="relative h-1 bg-gobierno-dorado" />
+
       <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
     </section>
   );
-
-  function handleFeaturedBid() {
-    if (!user) {
-      setAuthDialogOpen(true);
-      return;
-    }
-
-    // Round the current bid to remove fractional values
-    const roundedCurrentBid = Math.floor(featuredAuction.currentBid);
-    
-    // Calculate smart bid increment for the featured auction
-    const smartIncrement = calculateSmartBidIncrement(roundedCurrentBid);
-    const nextBidAmount = calculateNextBidAmount(roundedCurrentBid, smartIncrement);
-    
-    if (balance < nextBidAmount) {
-      toast({
-        title: "Saldo insuficiente",
-        description: "No tienes suficiente saldo para realizar esta puja. Recarga tu cuenta para participar.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Simular puja exitosa
-    toast({
-      title: "¡Puja realizada!",
-      description: `Has pujado $${nextBidAmount.toLocaleString()} por ${featuredAuction.title}`,
-    });
-
-    // Scroll to auction grid to see more auctions
-    setTimeout(() => {
-      const auctionGrid = document.getElementById('auction-grid');
-      if (auctionGrid) {
-        auctionGrid.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 1500);
-  }
 }

@@ -86,7 +86,7 @@ export const AuctionCard = ({ item, onBid }: AuctionCardProps) => {
   const isEndingSoon = timeRemaining <= 30 * 60 * 1000; // 30 minutes
 
   return (
-    <Card className="group glass-card hover:shadow-xl transition-all duration-300 overflow-hidden border-0">
+    <Card className="group bg-white border border-border hover:shadow-md hover:border-gobierno-dorado transition-all duration-200 overflow-hidden">
       <CardHeader className="p-0">
         <div className="relative overflow-hidden rounded-t-xl">
           <img 
@@ -178,9 +178,9 @@ export const AuctionCard = ({ item, onBid }: AuctionCardProps) => {
             <span className="text-sm text-muted-foreground">MXN</span>
           </div>
           
-          <Button 
+          <Button
             onClick={handleBid}
-            className="w-full glass-gradient"
+            className="w-full bg-gobierno-guinda hover:bg-gobierno-guinda-oscuro text-white"
             disabled={timeRemaining <= 0}
           >
             <Gavel className="h-4 w-4 mr-2" />

@@ -1,85 +1,86 @@
-import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Gavel, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
-import visaLogo from "@/assets/visa-logo.svg";
-import mastercardLogo from "@/assets/mastercard-logo.png";
+import { Gavel, Mail, Phone, MapPin } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="glass-card border-t border-border/50 mt-20">
+    <footer className="bg-gobierno-guinda text-white mt-20">
+      {/* Banda dorada superior */}
+      <div className="h-1 bg-gobierno-dorado" />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Brand */}
+
+          {/* Identidad */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gradient-primary">
-                <Gavel className="h-6 w-6 text-white" />
+              <div className="p-2 rounded bg-white/10">
+                <Gavel className="h-5 w-5 text-gobierno-dorado" />
               </div>
               <div>
-                <h3 className="text-lg font-bold bg-gradient-primary bg-clip-text text-transparent">
-                  Subastas GAP
-                </h3>
-                <p className="text-xs text-muted-foreground">Premium Auctions</p>
+                <div className="font-bold text-lg text-white leading-tight">Subastas GAP</div>
+                <div className="text-[10px] text-gobierno-dorado uppercase tracking-widest">
+                  Gobierno de México
+                </div>
               </div>
             </div>
-            <p className="text-sm text-muted-foreground">
-              La plataforma líder en subastas online con experiencia premium y seguridad garantizada.
+            <p className="text-sm text-white/70 leading-relaxed">
+              Plataforma oficial de subastas de artículos decomisados en
+              aeropuertos internacionales, supervisada por la Administración
+              General de Aduanas.
             </p>
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="icon" className="glass hover:bg-white/10">
-                <Facebook className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="glass hover:bg-white/10">
-                <Twitter className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="glass hover:bg-white/10">
-                <Instagram className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="glass hover:bg-white/10">
-                <Linkedin className="h-4 w-4" />
-              </Button>
+            {/* Escudo placeholder */}
+            <div className="flex items-center gap-2 pt-2">
+              <svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true">
+                <rect width="7.33" height="14" fill="#006847" />
+                <rect x="7.33" width="7.34" height="14" fill="#FFFFFF" />
+                <rect x="14.67" width="7.33" height="14" fill="#CE1126" />
+              </svg>
+              <span className="text-xs text-white/60">México</span>
             </div>
           </div>
 
-          {/* Enlaces Rápidos */}
+          {/* Navegación */}
           <div className="space-y-4">
-            <h4 className="text-lg font-semibold">Enlaces Rápidos</h4>
+            <h4 className="text-sm font-bold uppercase tracking-widest text-gobierno-dorado border-b border-white/20 pb-2">
+              Plataforma
+            </h4>
             <nav className="space-y-2">
-              <a href="#" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Cómo Funciona
-              </a>
-              <a href="#" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Categorías
-              </a>
-              <a href="#" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Mis Subastas
-              </a>
-              <a href="#" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Historia de Pujas
-              </a>
-              <a href="#" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Centro de Ayuda
-              </a>
+              {[
+                { label: "Cómo Funciona", href: "/#como-funciona" },
+                { label: "Categorías", href: "/#auction-grid" },
+                { label: "Mis Pujas", href: "/mis-pujas" },
+                { label: "Mi Perfil", href: "/perfil" },
+              ].map(({ label, href }) => (
+                <Link
+                  key={label}
+                  to={href}
+                  className="block text-sm text-white/70 hover:text-gobierno-dorado transition-colors"
+                >
+                  {label}
+                </Link>
+              ))}
             </nav>
           </div>
 
-          {/* Soporte */}
+          {/* Legal */}
           <div className="space-y-4">
-            <h4 className="text-lg font-semibold">Soporte</h4>
+            <h4 className="text-sm font-bold uppercase tracking-widest text-gobierno-dorado border-b border-white/20 pb-2">
+              Legal
+            </h4>
             <nav className="space-y-2">
-              <Link to="/faq" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                FAQ
+              <Link to="/faq" className="block text-sm text-white/70 hover:text-gobierno-dorado transition-colors">
+                Preguntas Frecuentes
               </Link>
-              <Link to="/terminos" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/terminos" className="block text-sm text-white/70 hover:text-gobierno-dorado transition-colors">
                 Términos y Condiciones
               </Link>
-              <Link to="/privacidad" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/privacidad" className="block text-sm text-white/70 hover:text-gobierno-dorado transition-colors">
                 Política de Privacidad
               </Link>
-              <Link to="/reembolsos" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/reembolsos" className="block text-sm text-white/70 hover:text-gobierno-dorado transition-colors">
                 Política de Reembolsos
               </Link>
-              <Link to="/contacto" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/contacto" className="block text-sm text-white/70 hover:text-gobierno-dorado transition-colors">
                 Contacto
               </Link>
             </nav>
@@ -87,44 +88,37 @@ export function Footer() {
 
           {/* Contacto */}
           <div className="space-y-4">
-            <h4 className="text-lg font-semibold">Contacto</h4>
+            <h4 className="text-sm font-bold uppercase tracking-widest text-gobierno-dorado border-b border-white/20 pb-2">
+              Contacto
+            </h4>
             <div className="space-y-3">
-              <div className="flex items-center gap-3 text-sm">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">contacto@subastasgap.mx</span>
+              <div className="flex items-center gap-3 text-sm text-white/70">
+                <Mail className="h-4 w-4 text-gobierno-dorado flex-shrink-0" />
+                <span>contacto@subastasgap.mx</span>
               </div>
-              <div className="flex items-center gap-3 text-sm">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">+52 (222) 123-4567</span>
+              <div className="flex items-center gap-3 text-sm text-white/70">
+                <Phone className="h-4 w-4 text-gobierno-dorado flex-shrink-0" />
+                <span>+52 (222) 123-4567</span>
               </div>
-              <div className="flex items-start gap-3 text-sm">
-                <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                <span className="text-muted-foreground">
+              <div className="flex items-start gap-3 text-sm text-white/70">
+                <MapPin className="h-4 w-4 text-gobierno-dorado flex-shrink-0 mt-0.5" />
+                <span>
                   Vía Atlixcáyotl No. 3248, Torre JV II, Piso 6<br />
-                  Col. Reserva Territorial Atlixcáyotl<br />
                   C.P. 72830, San Andrés Cholula, Puebla
                 </span>
               </div>
             </div>
-            <div className="pt-2">
-              <p className="text-xs text-muted-foreground">
-                Disponible 24/7 para asistencia
-              </p>
-            </div>
           </div>
         </div>
 
-        <div className="border-t border-border/50 mt-8 pt-8 flex flex-col sm:flex-row items-center justify-between">
-          <div className="flex items-center gap-4">
-            <p className="text-sm text-muted-foreground">
-              © 2024 Subastas GAP. Todos los derechos reservados.
-            </p>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Métodos de pago seguros:</span>
-              <img src={visaLogo} alt="Visa" className="h-5 w-auto" />
-              <img src={mastercardLogo} alt="Mastercard" className="h-5 w-auto" />
-            </div>
-          </div>
+        {/* Pie legal */}
+        <div className="border-t border-white/20 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-white/50 text-center sm:text-left">
+            © {new Date().getFullYear()} Subastas GAP — Gobierno de México. Todos los derechos reservados.
+          </p>
+          <p className="text-xs text-white/40">
+            Servicio regulado por la Administración General de Aduanas
+          </p>
         </div>
       </div>
     </footer>
