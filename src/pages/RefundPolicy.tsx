@@ -1,4 +1,4 @@
-import { Header } from "@/components/Header";
+﻿import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
 const RefundPolicy = () => {
@@ -34,7 +34,7 @@ const RefundPolicy = () => {
                   <li>El usuario no tiene subastas ganadas pendientes de pago o envío.</li>
                 </ul>
                 
-                <p className="text-muted-foreground mb-3">Para solicitar un reembolso, escribe a <a href="mailto:reembolsos@subastasgap.mx" className="text-primary hover:underline">reembolsos@subastasgap.mx</a> con:</p>
+                <p className="text-muted-foreground mb-3">Para solicitar un reembolso, escribe a <a href="mailto:reembolsos@subastasgap.com.mx" className="text-primary hover:underline">reembolsos@subastasgap.com.mx</a> con:</p>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-4">
                   <li>Nombre completo</li>
                   <li>Correo registrado</li>

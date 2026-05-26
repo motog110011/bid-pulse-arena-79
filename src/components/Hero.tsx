@@ -45,7 +45,8 @@ export function Hero() {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${heroImage})` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-white/97 via-white/90 to-white/60" />
+      {/* overlay más opaco para garantizar legibilidad en todos los tamaños */}
+      <div className="absolute inset-0 bg-white/90 sm:bg-gradient-to-r sm:from-white/98 sm:via-white/92 sm:to-white/70" />
 
       {/* Banda dorada decorativa superior */}
       <div className="relative h-1 bg-gobierno-dorado" />
@@ -59,10 +60,10 @@ export function Hero() {
             <div className="flex items-center gap-3">
               <div className="h-12 w-1 bg-gobierno-guinda rounded-full" />
               <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-gobierno-gris">
+                <p className="text-xs font-semibold uppercase tracking-widest text-gobierno-guinda">
                   Subastas GAP
                 </p>
-                <p className="text-xs text-gobierno-gris/70 tracking-wide">
+                <p className="text-xs text-foreground/60 tracking-wide">
                   Plataforma certificada de subastas
                 </p>
               </div>
@@ -74,7 +75,7 @@ export function Hero() {
                 Subastas de
                 <span className="block text-foreground">Productos Decomisados</span>
               </h1>
-              <p className="text-base text-gobierno-gris max-w-lg leading-relaxed">
+              <p className="text-base text-foreground/80 max-w-lg leading-relaxed">
                 Artículos confiscados en aeropuertos internacionales de México.
                 Proceso transparente, verificado y 100% legal.
                 Precios muy por debajo del mercado.

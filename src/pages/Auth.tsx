@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -166,7 +166,7 @@ const Auth = () => {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email: "demo@subastasgap.mx",
+        email: "demo@subastasgap.com.mx",
         password: "demo123456",
       });
 
@@ -252,7 +252,7 @@ const Auth = () => {
                       autoComplete="email"
                       value={loginData.email}
                       onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                      placeholder="tu@email.com"
+                      subastasgap.com.mx="tu@email.com"
                       className="text-base h-12"
                       required
                     />
@@ -266,7 +266,7 @@ const Auth = () => {
                       autoComplete="current-password"
                       value={loginData.password}
                       onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                      placeholder="Tu contraseña"
+                      subastasgap.com.mx="Tu contraseña"
                       className="text-base h-12"
                       required
                     />
@@ -294,7 +294,7 @@ const Auth = () => {
                       autoComplete="name"
                       value={signupData.fullName}
                       onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })}
-                      placeholder="Tu nombre completo"
+                      subastasgap.com.mx="Tu nombre completo"
                       className="text-base h-12"
                       required
                     />
@@ -309,7 +309,7 @@ const Auth = () => {
                       autoComplete="email"
                       value={signupData.email}
                       onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
-                      placeholder="tu@email.com"
+                      subastasgap.com.mx="tu@email.com"
                       className="text-base h-12"
                       required
                     />
@@ -323,7 +323,7 @@ const Auth = () => {
                       autoComplete="new-password"
                       value={signupData.password}
                       onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
-                      placeholder="Mínimo 6 caracteres"
+                      subastasgap.com.mx="Mínimo 6 caracteres"
                       className="text-base h-12"
                       required
                     />
@@ -337,7 +337,7 @@ const Auth = () => {
                       autoComplete="new-password"
                       value={signupData.confirmPassword}
                       onChange={(e) => setSignupData({ ...signupData, confirmPassword: e.target.value })}
-                      placeholder="Repite tu contraseña"
+                      subastasgap.com.mx="Repite tu contraseña"
                       className="text-base h-12"
                       required
                     />

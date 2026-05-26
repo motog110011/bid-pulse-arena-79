@@ -1,4 +1,4 @@
-import { Header } from "@/components/Header";
+﻿import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
 const FAQ = () => {
@@ -22,7 +22,7 @@ const FAQ = () => {
                   <li>Completa el formulario para generar un código de referencia único, asociado a tu cuenta y transacción.</li>
                   <li>Realiza una transferencia SPEI por el monto deseado (mínimo $1,000 MXN – máximo $15,000 MXN).</li>
                   <li>Una vez realizada la transferencia, tu saldo será validado por nuestro equipo.</li>
-                  <li>Opcional: Puedes enviar el comprobante al correo saldo@subastasgap.mx para agilizar el proceso.</li>
+                  <li>Opcional: Puedes enviar el comprobante al correo saldo@subastasgap.com.mx para agilizar el proceso.</li>
                 </ol>
               </div>
             </div>
@@ -71,7 +71,7 @@ const FAQ = () => {
 
             <div className="border rounded-lg p-6">
               <h2 className="text-xl font-semibold mb-3">¿Puedo contactar a alguien si tengo dudas?</h2>
-              <p className="text-muted-foreground">Sí. Puedes escribirnos a soporte@subastasgap.mx o a través de WhatsApp si elegiste ese método de contacto en tu cuenta.</p>
+              <p className="text-muted-foreground">Sí. Puedes escribirnos a soporte@subastasgap.com.mx o a través de WhatsApp si elegiste ese método de contacto en tu cuenta.</p>
             </div>
           </div>
         </div>

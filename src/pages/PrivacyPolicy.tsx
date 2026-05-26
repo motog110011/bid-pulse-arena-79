@@ -1,4 +1,4 @@
-import { Header } from "@/components/Header";
+﻿import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
 const PrivacyPolicy = () => {
@@ -52,7 +52,7 @@ const PrivacyPolicy = () => {
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                   <li>Acceder, corregir o eliminar tus datos personales.</li>
                   <li>Solicitar la cancelación de tu cuenta.</li>
-                  <li>Limitar el uso de tu información enviando un correo a <a href="mailto:privacidad@subastasgap.mx" className="text-primary hover:underline">privacidad@subastasgap.mx</a>.</li>
+                  <li>Limitar el uso de tu información enviando un correo a <a href="mailto:privacidad@subastasgap.com.mx" className="text-primary hover:underline">privacidad@subastasgap.com.mx</a>.</li>
                 </ul>
               </section>
 

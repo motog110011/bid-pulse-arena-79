@@ -1,4 +1,4 @@
-import { Header } from "@/components/Header";
+﻿import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
 const TermsOfService = () => {
@@ -108,10 +108,10 @@ const TermsOfService = () => {
                 <p>San Andrés Cholula, Puebla</p>
                 <p>
                   <a 
-                    href="mailto:contacto@subastasgap.mx" 
+                    href="mailto:contacto@subastasgap.com.mx" 
                     className="text-primary hover:underline"
                   >
-                    contacto@subastasgap.mx
+                    contacto@subastasgap.com.mx
                   </a>
                 </p>
               </div>

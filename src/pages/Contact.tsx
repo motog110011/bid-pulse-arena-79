@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -90,7 +90,7 @@ const Contact = () => {
                         <FormItem>
                           <FormLabel>Nombre completo</FormLabel>
                           <FormControl>
-                            <Input placeholder="Tu nombre" {...field} />
+                            <Input subastasgap.com.mx="Tu nombre" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -104,7 +104,7 @@ const Contact = () => {
                         <FormItem>
                           <FormLabel>Correo electrónico</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="tu@email.com" {...field} />
+                            <Input type="email" subastasgap.com.mx="tu@email.com" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -118,7 +118,7 @@ const Contact = () => {
                         <FormItem>
                           <FormLabel>Asunto</FormLabel>
                           <FormControl>
-                            <Input placeholder="¿En qué podemos ayudarte?" {...field} />
+                            <Input subastasgap.com.mx="¿En qué podemos ayudarte?" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -133,7 +133,7 @@ const Contact = () => {
                           <FormLabel>Mensaje</FormLabel>
                           <FormControl>
                             <Textarea 
-                              placeholder="Describe tu consulta o problema..."
+                              subastasgap.com.mx="Describe tu consulta o problema..."
                               className="min-h-[120px]"
                               {...field} 
                             />
@@ -170,7 +170,7 @@ const Contact = () => {
                     <Mail className="h-5 w-5 text-primary" />
                     <div>
                       <p className="font-medium">Correo electrónico</p>
-                      <p className="text-sm text-muted-foreground">soporte@subastasgap.mx</p>
+                      <p className="text-sm text-muted-foreground">soporte@subastasgap.com.mx</p>
                     </div>
                   </div>
 
@@ -216,20 +216,20 @@ const Contact = () => {
                 <CardContent className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">Recargas de saldo:</span>
-                    <a href="mailto:saldo@subastasgap.mx" className="text-sm text-primary hover:underline">
-                      saldo@subastasgap.mx
+                    <a href="mailto:saldo@subastasgap.com.mx" className="text-sm text-primary hover:underline">
+                      saldo@subastasgap.com.mx
                     </a>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">Reembolsos:</span>
-                    <a href="mailto:reembolsos@subastasgap.mx" className="text-sm text-primary hover:underline">
-                      reembolsos@subastasgap.mx
+                    <a href="mailto:reembolsos@subastasgap.com.mx" className="text-sm text-primary hover:underline">
+                      reembolsos@subastasgap.com.mx
                     </a>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">Privacidad:</span>
-                    <a href="mailto:privacidad@subastasgap.mx" className="text-sm text-primary hover:underline">
-                      privacidad@subastasgap.mx
+                    <a href="mailto:privacidad@subastasgap.com.mx" className="text-sm text-primary hover:underline">
+                      privacidad@subastasgap.com.mx
                     </a>
                   </div>
                 </CardContent>

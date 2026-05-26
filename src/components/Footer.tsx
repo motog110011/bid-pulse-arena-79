@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 import { Gavel, Mail, Phone, MapPin } from "lucide-react";
 
 export function Footer() {
@@ -28,7 +28,7 @@ export function Footer() {
               aeropuertos internacionales. Proceso transparente,
               legal y verificado.
             </p>
-            {/* Escudo placeholder */}
+            {/* Escudo subastasgap.com.mx */}
             <div className="flex items-center gap-2 pt-2">
               <svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true">
                 <rect width="7.33" height="14" fill="#006847" />
@@ -94,7 +94,7 @@ export function Footer() {
             <div className="space-y-3">
               <div className="flex items-center gap-3 text-sm text-white/70">
                 <Mail className="h-4 w-4 text-gobierno-dorado flex-shrink-0" />
-                <span>contacto@subastasgap.mx</span>
+                <span>contacto@subastasgap.com.mx</span>
               </div>
               <div className="flex items-center gap-3 text-sm text-white/70">
                 <Phone className="h-4 w-4 text-gobierno-dorado flex-shrink-0" />

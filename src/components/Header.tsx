@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -74,7 +74,7 @@ export function Header() {
             </span>
           </div>
           <span className="text-xs text-gobierno-dorado tracking-widest font-medium">
-            subastasgap.mx
+            subastasgap.com.mx
           </span>
         </div>
       </div>

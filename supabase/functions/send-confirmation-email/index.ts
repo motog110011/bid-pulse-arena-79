@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+﻿import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 import { Resend } from "npm:resend@4.0.0";
 
@@ -175,7 +175,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email via Resend
     const emailResponse = await resend.emails.send({
-      from: "Subastas GAP <noreply@subastasgap.com>",
+      from: "Subastas GAP <noreply@subastasgap.com.mx>",
       to: [user.email],
       subject: "Confirma tu cuenta en Subastas GAP - Premium Auctions",
       html: htmlContent,

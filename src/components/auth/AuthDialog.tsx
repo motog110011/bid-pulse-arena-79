@@ -95,67 +95,87 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
           </TabsList>
           
           <TabsContent value="login">
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-4 mt-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Correo electrónico</Label>
+                <Label htmlFor="dialog-email">Correo electrónico</Label>
                 <Input
-                  id="email"
+                  id="dialog-email"
                   type="email"
+                  inputMode="email"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="h-12 text-base bg-muted border-border"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
+                <Label htmlFor="dialog-password">Contraseña</Label>
                 <Input
-                  id="password"
+                  id="dialog-password"
                   type="password"
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="h-12 text-base bg-muted border-border"
                   required
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button
+                type="submit"
+                className="w-full h-12 text-base bg-gobierno-guinda hover:bg-gobierno-guinda-oscuro text-white"
+                disabled={isLoading}
+              >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Iniciar Sesión
               </Button>
             </form>
           </TabsContent>
-          
+
           <TabsContent value="register">
-            <form onSubmit={handleRegister} className="space-y-4">
+            <form onSubmit={handleRegister} className="space-y-4 mt-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nombre completo</Label>
+                <Label htmlFor="dialog-name">Nombre completo</Label>
                 <Input
-                  id="name"
+                  id="dialog-name"
                   type="text"
+                  autoComplete="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  className="h-12 text-base bg-muted border-border"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="register-email">Correo electrónico</Label>
+                <Label htmlFor="dialog-reg-email">Correo electrónico</Label>
                 <Input
-                  id="register-email"
+                  id="dialog-reg-email"
                   type="email"
+                  inputMode="email"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="h-12 text-base bg-muted border-border"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="register-password">Contraseña</Label>
+                <Label htmlFor="dialog-reg-password">Contraseña</Label>
                 <Input
-                  id="register-password"
+                  id="dialog-reg-password"
                   type="password"
+                  autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="h-12 text-base bg-muted border-border"
                   required
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button
+                type="submit"
+                className="w-full h-12 text-base bg-gobierno-guinda hover:bg-gobierno-guinda-oscuro text-white"
+                disabled={isLoading}
+              >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Crear Cuenta
               </Button>
