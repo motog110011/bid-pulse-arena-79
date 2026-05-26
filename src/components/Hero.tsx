@@ -55,15 +55,15 @@ export function Hero() {
 
           {/* Columna izquierda */}
           <div className="space-y-8">
-            {/* Sello institucional */}
+            {/* Sello de la plataforma */}
             <div className="flex items-center gap-3">
               <div className="h-12 w-1 bg-gobierno-guinda rounded-full" />
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-gobierno-gris">
-                  Gobierno de México
+                  Subastas GAP
                 </p>
                 <p className="text-xs text-gobierno-gris/70 tracking-wide">
-                  Administración General de Aduanas
+                  Plataforma certificada de subastas
                 </p>
               </div>
             </div>
@@ -76,8 +76,8 @@ export function Hero() {
               </h1>
               <p className="text-base text-gobierno-gris max-w-lg leading-relaxed">
                 Artículos confiscados en aeropuertos internacionales de México.
-                Proceso oficial, transparente y 100% legal, supervisado por la
-                Administración General de Aduanas.
+                Proceso transparente, verificado y 100% legal.
+                Precios muy por debajo del mercado.
               </p>
             </div>
 
@@ -193,7 +193,7 @@ export function Hero() {
               <div className="bg-gobierno-claro px-5 py-2 border-t border-border flex items-center gap-2">
                 <ShieldCheck className="h-3.5 w-3.5 text-gobierno-guinda" />
                 <span className="text-xs text-gobierno-gris">
-                  Artículo certificado por la Aduana
+                  Artículo verificado por Subastas GAP
                 </span>
               </div>
             </div>

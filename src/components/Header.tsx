@@ -52,30 +52,19 @@ export function Header() {
 
   return (
     <div className="sticky top-0 z-50">
-      {/* Barra institucional superior — estilo gob.mx */}
+      {/* Barra de aviso institucional */}
       <div className="bg-gobierno-guinda text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-between">
           <div className="flex items-center gap-3 text-xs">
-            {/* Bandera Mexico simplificada */}
-            <svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true">
-              <rect width="7.33" height="14" fill="#006847" />
-              <rect x="7.33" width="7.34" height="14" fill="#FFFFFF" />
-              <rect x="14.67" width="7.33" height="14" fill="#CE1126" />
-            </svg>
-            <span className="font-semibold tracking-wide">Gobierno de México</span>
+            <span className="font-semibold tracking-wide">Subastas GAP</span>
             <span className="text-gobierno-dorado hidden sm:block">|</span>
             <span className="hidden sm:block opacity-80">
-              Administración General de Aduanas
+              Artículos decomisados en aeropuertos internacionales
             </span>
           </div>
-          <a
-            href="https://www.gob.mx"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-gobierno-dorado hover:text-gobierno-dorado-claro transition-colors tracking-widest font-medium"
-          >
-            gob.mx
-          </a>
+          <span className="text-xs text-gobierno-dorado tracking-widest font-medium">
+            subastasgap.mx
+          </span>
         </div>
       </div>
 

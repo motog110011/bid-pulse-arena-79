@@ -19,14 +19,14 @@ export function Footer() {
               <div>
                 <div className="font-bold text-lg text-white leading-tight">Subastas GAP</div>
                 <div className="text-[10px] text-gobierno-dorado uppercase tracking-widest">
-                  Gobierno de México
+                  Subastas de Artículos Decomisados
                 </div>
               </div>
             </div>
             <p className="text-sm text-white/70 leading-relaxed">
-              Plataforma oficial de subastas de artículos decomisados en
-              aeropuertos internacionales, supervisada por la Administración
-              General de Aduanas.
+              Plataforma especializada en subastas de artículos decomisados en
+              aeropuertos internacionales. Proceso transparente,
+              legal y verificado.
             </p>
             {/* Escudo placeholder */}
             <div className="flex items-center gap-2 pt-2">
@@ -114,10 +114,10 @@ export function Footer() {
         {/* Pie legal */}
         <div className="border-t border-white/20 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-white/50 text-center sm:text-left">
-            © {new Date().getFullYear()} Subastas GAP — Gobierno de México. Todos los derechos reservados.
+            © {new Date().getFullYear()} Subastas GAP. Todos los derechos reservados.
           </p>
           <p className="text-xs text-white/40">
-            Servicio regulado por la Administración General de Aduanas
+            Artículos decomisados en aeropuertos internacionales de México
           </p>
         </div>
       </div>
