@@ -252,7 +252,7 @@ const Auth = () => {
                       autoComplete="email"
                       value={loginData.email}
                       onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                      subastasgap.com.mx="tu@email.com"
+                      placeholder="tu@email.com"
                       className="text-base h-12"
                       required
                     />
@@ -266,7 +266,7 @@ const Auth = () => {
                       autoComplete="current-password"
                       value={loginData.password}
                       onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                      subastasgap.com.mx="Tu contraseña"
+                      placeholder="Tu contraseña"
                       className="text-base h-12"
                       required
                     />
@@ -294,7 +294,7 @@ const Auth = () => {
                       autoComplete="name"
                       value={signupData.fullName}
                       onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })}
-                      subastasgap.com.mx="Tu nombre completo"
+                      placeholder="Tu nombre completo"
                       className="text-base h-12"
                       required
                     />
@@ -309,7 +309,7 @@ const Auth = () => {
                       autoComplete="email"
                       value={signupData.email}
                       onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
-                      subastasgap.com.mx="tu@email.com"
+                      placeholder="tu@email.com"
                       className="text-base h-12"
                       required
                     />
@@ -323,7 +323,7 @@ const Auth = () => {
                       autoComplete="new-password"
                       value={signupData.password}
                       onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
-                      subastasgap.com.mx="Mínimo 6 caracteres"
+                      placeholder="Mínimo 6 caracteres"
                       className="text-base h-12"
                       required
                     />
@@ -337,7 +337,7 @@ const Auth = () => {
                       autoComplete="new-password"
                       value={signupData.confirmPassword}
                       onChange={(e) => setSignupData({ ...signupData, confirmPassword: e.target.value })}
-                      subastasgap.com.mx="Repite tu contraseña"
+                      placeholder="Repite tu contraseña"
                       className="text-base h-12"
                       required
                     />

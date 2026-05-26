@@ -90,7 +90,7 @@ const Contact = () => {
                         <FormItem>
                           <FormLabel>Nombre completo</FormLabel>
                           <FormControl>
-                            <Input subastasgap.com.mx="Tu nombre" {...field} />
+                            <Input placeholder="Tu nombre" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -104,7 +104,7 @@ const Contact = () => {
                         <FormItem>
                           <FormLabel>Correo electrónico</FormLabel>
                           <FormControl>
-                            <Input type="email" subastasgap.com.mx="tu@email.com" {...field} />
+                            <Input type="email" placeholder="tu@email.com" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -118,7 +118,7 @@ const Contact = () => {
                         <FormItem>
                           <FormLabel>Asunto</FormLabel>
                           <FormControl>
-                            <Input subastasgap.com.mx="¿En qué podemos ayudarte?" {...field} />
+                            <Input placeholder="¿En qué podemos ayudarte?" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -133,7 +133,7 @@ const Contact = () => {
                           <FormLabel>Mensaje</FormLabel>
                           <FormControl>
                             <Textarea 
-                              subastasgap.com.mx="Describe tu consulta o problema..."
+                              placeholder="Describe tu consulta o problema..."
                               className="min-h-[120px]"
                               {...field} 
                             />
