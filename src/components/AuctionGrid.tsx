@@ -206,9 +206,18 @@ const AuctionGrid = () => {
             {tabKeys.map((category) => (
               <TabsContent key={category} value={category} className="space-y-6">
                 {loading ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  // UX: skeleton con aspect-ratio que coincide con la imagen de la card — evita layout shift
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {[1, 2, 3, 4, 5, 6].map((i) => (
-                      <div key={i} className="h-64 bg-muted animate-pulse rounded-lg" />
+                      <div key={i} className="bg-white border border-border rounded overflow-hidden animate-pulse">
+                        <div className="aspect-[4/3] bg-muted" />
+                        <div className="p-4 space-y-3">
+                          <div className="h-4 bg-muted rounded w-3/4" />
+                          <div className="h-4 bg-muted rounded w-1/2" />
+                          <div className="h-8 bg-muted rounded" />
+                          <div className="h-12 bg-muted rounded" />
+                        </div>
+                      </div>
                     ))}
                   </div>
                 ) : filteredAuctions.length === 0 ? (
@@ -216,7 +225,8 @@ const AuctionGrid = () => {
                     <p className="text-lg">No hay subastas activas en esta categoría.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  // UX: mobile-first grid — 1 col base, 2 en sm, 3 en lg
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {filteredAuctions.map((item) => (
                       <AuctionCard key={item.id} item={item} onBid={handleBid} />
                     ))}

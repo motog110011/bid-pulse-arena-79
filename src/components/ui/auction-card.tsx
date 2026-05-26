@@ -1,14 +1,13 @@
-
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Timer } from "@/components/ui/timer";
-import { Heart, Gavel, Users, TrendingUp } from "lucide-react";
+import { Gavel, Users, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { useProductImageMappings } from '@/hooks/useProductImages';
 import { resolveDeterministicImage, getFallbackCandidates } from '@/lib/deterministicImageResolver';
-import { calculateNextBidAmount, calculateSmartBidIncrement, validateBidAmount, formatBidAmount } from '@/utils/bidUtils';
+import { calculateNextBidAmount, calculateSmartBidIncrement, validateBidAmount } from '@/utils/bidUtils';
 
 interface AuctionItem {
   id: string;
@@ -31,107 +30,91 @@ interface AuctionCardProps {
 }
 
 export const AuctionCard = ({ item, onBid }: AuctionCardProps) => {
-  // Round the current bid to remove fractional values
   const roundedCurrentBid = Math.floor(item.currentBid);
-  
-  // Calculate smart bid increment based on rounded current bid amount
   const smartIncrement = calculateSmartBidIncrement(roundedCurrentBid);
   const suggestedBidAmount = calculateNextBidAmount(roundedCurrentBid, smartIncrement);
-  
+
   const [newBidAmount, setNewBidAmount] = useState(suggestedBidAmount);
   const [imgError, setImgError] = useState(false);
   const [fallbackIndex, setFallbackIndex] = useState(0);
-  
+
   const { data: mappings } = useProductImageMappings();
 
-  // Resolver imagen de forma determinística
   const primaryImage = resolveDeterministicImage(
-    item.title,
-    item.category,
-    item.image,
-    mappings
+    item.title, item.category, item.image, mappings
   );
-
   const fallbackCandidates = getFallbackCandidates(item.category, item.title);
-  const currentSrc = imgError && fallbackIndex < fallbackCandidates.length 
-    ? fallbackCandidates[fallbackIndex] 
+  const currentSrc = imgError && fallbackIndex < fallbackCandidates.length
+    ? fallbackCandidates[fallbackIndex]
     : primaryImage;
 
-  // Reset error state when item changes
   useEffect(() => {
     setImgError(false);
     setFallbackIndex(0);
   }, [item.id]);
 
-  // Update bid amount when current bid changes - use smart increments
   useEffect(() => {
-    const roundedBid = Math.floor(item.currentBid);
-    const smartIncrement = calculateSmartBidIncrement(roundedBid);
-    const suggestedAmount = calculateNextBidAmount(roundedBid, smartIncrement);
-    setNewBidAmount(suggestedAmount);
+    const rounded = Math.floor(item.currentBid);
+    const inc = calculateSmartBidIncrement(rounded);
+    setNewBidAmount(calculateNextBidAmount(rounded, inc));
   }, [item.currentBid]);
 
   const handleBid = () => {
     const validation = validateBidAmount(newBidAmount, item.currentBid, smartIncrement);
-    
     if (!validation.valid) {
       toast.error(validation.message || "Oferta inválida");
       return;
     }
-    
     onBid(item.id, newBidAmount);
   };
 
   const timeRemaining = item.endTime.getTime() - Date.now();
-  const isEndingSoon = timeRemaining <= 30 * 60 * 1000; // 30 minutes
+  const isEndingSoon = timeRemaining <= 30 * 60 * 1000;
+  const isExpired = timeRemaining <= 0;
 
   return (
-    <Card className="group bg-white border border-border hover:shadow-md hover:border-gobierno-dorado transition-all duration-200 overflow-hidden">
+    <Card className="flex flex-col bg-white border border-border hover:border-gobierno-dorado hover:shadow-md transition-all duration-200 overflow-hidden">
       <CardHeader className="p-0">
-        <div className="relative overflow-hidden rounded-t-xl">
-          <img 
+        {/* UX: aspect-ratio fijo para evitar layout shift mientras carga la imagen */}
+        <div className="relative overflow-hidden aspect-[4/3] bg-muted">
+          <img
             src={currentSrc}
-            alt={`${item.title} - ${item.category}`}
-            className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+            alt={`${item.title} — ${item.category}`}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
             loading="lazy"
             decoding="async"
-            sizes="(max-width: 768px) 100vw, 33vw"
             referrerPolicy="no-referrer"
             crossOrigin="anonymous"
             onError={() => {
               if (!imgError) {
                 setImgError(true);
               } else if (fallbackIndex < fallbackCandidates.length - 1) {
-                setFallbackIndex(prev => prev + 1);
+                setFallbackIndex((p) => p + 1);
               }
             }}
           />
-          <div className="absolute top-3 left-3 flex gap-2">
+          {/* UX: badges en esquina superior izquierda — zona segura en mobile */}
+          <div className="absolute top-2 left-2 flex flex-col gap-1">
             {item.isLive && (
-              <Badge className="bg-destructive animate-pulse-auction">
+              <Badge className="bg-destructive text-white animate-pulse-auction text-xs">
                 EN VIVO
               </Badge>
             )}
-            {isEndingSoon && (
-              <Badge className="bg-auction-warning">
+            {isEndingSoon && !isExpired && (
+              <Badge className="bg-auction-warning text-white text-xs">
                 TERMINANDO
               </Badge>
             )}
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-3 right-3 glass text-white hover:text-destructive"
-          >
-            <Heart className="h-4 w-4" />
-          </Button>
         </div>
       </CardHeader>
 
-      <CardContent className="p-6 space-y-4">
-        {/* Title and Category */}
+      {/* UX: CardContent con flex-col y flex-1 para que todas las cards tengan la misma altura */}
+      <CardContent className="flex flex-col flex-1 p-4 gap-3">
+        {/* Título y categoría */}
         <div>
-          <h3 className="font-semibold text-lg line-clamp-2 mb-1">
+          {/* UX: line-clamp-2 evita desbordamiento y mantiene altura consistente */}
+          <h3 className="font-semibold text-base leading-snug line-clamp-2 mb-1.5 text-foreground">
             {item.title}
           </h3>
           <Badge variant="secondary" className="text-xs">
@@ -139,59 +122,61 @@ export const AuctionCard = ({ item, onBid }: AuctionCardProps) => {
           </Badge>
         </div>
 
-        {/* Current Bid Info */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Oferta actual:</span>
-            <span className="font-bold text-xl text-primary">
-              ${Math.floor(item.currentBid)} MXN
-            </span>
+        {/* Puja actual */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">Oferta actual</p>
+            <p className="font-bold text-xl text-gobierno-guinda">
+              ${Math.floor(item.currentBid).toLocaleString("es-MX")}
+              <span className="text-xs font-normal text-muted-foreground ml-1">MXN</span>
+            </p>
           </div>
-          
           {item.currentBidder && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users className="h-4 w-4" />
-              <span>{item.currentBidder}</span>
-              <span>•</span>
-              <span>{item.totalBids} ofertas</span>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground text-right">
+              <Users className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
+              <span>{item.totalBids} pujas</span>
             </div>
           )}
         </div>
 
         {/* Timer */}
-        <div className="text-center py-2">
+        <div className="text-center py-1">
           <Timer endTime={item.endTime} />
         </div>
 
-        {/* Bid Input */}
-        <div className="space-y-3">
+        {/* UX: controles de puja en la mitad inferior — thumb zone en mobile */}
+        <div className="mt-auto space-y-2">
           <div className="flex items-center gap-2">
+            {/* UX: inputMode numeric abre teclado numérico en mobile sin zoom (text-base = 16px) */}
             <input
               type="number"
+              inputMode="numeric"
               value={newBidAmount}
               onChange={(e) => setNewBidAmount(Number(e.target.value))}
               min={suggestedBidAmount}
               step={smartIncrement}
-              className="flex-1 px-3 py-2 rounded-lg border border-border bg-background"
-              placeholder="Tu oferta"
+              disabled={isExpired}
+              aria-label="Monto de tu oferta en MXN"
+              className="flex-1 px-3 py-2 text-base rounded border border-border bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gobierno-guinda disabled:opacity-50"
             />
-            <span className="text-sm text-muted-foreground">MXN</span>
+            <span className="text-sm text-muted-foreground shrink-0">MXN</span>
           </div>
-          
+
+          {/* UX: h-12 = 48px — área de toque mínima recomendada para mobile */}
           <Button
             onClick={handleBid}
-            className="w-full bg-gobierno-guinda hover:bg-gobierno-guinda-oscuro text-white"
-            disabled={timeRemaining <= 0}
+            disabled={isExpired}
+            className="w-full h-12 bg-gobierno-guinda hover:bg-gobierno-guinda-oscuro text-white font-semibold text-base"
           >
-            <Gavel className="h-4 w-4 mr-2" />
-            {timeRemaining <= 0 ? "Subasta Finalizada" : "Realizar Oferta"}
+            <Gavel className="h-4 w-4 mr-2" aria-hidden="true" />
+            {isExpired ? "Subasta Finalizada" : "Realizar Oferta"}
           </Button>
         </div>
 
-        {/* Bid Increment Info */}
-        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-          <TrendingUp className="h-3 w-3" />
-          <span>Incremento mínimo: ${smartIncrement} MXN</span>
+        {/* Metadata secundaria */}
+        <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+          <TrendingUp className="h-3 w-3" aria-hidden="true" />
+          <span>Incremento mínimo: ${smartIncrement.toLocaleString("es-MX")} MXN</span>
         </div>
       </CardContent>
     </Card>

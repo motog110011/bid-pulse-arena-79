@@ -244,31 +244,38 @@ const Auth = () => {
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
+                    {/* UX: text-base = 16px mínimo — evita zoom automático en iOS */}
                     <Input
                       id="email"
                       type="email"
+                      inputMode="email"
+                      autoComplete="email"
                       value={loginData.email}
                       onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                       placeholder="tu@email.com"
+                      className="text-base h-12"
                       required
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="password">Contraseña</Label>
                     <Input
                       id="password"
                       type="password"
+                      autoComplete="current-password"
                       value={loginData.password}
                       onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                       placeholder="Tu contraseña"
+                      className="text-base h-12"
                       required
                     />
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-gradient-primary" 
+                  {/* UX: h-12 = 48px — área de toque mínima para botón submit */}
+                  <Button
+                    type="submit"
+                    className="w-full h-12 text-base bg-gobierno-guinda hover:bg-gobierno-guinda-oscuro text-white"
                     disabled={isLoading}
                   >
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -284,52 +291,61 @@ const Auth = () => {
                     <Input
                       id="fullName"
                       type="text"
+                      autoComplete="name"
                       value={signupData.fullName}
                       onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })}
                       placeholder="Tu nombre completo"
+                      className="text-base h-12"
                       required
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
                     <Input
                       id="signup-email"
                       type="email"
+                      inputMode="email"
+                      autoComplete="email"
                       value={signupData.email}
                       onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
                       placeholder="tu@email.com"
+                      className="text-base h-12"
                       required
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Contraseña</Label>
                     <Input
                       id="signup-password"
                       type="password"
+                      autoComplete="new-password"
                       value={signupData.password}
                       onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
                       placeholder="Mínimo 6 caracteres"
+                      className="text-base h-12"
                       required
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="confirm-password">Confirmar Contraseña</Label>
                     <Input
                       id="confirm-password"
                       type="password"
+                      autoComplete="new-password"
                       value={signupData.confirmPassword}
                       onChange={(e) => setSignupData({ ...signupData, confirmPassword: e.target.value })}
                       placeholder="Repite tu contraseña"
+                      className="text-base h-12"
                       required
                     />
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-gradient-primary" 
+                  <Button
+                    type="submit"
+                    className="w-full h-12 text-base bg-gobierno-guinda hover:bg-gobierno-guinda-oscuro text-white"
                     disabled={isLoading}
                   >
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

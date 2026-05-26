@@ -213,12 +213,15 @@ export function WalletRechargeForm() {
                 <FormItem>
                   <FormLabel>Monto a recargar (MXN)</FormLabel>
                   <FormControl>
+                    {/* UX: inputMode numeric abre teclado numérico en mobile; text-base evita zoom en iOS */}
                     <Input
                       type="number"
+                      inputMode="numeric"
                       placeholder="1000"
                       min={1000}
                       max={15000}
                       step={100}
+                      className="text-base h-12"
                       {...field}
                       onChange={(e) => field.onChange(Number(e.target.value))}
                     />
@@ -286,19 +289,22 @@ export function WalletRechargeForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {form.watch("contactMethod") === "email" 
-                      ? "Correo electrónico" 
-                      : "Número de teléfono"
-                    }
+                    {form.watch("contactMethod") === "email"
+                      ? "Correo electrónico"
+                      : "Número de teléfono"}
                   </FormLabel>
                   <FormControl>
+                    {/* UX: type tel abre teclado telefónico en mobile; text-base evita zoom */}
                     <Input
                       type={form.watch("contactMethod") === "email" ? "email" : "tel"}
+                      inputMode={form.watch("contactMethod") === "email" ? "email" : "tel"}
+                      autoComplete={form.watch("contactMethod") === "email" ? "email" : "tel"}
                       placeholder={
-                        form.watch("contactMethod") === "email" 
-                          ? "tu@email.com" 
+                        form.watch("contactMethod") === "email"
+                          ? "tu@email.com"
                           : "+52 55 1234 5678"
                       }
+                      className="text-base h-12"
                       {...field}
                     />
                   </FormControl>
@@ -333,11 +339,11 @@ export function WalletRechargeForm() {
               )}
             />
 
-            <Button 
-              type="submit" 
-              className="w-full bg-gradient-primary hover:shadow-glow"
+            {/* UX: h-12 = 48px — área de toque mínima para submit en mobile */}
+            <Button
+              type="submit"
+              className="w-full h-12 text-base bg-gobierno-guinda hover:bg-gobierno-guinda-oscuro text-white"
               disabled={isLoading}
-              size="lg"
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               <CreditCard className="mr-2 h-4 w-4" />

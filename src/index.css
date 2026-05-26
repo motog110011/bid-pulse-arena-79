@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+/* UX: display=swap evita flash de texto invisible en conexiones lentas */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -8,6 +9,36 @@
   Subastas GAP — Identidad visual institucional
   Paleta: Guinda #6B1D3E · Dorado #C9A84C · Blanco #FFFFFF
 */
+
+/* UX: tokens de spacing y altura de header para scroll-margin compensatorio */
+:root {
+  --header-height: 6rem; /* 32px topbar + 64px main nav */
+}
+
+/* UX: scroll-margin-top en secciones con id para que el header sticky no las tape */
+section[id],
+div[id] {
+  scroll-margin-top: var(--header-height);
+}
+
+/* UX: elimina animaciones para usuarios con preferencia de movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* UX: focus ring accesible visible — no sobreescribir con outline-none sin reemplazo */
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 2px;
+}
 
 @layer base {
   :root {
