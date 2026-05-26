@@ -104,8 +104,8 @@ const Auth = () => {
 
     try {
       const redirectUrl = `${window.location.origin}/`;
-      
-      const { error } = await supabase.auth.signUp({
+
+      const { data, error } = await supabase.auth.signUp({
         email: signupData.email,
         password: signupData.password,
         options: {
@@ -117,10 +117,10 @@ const Auth = () => {
       });
 
       if (error) {
-        if (error.message.includes("already registered")) {
+        if (error.message.includes("already registered") || error.message.includes("User already registered")) {
           toast({
-            title: "Usuario existente",
-            description: "Ya existe una cuenta con este email. Intenta iniciar sesión.",
+            title: "Cuenta existente",
+            description: "Ya existe una cuenta con este email. Inicia sesión.",
             variant: "destructive",
           });
         } else {
@@ -130,10 +130,23 @@ const Auth = () => {
             variant: "destructive",
           });
         }
-      } else {
+      } else if (data.user && !data.session) {
+        // Usuario creado pero email confirmation ON — lo decimos claramente
+        toast({
+          title: "Revisa tu correo",
+          description: "Te enviamos un enlace de confirmación. Si no llega, contacta al administrador para activar tu cuenta.",
+        });
+      } else if (data.session) {
+        // Confirmación OFF — sesión inmediata
         toast({
           title: "¡Cuenta creada!",
-          description: "Tu cuenta ha sido creada exitosamente. Puedes iniciar sesión ahora.",
+          description: "Bienvenido, ya puedes participar en las subastas.",
+        });
+        navigate("/");
+      } else {
+        toast({
+          title: "Registro enviado",
+          description: "Si no recibes el correo de confirmación en 5 minutos, intenta de nuevo.",
         });
         setActiveTab("login");
         setLoginData({ email: signupData.email, password: "" });
