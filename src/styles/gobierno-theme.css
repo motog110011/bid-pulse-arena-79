@@ -1,0 +1,221 @@
+/*
+  Tema Identidad Visual — Gobierno de México / 4T
+  Aplicar en index.css con: @import './styles/gobierno-theme.css';
+
+  Para activar en tailwind.config.ts agregar bajo theme.extend.colors:
+    gobierno: {
+      guinda:   '#6B1D3E',
+      dorado:   '#C9A84C',
+      blanco:   '#FFFFFF',
+      gris:     '#54565A',
+      claro:    '#F5F0EA',
+      oscuro:   '#3D0F22',
+    }
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+  /* --- Colores institucionales --- */
+  --color-guinda:        #6B1D3E;
+  --color-guinda-oscuro: #3D0F22;
+  --color-guinda-hover:  #7e2349;
+  --color-dorado:        #C9A84C;
+  --color-dorado-claro:  #DFC070;
+  --color-dorado-oscuro: #A8882A;
+  --color-blanco:        #FFFFFF;
+  --color-gris-inst:     #54565A;
+  --color-gris-claro:    #F5F0EA;
+  --color-negro:         #1A1A1A;
+
+  /* --- Tipografía institucional --- */
+  --font-institucional: 'Montserrat', system-ui, -apple-system, sans-serif;
+
+  /* --- Sombras --- */
+  --shadow-guinda:  0 4px 20px rgba(107, 29, 62, 0.25);
+  --shadow-dorado:  0 4px 16px rgba(201, 168, 76, 0.30);
+  --shadow-card:    0 2px 12px rgba(0, 0, 0, 0.08);
+
+  /* --- Bordes --- */
+  --radius-inst: 4px;
+  --border-guinda: 1px solid var(--color-guinda);
+  --border-dorado: 1px solid var(--color-dorado);
+}
+
+/* --- Barra superior (franja guinda gob.mx) --- */
+.gob-topbar {
+  background-color: var(--color-guinda);
+  color: var(--color-blanco);
+  font-family: var(--font-institucional);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 0.25rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* --- Header principal --- */
+.gob-header {
+  background-color: var(--color-blanco);
+  border-bottom: 3px solid var(--color-guinda);
+  box-shadow: var(--shadow-card);
+  font-family: var(--font-institucional);
+}
+
+/* --- Navegación --- */
+.gob-nav-link {
+  color: var(--color-gris-inst);
+  font-family: var(--font-institucional);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-inst);
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.gob-nav-link:hover,
+.gob-nav-link.active {
+  color: var(--color-guinda);
+  background-color: rgba(107, 29, 62, 0.06);
+}
+
+/* --- Botón primario institucional --- */
+.gob-btn-primary {
+  background-color: var(--color-guinda);
+  color: var(--color-blanco);
+  font-family: var(--font-institucional);
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: none;
+  border-radius: var(--radius-inst);
+  padding: 0.625rem 1.25rem;
+  cursor: pointer;
+  transition: background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.gob-btn-primary:hover {
+  background-color: var(--color-guinda-hover);
+  box-shadow: var(--shadow-guinda);
+}
+
+/* --- Botón secundario dorado --- */
+.gob-btn-secondary {
+  background-color: transparent;
+  color: var(--color-guinda);
+  font-family: var(--font-institucional);
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 2px solid var(--color-guinda);
+  border-radius: var(--radius-inst);
+  padding: 0.5rem 1.25rem;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.gob-btn-secondary:hover {
+  background-color: var(--color-guinda);
+  color: var(--color-blanco);
+}
+
+/* --- Badge / etiqueta institucional --- */
+.gob-badge {
+  background-color: var(--color-dorado);
+  color: var(--color-negro);
+  font-family: var(--font-institucional);
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 2px;
+}
+
+.gob-badge-guinda {
+  background-color: var(--color-guinda);
+  color: var(--color-blanco);
+}
+
+/* --- Tarjeta institucional --- */
+.gob-card {
+  background-color: var(--color-blanco);
+  border: 1px solid #e0d8d0;
+  border-radius: var(--radius-inst);
+  box-shadow: var(--shadow-card);
+  font-family: var(--font-institucional);
+}
+
+.gob-card-header {
+  border-bottom: 3px solid var(--color-guinda);
+  padding: 1rem 1.25rem;
+}
+
+/* --- Divider dorado --- */
+.gob-divider {
+  border: none;
+  border-top: 2px solid var(--color-dorado);
+  opacity: 0.6;
+  margin: 1rem 0;
+}
+
+/* --- Sello / watermark institucional --- */
+.gob-sello {
+  border: 2px solid var(--color-dorado);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  box-shadow: var(--shadow-dorado);
+}
+
+/* --- Texto institucional --- */
+.gob-title {
+  font-family: var(--font-institucional);
+  font-weight: 800;
+  color: var(--color-guinda);
+  letter-spacing: -0.02em;
+}
+
+.gob-subtitle {
+  font-family: var(--font-institucional);
+  font-weight: 600;
+  color: var(--color-dorado);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.75rem;
+}
+
+/* =============================================
+   INSTRUCCIONES PARA tailwind.config.ts
+   =============================================
+
+   Agregar dentro de theme.extend:
+
+   colors: {
+     gobierno: {
+       guinda:  '#6B1D3E',
+       'guinda-oscuro': '#3D0F22',
+       'guinda-hover':  '#7e2349',
+       dorado:  '#C9A84C',
+       'dorado-claro': '#DFC070',
+       blanco:  '#FFFFFF',
+       gris:    '#54565A',
+       claro:   '#F5F0EA',
+     }
+   },
+   fontFamily: {
+     institucional: ['Montserrat', 'system-ui', 'sans-serif'],
+   },
+
+   Esto habilita clases como:
+     bg-gobierno-guinda, text-gobierno-dorado,
+     border-gobierno-guinda, font-institucional
+   ============================================= */

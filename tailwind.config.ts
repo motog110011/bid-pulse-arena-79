@@ -21,6 +21,7 @@ export default {
 			fontFamily: {
 				'inter': ['Inter', 'system-ui', 'sans-serif'],
 				'poppins': ['Poppins', 'system-ui', 'sans-serif'],
+				'institucional': ['Montserrat', 'system-ui', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -55,6 +56,18 @@ export default {
 				card: {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
+				},
+				// Identidad visual institucional Gobierno de México
+				gobierno: {
+					guinda:        '#6B1D3E',
+					'guinda-oscuro': '#3D0F22',
+					'guinda-hover':  '#7e2349',
+					dorado:        '#C9A84C',
+					'dorado-claro':  '#DFC070',
+					'dorado-oscuro': '#A8882A',
+					blanco:        '#FFFFFF',
+					gris:          '#54565A',
+					claro:         '#F5F0EA',
 				},
 				// Colores específicos para subastas
 				auction: {
