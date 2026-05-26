@@ -56,54 +56,63 @@ END $$;
 -- Reemplaza email y contraseña
 -- ============================================================
 
-/*
 DO $$
 DECLARE
   v_user_id uuid := gen_random_uuid();
   v_email   text := 'motog110011@gmail.com';    -- <-- TU EMAIL
   v_pass    text := 'Admin2024!';               -- <-- TU CONTRASEÑA
+  v_exists  uuid;
 BEGIN
-  -- Insertar usuario directamente en auth.users
-  -- La contraseña se guarda como bcrypt — Supabase la validará al login
-  INSERT INTO auth.users (
-    id,
-    instance_id,
-    email,
-    encrypted_password,
-    email_confirmed_at,
-    created_at,
-    updated_at,
-    role,
-    aud
-  ) VALUES (
-    v_user_id,
-    '00000000-0000-0000-0000-000000000000',
-    v_email,
-    crypt(v_pass, gen_salt('bf')),
-    now(),   -- email ya confirmado
-    now(),
-    now(),
-    'authenticated',
-    'authenticated'
-  )
-  ON CONFLICT (email) DO NOTHING;
+  -- Verificar si ya existe antes de insertar
+  SELECT id INTO v_exists FROM auth.users WHERE email = v_email;
 
-  -- Obtener el ID real (por si ya existía)
-  SELECT id INTO v_user_id FROM auth.users WHERE email = v_email;
+  IF v_exists IS NULL THEN
+    INSERT INTO auth.users (
+      id,
+      instance_id,
+      email,
+      encrypted_password,
+      email_confirmed_at,
+      created_at,
+      updated_at,
+      role,
+      aud
+    ) VALUES (
+      v_user_id,
+      '00000000-0000-0000-0000-000000000000',
+      v_email,
+      crypt(v_pass, gen_salt('bf')),
+      now(),
+      now(),
+      now(),
+      'authenticated',
+      'authenticated'
+    );
+    RAISE NOTICE 'Usuario creado en auth.users';
+  ELSE
+    v_user_id := v_exists;
+    -- Confirmar email y actualizar contraseña si ya existía
+    UPDATE auth.users
+    SET
+      encrypted_password  = crypt(v_pass, gen_salt('bf')),
+      email_confirmed_at  = COALESCE(email_confirmed_at, now()),
+      updated_at          = now()
+    WHERE id = v_user_id;
+    RAISE NOTICE 'Usuario ya existía — email confirmado y contraseña actualizada';
+  END IF;
 
-  -- Crear perfil, rol admin y wallet con saldo inicial
+  -- Crear perfil, rol admin y wallet
   INSERT INTO public.profiles (id, full_name) VALUES (v_user_id, 'Admin')
   ON CONFLICT (id) DO NOTHING;
 
   INSERT INTO public.user_roles (user_id, role) VALUES (v_user_id, 'admin')
-  ON CONFLICT (user_id) DO UPDATE SET role = 'admin';
+  ON CONFLICT (user_id) DO UPDATE SET role = 'admin', updated_at = now();
 
   INSERT INTO public.user_wallets (user_id, balance) VALUES (v_user_id, 1000)
-  ON CONFLICT (user_id) DO UPDATE SET balance = 1000;
+  ON CONFLICT (user_id) DO UPDATE SET balance = GREATEST(user_wallets.balance, 1000);
 
-  RAISE NOTICE '✓ Usuario admin creado: % / %', v_email, v_pass;
+  RAISE NOTICE 'Admin listo: % con contrasena: %', v_email, v_pass;
 END $$;
-*/
 
 
 -- ============================================================
