@@ -45,8 +45,8 @@ export function Hero() {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${heroImage})` }}
       />
-      {/* overlay más opaco para garantizar legibilidad en todos los tamaños */}
-      <div className="absolute inset-0 bg-white/90 sm:bg-gradient-to-r sm:from-white/98 sm:via-white/92 sm:to-white/70" />
+      {/* overlay sólido — evita que la foto sangre y grisee el texto */}
+      <div className="absolute inset-0 bg-white/[.96] sm:bg-gradient-to-r sm:from-white/[.98] sm:via-white/[.97] sm:to-white/[.88]" />
 
       {/* Banda dorada decorativa superior */}
       <div className="relative h-1 bg-gobierno-dorado" />
@@ -63,7 +63,7 @@ export function Hero() {
                 <p className="text-xs font-semibold uppercase tracking-widest text-gobierno-guinda">
                   Subastas GAP
                 </p>
-                <p className="text-xs text-foreground/60 tracking-wide">
+                <p className="text-xs text-gray-500 tracking-wide">
                   Plataforma certificada de subastas
                 </p>
               </div>
@@ -73,9 +73,9 @@ export function Hero() {
             <div className="space-y-4">
               <h1 className="text-4xl lg:text-5xl font-extrabold leading-tight text-gobierno-guinda">
                 Subastas de
-                <span className="block text-foreground">Productos Decomisados</span>
+                <span className="block text-gray-900">Productos Decomisados</span>
               </h1>
-              <p className="text-base text-foreground/80 max-w-lg leading-relaxed">
+              <p className="text-base text-gray-700 max-w-lg leading-relaxed">
                 Artículos confiscados en aeropuertos internacionales de México.
                 Proceso transparente, verificado y 100% legal.
                 Precios muy por debajo del mercado.
@@ -88,21 +88,21 @@ export function Hero() {
                 <div className="text-2xl font-bold text-gobierno-guinda">
                   {loading ? "—" : stats.activeUsers.toLocaleString("es-MX")}
                 </div>
-                <div className="text-xs text-gobierno-gris uppercase tracking-wide mt-0.5">Usuarios activos</div>
+                <div className="text-xs text-gray-500 uppercase tracking-wide mt-0.5">Usuarios activos</div>
               </div>
               <div className="w-px h-8 bg-border" />
               <div className="text-center">
                 <div className="text-2xl font-bold text-gobierno-dorado-oscuro">
                   {loading ? "—" : stats.totalAuctionsToday}
                 </div>
-                <div className="text-xs text-gobierno-gris uppercase tracking-wide mt-0.5">Subastas hoy</div>
+                <div className="text-xs text-gray-500 uppercase tracking-wide mt-0.5">Subastas hoy</div>
               </div>
               <div className="w-px h-8 bg-border" />
               <div className="text-center">
                 <div className="text-2xl font-bold text-gobierno-guinda">
                   {loading ? "—" : stats.liveAuctions}
                 </div>
-                <div className="text-xs text-gobierno-gris uppercase tracking-wide mt-0.5">En vivo</div>
+                <div className="text-xs text-gray-500 uppercase tracking-wide mt-0.5">En vivo</div>
               </div>
             </div>
 
@@ -128,7 +128,7 @@ export function Hero() {
             </div>
 
             {/* Sellos de confianza */}
-            <div className="flex items-center gap-4 text-xs text-gobierno-gris">
+            <div className="flex items-center gap-4 text-xs text-gray-600">
               <div className="flex items-center gap-1.5">
                 <ShieldCheck className="h-4 w-4 text-gobierno-guinda" />
                 <span>Proceso oficial verificado</span>

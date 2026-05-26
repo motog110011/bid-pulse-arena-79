@@ -1,367 +1,429 @@
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Loader2, CreditCard, Smartphone, Mail, Upload } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Loader2, CreditCard, Mail, Smartphone, Copy, CheckCircle, Upload, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
-const rechargeSchema = z.object({
-  amount: z.number()
-    .min(1000, "El monto mínimo es $1,000")
-    .max(15000, "El monto máximo es $15,000"),
-  contactMethod: z.enum(["email", "whatsapp", "phone"], {
-    required_error: "Selecciona un método de contacto",
-  }),
-  contactValue: z.string().min(1, "Este campo es requerido"),
-  paymentProof: z.instanceof(File).optional(),
-});
-
-type RechargeFormData = z.infer<typeof rechargeSchema>;
-
 interface BankDetails {
-  bank_name: string
-  account_holder: string
-  account_number: string
-  clabe: string
-  oxxo_card_number: string
-  reference_instructions: string
+  bank_name: string;
+  account_holder: string;
+  account_number: string;
+  clabe: string;
+  oxxo_card_number?: string;
+  reference_instructions?: string;
+}
+
+const AMOUNT_PRESETS = [1000, 3000, 5000, 10000, 15000];
+const CONTACT_OPTIONS = [
+  { value: "email",    label: "Correo electrónico", icon: Mail },
+  { value: "whatsapp", label: "WhatsApp",            icon: Smartphone },
+  { value: "phone",    label: "Teléfono",            icon: Smartphone },
+] as const;
+
+function generate5DigitRef(): string {
+  return Math.floor(10000 + Math.random() * 90000).toString();
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      className="ml-2 p-1 rounded hover:bg-muted transition-colors"
+      aria-label="Copiar"
+    >
+      {copied
+        ? <CheckCircle className="h-4 w-4 text-green-600" />
+        : <Copy className="h-4 w-4 text-muted-foreground" />}
+    </button>
+  );
 }
 
 export function WalletRechargeForm() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [bankDetails, setBankDetails] = useState<BankDetails | null>(null);
-  const [loadingBankDetails, setLoadingBankDetails] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const form = useForm<RechargeFormData>({
-    resolver: zodResolver(rechargeSchema),
-    defaultValues: {
-      amount: 1000,
-      contactMethod: "email",
-      contactValue: user?.email || "",
-    },
-  });
+  // Step 1 state
+  const [amount, setAmount]               = useState<number>(1000);
+  const [customAmount, setCustomAmount]   = useState("");
+  const [contactMethod, setContactMethod] = useState<"email" | "whatsapp" | "phone">("email");
+  const [contactValue, setContactValue]   = useState(user?.email ?? "");
 
-  // Fetch bank details on component mount
+  // Step 2 state
+  const [step, setStep]             = useState<1 | 2>(1);
+  const [reference, setReference]   = useState("");
+  const [proofFile, setProofFile]   = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Bank details from admin settings
+  const [bankDetails, setBankDetails]           = useState<BankDetails | null>(null);
+  const [loadingBank, setLoadingBank]           = useState(true);
+
   useEffect(() => {
-    const fetchBankDetails = async () => {
-      try {
-        setLoadingBankDetails(true)
-        const { data, error } = await supabase
-          .from('app_settings')
-          .select('setting_value')
-          .eq('setting_key', 'bank_details')
-          .single()
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("app_settings")
+        .select("setting_value")
+        .eq("setting_key", "bank_details")
+        .single();
+      if (data?.setting_value) setBankDetails(data.setting_value as BankDetails);
+      setLoadingBank(false);
+    })();
+  }, []);
 
-        if (error) {
-          console.error('Error fetching bank details:', error)
-          return
-        }
+  // ── Step 1: generate reference and advance ────────────────────────────────
+  function handleContinue() {
+    const finalAmount = customAmount ? Number(customAmount) : amount;
+    if (!finalAmount || finalAmount < 1000 || finalAmount > 15000) {
+      toast({ title: "Monto inválido", description: "Ingresa un monto entre $1,000 y $15,000.", variant: "destructive" });
+      return;
+    }
+    if (!contactValue.trim()) {
+      toast({ title: "Falta tu contacto", description: "Ingresa tu correo o número.", variant: "destructive" });
+      return;
+    }
+    setReference(generate5DigitRef());
+    setStep(2);
+  }
 
-        if (data?.setting_value) {
-          setBankDetails(data.setting_value as unknown as BankDetails)
-        }
-      } catch (error) {
-        console.error('Error fetching bank details:', error)
-      } finally {
-        setLoadingBankDetails(false)
+  // ── Step 2: upload proof + save request ──────────────────────────────────
+  async function handleSubmit() {
+    if (!user) return;
+    setIsSubmitting(true);
+
+    const finalAmount = customAmount ? Number(customAmount) : amount;
+    let proofUrl: string | null = null;
+
+    // Upload comprobante if provided
+    if (proofFile) {
+      const ext  = proofFile.name.split(".").pop();
+      const path = `${user.id}/${reference}.${ext}`;
+
+      const { error: uploadError } = await (supabase as any).storage
+        .from("comprobantes")
+        .upload(path, proofFile, { upsert: true });
+
+      if (uploadError) {
+        // Bucket may not exist yet — proceed without proof and warn admin
+        console.warn("Storage upload failed:", uploadError.message);
+        toast({
+          title: "Comprobante no adjuntado",
+          description: "No se pudo subir el archivo. La solicitud se enviará sin comprobante.",
+          variant: "destructive",
+        });
+      } else {
+        proofUrl = path;
       }
     }
 
-    fetchBankDetails()
-  }, [])
-
-  const generateReference = () => {
-    const random = Math.random().toString(36).substring(2, 7).toUpperCase();
-    return random;
-  };
-
-  const onSubmit = async (data: RechargeFormData) => {
-    if (!user) {
-      toast({
-        title: "Error",
-        description: "Debes iniciar sesión para solicitar una recarga",
-        variant: "destructive",
+    // Save recharge request
+    const { error } = await (supabase as any)
+      .from("wallet_recharge_requests")
+      .insert({
+        user_id:           user.id,
+        amount:            finalAmount,
+        contact_method:    contactMethod,
+        contact_value:     contactValue,
+        reference_number:  reference,
+        payment_proof_url: proofUrl,
+        status:            "pending",
       });
+
+    if (error) {
+      toast({ title: "Error al enviar", description: error.message, variant: "destructive" });
+      setIsSubmitting(false);
       return;
     }
 
-    setIsLoading(true);
-    try {
-      const referenceNumber = generateReference();
-      
-      // Upload payment proof if provided
-      let paymentProofUrl = null
-      if (data.paymentProof) {
-        // For now, we'll just indicate a file was provided
-        // In a real implementation, you'd upload to Supabase Storage
-        paymentProofUrl = `payment-proof-${referenceNumber}`
-      }
+    // Notify admin
+    await (supabase as any).rpc("create_admin_notification", {
+      notification_type:    "recharge_request",
+      notification_title:   "Nueva solicitud de recarga",
+      notification_message: `Ref. ${reference} — $${finalAmount.toLocaleString("es-MX")}`,
+      notification_data:    { amount: finalAmount, reference, user_id: user.id },
+      triggering_user_id:   user.id,
+    }).catch(() => {/* non-critical */});
 
-      // Save to database
-      const { error } = await supabase
-        .from('wallet_recharge_requests')
-        .insert({
-          user_id: user.id,
-          amount: data.amount,
-          contact_method: data.contactMethod,
-          contact_value: data.contactValue,
-          reference_number: referenceNumber,
-          payment_proof_url: paymentProofUrl,
-          status: 'pending'
-        });
+    toast({
+      title: "Solicitud enviada",
+      description: `Referencia ${reference}. Te avisaremos en 12–24 h cuando se acredite tu saldo.`,
+    });
 
-      if (error) {
-        throw error;
-      }
-
-      // Create admin notification
-      await supabase.rpc('create_admin_notification', {
-        notification_type: 'recharge_request',
-        notification_title: 'Nueva solicitud de recarga',
-        notification_message: `Usuario solicitó recarga de $${data.amount}`,
-        notification_data: { 
-          amount: data.amount, 
-          reference: referenceNumber,
-          user_id: user.id 
-        },
-        triggering_user_id: user.id
-      })
-
-      toast({
-        title: "Solicitud enviada",
-        description: `Tu solicitud de recarga ha sido enviada. Número de referencia: ${referenceNumber}`,
-      });
-
-      form.reset();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Error al procesar la solicitud. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (loadingBankDetails) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center p-8">
-          <div className="text-center space-y-2">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-r-transparent mx-auto" />
-            <p className="text-sm text-muted-foreground">Cargando información bancaria...</p>
-          </div>
-        </CardContent>
-      </Card>
-    )
+    // Reset
+    setStep(1);
+    setReference("");
+    setProofFile(null);
+    setCustomAmount("");
+    setContactValue(user?.email ?? "");
+    setIsSubmitting(false);
   }
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5" />
-          Recargar Billetera
-        </CardTitle>
-        <CardDescription>
-          Realiza una transferencia bancaria para recargar tu billetera digital
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {bankDetails && (
-          <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-            <h3 className="font-semibold text-sm mb-3 text-primary">Datos Bancarios</h3>
-            <div className="space-y-2 text-sm">
-              <div>
-                <span className="font-medium">Banco:</span> {bankDetails.bank_name}
-              </div>
-              <div>
-                <span className="font-medium">Titular:</span> {bankDetails.account_holder}
-              </div>
-              <div>
-                <span className="font-medium">Cuenta:</span> {bankDetails.account_number}
-              </div>
-              <div>
-                <span className="font-medium">CLABE:</span> {bankDetails.clabe}
-              </div>
-              <div>
-                <span className="font-medium">Número de tarjeta para depósito en OXXO:</span> {bankDetails.oxxo_card_number}
-              </div>
-              <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded text-amber-800">
-                <span className="font-medium">Importante:</span> {bankDetails.reference_instructions}
-              </div>
-            </div>
+  if (loadingBank) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-gobierno-guinda" />
+      </div>
+    );
+  }
+
+  // ── STEP 1 ────────────────────────────────────────────────────────────────
+  if (step === 1) {
+    const finalAmount = customAmount ? Number(customAmount) : amount;
+
+    return (
+      <div className="space-y-6">
+        {/* Monto */}
+        <div className="space-y-3">
+          <Label className="text-base font-semibold">Monto a recargar (MXN)</Label>
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+            {AMOUNT_PRESETS.map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => { setAmount(preset); setCustomAmount(""); }}
+                className={`py-2.5 px-1 rounded border text-sm font-semibold transition-colors ${
+                  amount === preset && !customAmount
+                    ? "bg-gobierno-guinda text-white border-gobierno-guinda"
+                    : "bg-white border-border text-foreground hover:border-gobierno-guinda hover:text-gobierno-guinda"
+                }`}
+              >
+                ${preset.toLocaleString("es-MX")}
+              </button>
+            ))}
           </div>
-        )}
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Monto a recargar (MXN)</FormLabel>
-                  <FormControl>
-                    {/* UX: inputMode numeric abre teclado numérico en mobile; text-base evita zoom en iOS */}
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      placeholder="1000"
-                      min={1000}
-                      max={15000}
-                      step={100}
-                      className="text-base h-12"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Monto mínimo: $1,000 - Monto máximo: $15,000
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              inputMode="numeric"
+              placeholder="Otro monto..."
+              value={customAmount}
+              onChange={(e) => { setCustomAmount(e.target.value); setAmount(0); }}
+              min={1000}
+              max={15000}
+              step={100}
+              className="text-base h-12 bg-muted border-border"
             />
+            <span className="text-sm text-muted-foreground shrink-0">MXN</span>
+          </div>
+          <p className="text-xs text-muted-foreground">Mínimo $1,000 · Máximo $15,000</p>
+        </div>
 
-            <FormField
-              control={form.control}
-              name="contactMethod"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Método de contacto preferido</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex flex-col space-y-2"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="email" id="email" />
-                        <label
-                          htmlFor="email"
-                          className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          <Mail className="h-4 w-4" />
-                          Correo electrónico
-                        </label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="whatsapp" id="whatsapp" />
-                        <label
-                          htmlFor="whatsapp"
-                          className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          <Smartphone className="h-4 w-4" />
-                          WhatsApp
-                        </label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="phone" id="phone" />
-                        <label
-                          htmlFor="phone"
-                          className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          <Smartphone className="h-4 w-4" />
-                          Teléfono
-                        </label>
-                      </div>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        {/* Método de contacto */}
+        <div className="space-y-3">
+          <Label className="text-base font-semibold">¿Cómo te avisamos cuando se acredite?</Label>
+          <RadioGroup
+            value={contactMethod}
+            onValueChange={(v) => setContactMethod(v as typeof contactMethod)}
+            className="space-y-2"
+          >
+            {CONTACT_OPTIONS.map(({ value, label, icon: Icon }) => (
+              <div key={value} className={`flex items-center gap-3 p-3 rounded border cursor-pointer transition-colors ${
+                contactMethod === value ? "border-gobierno-guinda bg-gobierno-claro" : "border-border hover:border-gobierno-guinda/50"
+              }`}>
+                <RadioGroupItem value={value} id={`cm-${value}`} />
+                <label htmlFor={`cm-${value}`} className="flex items-center gap-2 cursor-pointer text-sm font-medium">
+                  <Icon className="h-4 w-4 text-gobierno-gris" aria-hidden="true" />
+                  {label}
+                </label>
+              </div>
+            ))}
+          </RadioGroup>
+        </div>
 
-            <FormField
-              control={form.control}
-              name="contactValue"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {form.watch("contactMethod") === "email"
-                      ? "Correo electrónico"
-                      : "Número de teléfono"}
-                  </FormLabel>
-                  <FormControl>
-                    {/* UX: type tel abre teclado telefónico en mobile; text-base evita zoom */}
-                    <Input
-                      type={form.watch("contactMethod") === "email" ? "email" : "tel"}
-                      inputMode={form.watch("contactMethod") === "email" ? "email" : "tel"}
-                      autoComplete={form.watch("contactMethod") === "email" ? "email" : "tel"}
-                      placeholder={
-                        form.watch("contactMethod") === "email"
-                          ? "tu@email.com"
-                          : "+52 55 1234 5678"
-                      }
-                      className="text-base h-12"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        {/* Valor de contacto */}
+        <div className="space-y-2">
+          <Label htmlFor="contact-value" className="text-sm font-semibold">
+            {contactMethod === "email" ? "Tu correo electrónico" : "Tu número de teléfono"}
+          </Label>
+          <Input
+            id="contact-value"
+            type={contactMethod === "email" ? "email" : "tel"}
+            inputMode={contactMethod === "email" ? "email" : "tel"}
+            autoComplete={contactMethod === "email" ? "email" : "tel"}
+            value={contactValue}
+            onChange={(e) => setContactValue(e.target.value)}
+            placeholder={contactMethod === "email" ? "tu@correo.com" : "+52 55 1234 5678"}
+            className="text-base h-12 bg-muted border-border"
+          />
+        </div>
 
-            <FormField
-              control={form.control}
-              name="paymentProof"
-              render={({ field: { onChange, value, ...field } }) => (
-                <FormItem>
-                  <FormLabel>Comprobante de pago (opcional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) onChange(file)
-                      }}
-                      {...field}
-                      value=""
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Sube tu comprobante de transferencia (imagen o PDF)
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <Button
+          onClick={handleContinue}
+          className="w-full h-12 text-base bg-gobierno-guinda hover:bg-gobierno-guinda-oscuro text-white font-semibold"
+        >
+          <CreditCard className="mr-2 h-5 w-5" aria-hidden="true" />
+          Continuar — Ver datos de depósito
+        </Button>
+      </div>
+    );
+  }
 
-            {/* UX: h-12 = 48px — área de toque mínima para submit en mobile */}
-            <Button
-              type="submit"
-              className="w-full h-12 text-base bg-gobierno-guinda hover:bg-gobierno-guinda-oscuro text-white"
-              disabled={isLoading}
-            >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              <CreditCard className="mr-2 h-4 w-4" />
-              {isLoading ? "Enviando..." : "Enviar Solicitud"}
-            </Button>
+  // ── STEP 2 ────────────────────────────────────────────────────────────────
+  const finalAmount = customAmount ? Number(customAmount) : amount;
 
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <h4 className="font-medium mb-2">Proceso de Recarga</h4>
-              <ol className="text-sm text-muted-foreground space-y-1">
-                <li>1. Realiza la transferencia bancaria con los datos mostrados arriba</li>
-                <li>2. Usa el número de referencia que recibirás al enviar este formulario</li>
-                <li>3. Sube tu comprobante de pago (opcional pero recomendado)</li>
-                <li>4. Tu billetera será recargada en un máximo de 24 horas</li>
-              </ol>
+  return (
+    <div className="space-y-6">
+      {/* Regresa */}
+      <button
+        type="button"
+        onClick={() => setStep(1)}
+        className="flex items-center gap-1.5 text-sm text-gobierno-gris hover:text-gobierno-guinda transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+        Cambiar monto o contacto
+      </button>
+
+      {/* Número de referencia — prominente */}
+      <div className="text-center py-5 px-4 rounded-lg border-2 border-gobierno-guinda bg-gobierno-claro">
+        <p className="text-xs font-semibold uppercase tracking-widest text-gobierno-gris mb-1">
+          Tu número de referencia
+        </p>
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-5xl font-extrabold tracking-widest text-gobierno-guinda">
+            {reference}
+          </span>
+          <CopyButton text={reference} />
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          Usa este número como referencia al realizar tu depósito
+        </p>
+      </div>
+
+      {/* Resumen */}
+      <div className="flex justify-between items-center px-1">
+        <span className="text-sm text-muted-foreground">Monto a depositar</span>
+        <span className="text-xl font-bold text-foreground">
+          ${finalAmount.toLocaleString("es-MX")} <span className="text-sm font-normal">MXN</span>
+        </span>
+      </div>
+
+      {/* Datos bancarios */}
+      {bankDetails ? (
+        <div className="rounded-lg border border-border overflow-hidden">
+          <div className="bg-gobierno-guinda px-4 py-2.5">
+            <p className="text-xs font-bold uppercase tracking-widest text-white">Datos para depósito</p>
+          </div>
+          <div className="divide-y divide-border text-sm">
+            {[
+              { label: "Banco",    value: bankDetails.bank_name },
+              { label: "Titular",  value: bankDetails.account_holder },
+              { label: "Cuenta",   value: bankDetails.account_number },
+              { label: "CLABE",    value: bankDetails.clabe },
+              ...(bankDetails.oxxo_card_number
+                ? [{ label: "Tarjeta OXXO", value: bankDetails.oxxo_card_number }]
+                : []),
+            ].map(({ label, value }) => (
+              <div key={label} className="flex items-center justify-between px-4 py-3">
+                <span className="text-muted-foreground font-medium w-28 shrink-0">{label}</span>
+                <div className="flex items-center gap-1 min-w-0">
+                  <span className="font-semibold text-foreground truncate">{value}</span>
+                  <CopyButton text={value} />
+                </div>
+              </div>
+            ))}
+          </div>
+          {bankDetails.reference_instructions && (
+            <div className="px-4 py-3 bg-amber-50 border-t border-amber-200">
+              <p className="text-xs text-amber-800 leading-relaxed">
+                <span className="font-bold">Importante: </span>
+                {bankDetails.reference_instructions}
+              </p>
             </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-border px-4 py-6 text-center text-sm text-muted-foreground">
+          El administrador aún no ha configurado los datos bancarios.
+          Contacta a soporte en{" "}
+          <a href="mailto:soporte@subastasgap.com.mx" className="text-gobierno-guinda">
+            soporte@subastasgap.com.mx
+          </a>
+        </div>
+      )}
+
+      {/* Subir comprobante */}
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold">
+          Comprobante de depósito{" "}
+          <span className="text-muted-foreground font-normal">(opcional pero recomendado)</span>
+        </Label>
+        <div
+          className={`relative flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-6 cursor-pointer transition-colors ${
+            proofFile
+              ? "border-green-500 bg-green-50"
+              : "border-border hover:border-gobierno-guinda hover:bg-gobierno-claro"
+          }`}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {proofFile ? (
+            <>
+              <CheckCircle className="h-6 w-6 text-green-600" />
+              <p className="text-sm font-medium text-green-700">{proofFile.name}</p>
+              <p className="text-xs text-green-600">
+                {(proofFile.size / 1024).toFixed(0)} KB — haz clic para cambiar
+              </p>
+            </>
+          ) : (
+            <>
+              <Upload className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+              <p className="text-sm font-medium text-foreground">Subir comprobante</p>
+              <p className="text-xs text-muted-foreground">JPG, PNG o PDF · máx. 5 MB</p>
+            </>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.pdf"
+            className="sr-only"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f && f.size > 5 * 1024 * 1024) {
+                toast({ title: "Archivo muy grande", description: "Máximo 5 MB.", variant: "destructive" });
+                return;
+              }
+              if (f) setProofFile(f);
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Instrucciones */}
+      <ol className="text-xs text-muted-foreground space-y-1 list-none pl-0">
+        {[
+          "Realiza el depósito con los datos de arriba.",
+          `Usa la referencia ${reference} al hacer la transferencia.`,
+          "Sube tu comprobante (opcional pero agiliza el proceso).",
+          "Recibirás confirmación en 12–24 horas por tu medio de contacto.",
+        ].map((step, i) => (
+          <li key={i} className="flex gap-2">
+            <span className="font-bold text-gobierno-guinda shrink-0">{i + 1}.</span>
+            {step}
+          </li>
+        ))}
+      </ol>
+
+      <Button
+        onClick={handleSubmit}
+        disabled={isSubmitting}
+        className="w-full h-12 text-base bg-gobierno-guinda hover:bg-gobierno-guinda-oscuro text-white font-semibold"
+      >
+        {isSubmitting
+          ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          : <CheckCircle className="mr-2 h-5 w-5" aria-hidden="true" />}
+        {isSubmitting ? "Enviando solicitud..." : "Ya deposité — Enviar solicitud"}
+      </Button>
+    </div>
   );
 }
