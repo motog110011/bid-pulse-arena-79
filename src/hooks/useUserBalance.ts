@@ -1,57 +1,34 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '@/integrations/supabase/client'
-import { useAuth } from './useAuth'
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './useAuth';
 
 export function useUserBalance() {
-  const [balance, setBalance] = useState<number>(0)
-  const [loading, setLoading] = useState(true)
-  const { user } = useAuth()
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (!user) {
-      setBalance(0)
-      setLoading(false)
-      return
-    }
+  const { data: balance = 0, isLoading: loading } = useQuery({
+    queryKey: ['user-balance', user?.id],
+    queryFn: async (): Promise<number> => {
+      if (!user?.id) return 0;
 
-    fetchBalance()
-  }, [user?.id]) // Fixed dependency to prevent infinite loops
-
-  const fetchBalance = async () => {
-    if (!user?.id) return
-
-    try {
-      setLoading(true)
-      // @ts-ignore - Temporary fix for missing types
       const { data, error } = await (supabase as any)
         .from('user_wallets')
         .select('balance')
         .eq('user_id', user.id)
-        .single()
+        .single();
 
-      if (error) {
-        console.error('Error fetching balance:', error)
-        setBalance(0)
-      } else if (data) {
-        setBalance(Number(data.balance) || 0)
-      }
-    } catch (error) {
-      console.error('Error fetching balance:', error)
-      setBalance(0)
-    } finally {
-      setLoading(false)
-    }
-  }
+      if (error) return 0;
+      return Number(data?.balance ?? 0);
+    },
+    enabled: !!user,
+    staleTime: 10_000,
+  });
 
   const refreshBalance = () => {
     if (user?.id) {
-      fetchBalance()
+      queryClient.invalidateQueries({ queryKey: ['user-balance', user.id] });
     }
-  }
+  };
 
-  return {
-    balance,
-    loading,
-    refreshBalance,
-  }
+  return { balance, loading, refreshBalance };
 }

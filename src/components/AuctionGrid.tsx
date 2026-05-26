@@ -1,16 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Filter, ArrowUpDown } from "lucide-react";
 import { AuctionCard } from "@/components/ui/auction-card";
-import { useAutoBid } from "@/hooks/useAutoBid";
-import { useAuctionRenewal } from "@/hooks/useAuctionRenewal";
+import { AuthDialog } from "@/components/auth/AuthDialog";
+import { useAuth } from "@/hooks/useAuth";
+import { useBidMutation } from "@/hooks/useBidMutation";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-
-// Import test utilities for browser console access
-import '@/utils/testAuctionRenewal';
+import { Filter, ArrowUpDown } from "lucide-react";
 
 interface AuctionItem {
   id: string;
@@ -27,270 +25,211 @@ interface AuctionItem {
   bidIncrement: number;
 }
 
+const CATEGORIES = ["Perfumes", "Licores", "Vinos", "Navajas", "Herramientas", "Cosméticos"] as const;
+
+const formatAuction = (raw: any): AuctionItem => ({
+  id: raw.id,
+  title: raw.title,
+  currentBid: Number(raw.current_bid),
+  endTime: new Date(raw.end_time),
+  image: raw.image_url ?? "",
+  category: raw.category,
+  isLive: raw.status === "active",
+  description: raw.description,
+  currentBidder: raw.current_bidder ?? undefined,
+  totalBids: raw.total_bids,
+  minimumBid: Number(raw.minimum_bid),
+  bidIncrement: Number(raw.bid_increment),
+});
+
 const AuctionGrid = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [auctions, setAuctions] = useState<AuctionItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const { triggerAutoBid } = useAutoBid();
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const { user } = useAuth();
+  const bidMutation = useBidMutation();
   const { toast } = useToast();
 
-  // Initialize auction renewal system
-  useAuctionRenewal({
-    minExtensionMinutes: 15, // Minimum 15 minutes extension
-    maxExtensionMinutes: 60, // Maximum 60 minutes extension (less than 1 hour)
-    checkIntervalSeconds: 30, // Check every 30 seconds
-    enabled: true // Enable automatic renewal
-  });
-
-  const fetchAuctions = async () => {
-    try {
-      setLoading(true);
-      // Use PostgreSQL random() function to shuffle auctions on each load
-      const { data, error } = await supabase
-        .rpc('get_random_auctions');
-
-      if (error) {
-        console.error('Error fetching auctions:', error);
-        return;
-      }
-
-      const formattedAuctions: AuctionItem[] = data.map((auction) => ({
-        id: auction.id,
-        title: auction.title,
-        currentBid: Number(auction.current_bid),
-        endTime: new Date(auction.end_time),
-        image: auction.image_url || '/src/assets/product-perfume.jpg',
-        category: auction.category,
-        isLive: auction.status === 'active',
-        description: auction.description,
-        currentBidder: auction.current_bidder,
-        totalBids: auction.total_bids,
-        minimumBid: Number(auction.minimum_bid),
-        bidIncrement: Number(auction.bid_increment),
-      }));
-
-      setAuctions(formattedAuctions);
-    } catch (error) {
-      console.error('Error fetching auctions:', error);
-    } finally {
-      setLoading(false);
+  const fetchAuctions = useCallback(async () => {
+    const { data, error } = await (supabase as any).rpc("get_random_auctions");
+    if (error) {
+      toast({ title: "Error cargando subastas", variant: "destructive" });
+      return;
     }
-  };
+    setAuctions((data as any[]).map(formatAuction));
+    setLoading(false);
+  }, []);
 
+  // Carga inicial + suscripción Realtime
   useEffect(() => {
     fetchAuctions();
 
-    // Refresh auctions every 30 seconds
-    const interval = setInterval(fetchAuctions, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    const channel = supabase
+      .channel("auction-realtime")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "auctions" },
+        (payload) => {
+          const updated = payload.new as any;
+          setAuctions((prev) =>
+            prev
+              .map((a) =>
+                a.id === updated.id
+                  ? {
+                      ...a,
+                      currentBid: Number(updated.current_bid),
+                      totalBids: updated.total_bids,
+                      isLive: updated.status === "active",
+                    }
+                  : a
+              )
+              .filter((a) => a.isLive)
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchAuctions]);
 
   const handleBid = async (itemId: string, amount: number) => {
+    if (!user) {
+      setAuthDialogOpen(true);
+      return;
+    }
+
+    const auction = auctions.find((a) => a.id === itemId);
+
     try {
-      // Update the auction in the database
-      const { error } = await supabase
-        .from('auctions')
-        .update({
-          current_bid: amount,
-          current_bidder: "Tu oferta",
-          total_bids: auctions.find(a => a.id === itemId)?.totalBids! + 1,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', itemId);
+      await bidMutation.mutateAsync({ auctionId: itemId, amount });
 
-      if (error) {
-        console.error('Error updating bid:', error);
-        toast({
-          title: "Error",
-          description: "No se pudo realizar la oferta. Inténtalo de nuevo.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Update local state
-      setAuctions(prevAuctions =>
-        prevAuctions.map(auction =>
-          auction.id === itemId
+      // Actualización optimista local — Realtime la confirmará
+      setAuctions((prev) =>
+        prev.map((a) =>
+          a.id === itemId
             ? {
-                ...auction,
+                ...a,
                 currentBid: amount,
-                currentBidder: "Tu oferta",
-                totalBids: (auction.totalBids || 0) + 1,
+                currentBidder: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "Tú",
+                totalBids: a.totalBids + 1,
               }
-            : auction
+            : a
         )
       );
-      
-      // Schedule auto-bid after user's bid
-      triggerAutoBid(amount, itemId, {
-        minDelay: 15,
-        maxDelay: 45,
-        chanceToRespond: 0.7,
-        maxBidIncrease: 30
-      }, handleAutoBid);
-      
+
       toast({
-        title: "¡Oferta realizada!",
-        description: `Has ofertado $${amount.toFixed(2)} por "${auctions.find(a => a.id === itemId)?.title}"`,
+        title: "¡Puja registrada!",
+        description: `Ofertaste $${amount.toLocaleString("es-MX")} por "${auction?.title}"`,
       });
-    } catch (error) {
-      console.error('Error placing bid:', error);
+    } catch (err: any) {
       toast({
-        title: "Error",
-        description: "No se pudo realizar la oferta. Inténtalo de nuevo.",
+        title: "No se pudo pujar",
+        description: err.message ?? "Inténtalo de nuevo.",
         variant: "destructive",
       });
     }
   };
 
-  const handleAutoBid = async (auctionId: string, newBid: number, bidder: string) => {
-    try {
-      // Update the auction in the database
-      const { error } = await supabase
-        .from('auctions')
-        .update({
-          current_bid: newBid,
-          current_bidder: bidder,
-          total_bids: auctions.find(a => a.id === auctionId)?.totalBids! + 1,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', auctionId);
-
-      if (error) {
-        console.error('Error updating auto bid:', error);
-        return;
-      }
-
-      // Update local state
-      setAuctions(prevAuctions =>
-        prevAuctions.map(auction =>
-          auction.id === auctionId
-            ? {
-                ...auction,
-                currentBid: newBid,
-                currentBidder: bidder,
-                totalBids: (auction.totalBids || 0) + 1,
-              }
-            : auction
+  const filteredAuctions =
+    selectedCategory === "All"
+      ? auctions
+      : selectedCategory === "Terminating"
+      ? auctions.filter(
+          (a) => a.endTime.getTime() - Date.now() <= 30 * 60 * 1000 && a.endTime.getTime() > Date.now()
         )
-      );
-      
-      toast({
-        title: "Nueva oferta",
-        description: `${bidder} ha ofertado $${newBid.toFixed(2)}`,
-        variant: "default",
-      });
-    } catch (error) {
-      console.error('Error processing auto bid:', error);
-    }
-  };
+      : auctions.filter((a) => a.category === selectedCategory);
 
-  // Filter auctions based on selected category
-  const filteredAuctions = selectedCategory === "All" 
-    ? auctions 
-    : selectedCategory === "Terminating"
-    ? auctions.filter(auction => {
-        const timeRemaining = auction.endTime.getTime() - Date.now();
-        return timeRemaining <= 30 * 60 * 1000 && timeRemaining > 0; // 30 minutes
-      })
-    : auctions.filter(auction => auction.category === selectedCategory);
+  const liveCount = auctions.filter(
+    (a) => a.isLive && a.endTime.getTime() - Date.now() > 30 * 60 * 1000
+  ).length;
 
-  // Get live auctions (excluding terminating ones for the count)
-  const liveAuctions = auctions.filter(auction => {
-    const timeRemaining = auction.endTime.getTime() - Date.now();
-    return auction.isLive && timeRemaining > 30 * 60 * 1000;
-  });
-  
-  // Get ending soon auctions (less than 30 minutes remaining)
-  const endingSoon = auctions.filter(auction => {
-    const timeRemaining = auction.endTime.getTime() - Date.now();
-    return timeRemaining <= 30 * 60 * 1000 && timeRemaining > 0; // 30 minutes in milliseconds
-  });
+  const endingSoonCount = auctions.filter(
+    (a) => a.endTime.getTime() - Date.now() <= 30 * 60 * 1000 && a.endTime.getTime() > Date.now()
+  ).length;
+
+  const tabKeys = ["All", ...CATEGORIES, "Terminating"] as const;
 
   return (
-    <section id="auction-grid" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      <div className="space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <h2 className="text-4xl font-bold">
-            Productos <span className="text-primary">Decomisados</span>
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Artículos confiscados en aeropuertos internacionales. 
-            Perfumes, licores, vinos, navajas y más a precios increíbles.
-          </p>
-        </div>
-
-        {/* Stats */}
-        <div className="flex items-center justify-center gap-8 mb-8">
-          <div className="text-center">
-            <Badge className="bg-destructive animate-pulse-auction mb-2">
-              {liveAuctions.length} EN VIVO
-            </Badge>
-            <p className="text-sm text-muted-foreground">Subastas activas</p>
+    <>
+      <section id="auction-grid" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="space-y-8">
+          <div className="text-center space-y-4">
+            <h2 className="text-4xl font-bold">
+              Productos <span className="text-primary">Decomisados</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Artículos confiscados en aeropuertos internacionales.
+              Perfumes, licores, vinos, navajas y más a precios increíbles.
+            </p>
           </div>
-          <div className="text-center">
-            <Badge className="bg-auction-warning mb-2">
-              {endingSoon.length} TERMINANDO
-            </Badge>
-            <p className="text-sm text-muted-foreground">Próximas a finalizar</p>
-          </div>
-        </div>
 
-        {/* Filters and Tabs */}
-        <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
-            <TabsList className="glass-card">
-              <TabsTrigger value="All">Todos los Productos</TabsTrigger>
-              <TabsTrigger value="Perfumes">Perfumes</TabsTrigger>
-              <TabsTrigger value="Licores">Licores</TabsTrigger>
-              <TabsTrigger value="Vinos">Vinos</TabsTrigger>
-              <TabsTrigger value="Navajas">Navajas</TabsTrigger>
-              <TabsTrigger value="Herramientas">Herramientas</TabsTrigger>
-              <TabsTrigger value="Cosméticos">Cosméticos</TabsTrigger>
-              <TabsTrigger value="Terminating">Terminando Pronto</TabsTrigger>
-            </TabsList>
-
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="glass">
-                <Filter className="h-4 w-4 mr-2" />
-                Filtros
-              </Button>
-              <Button variant="outline" size="sm" className="glass">
-                <ArrowUpDown className="h-4 w-4 mr-2" />
-                Ordenar
-              </Button>
+          <div className="flex items-center justify-center gap-8">
+            <div className="text-center">
+              <Badge className="bg-destructive animate-pulse-auction mb-2">
+                {liveCount} EN VIVO
+              </Badge>
+              <p className="text-sm text-muted-foreground">Subastas activas</p>
+            </div>
+            <div className="text-center">
+              <Badge className="bg-auction-warning mb-2">
+                {endingSoonCount} TERMINANDO
+              </Badge>
+              <p className="text-sm text-muted-foreground">Próximas a finalizar</p>
             </div>
           </div>
 
-          {["All", "Perfumes", "Licores", "Vinos", "Navajas", "Herramientas", "Cosméticos", "Terminating"].map((category) => (
-            <TabsContent key={category} value={category} className="space-y-6">
-              {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="h-64 bg-muted animate-pulse rounded-lg" />
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredAuctions.map((item) => (
-                    <AuctionCard key={item.id} item={item} onBid={handleBid} />
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-          ))}
+          <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+              <TabsList className="glass-card flex-wrap h-auto gap-1">
+                <TabsTrigger value="All">Todos</TabsTrigger>
+                {CATEGORIES.map((cat) => (
+                  <TabsTrigger key={cat} value={cat}>{cat}</TabsTrigger>
+                ))}
+                <TabsTrigger value="Terminating">Terminando</TabsTrigger>
+              </TabsList>
 
-          {/* Load more */}
-          <div className="text-center mt-8">
-            <Button variant="outline" size="lg" className="glass">
-              Cargar Más Productos
-            </Button>
-          </div>
-        </Tabs>
-      </div>
-    </section>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="glass" disabled>
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filtros
+                </Button>
+                <Button variant="outline" size="sm" className="glass" disabled>
+                  <ArrowUpDown className="h-4 w-4 mr-2" />
+                  Ordenar
+                </Button>
+              </div>
+            </div>
+
+            {tabKeys.map((category) => (
+              <TabsContent key={category} value={category} className="space-y-6">
+                {loading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                      <div key={i} className="h-64 bg-muted animate-pulse rounded-lg" />
+                    ))}
+                  </div>
+                ) : filteredAuctions.length === 0 ? (
+                  <div className="text-center py-16 text-muted-foreground">
+                    <p className="text-lg">No hay subastas activas en esta categoría.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredAuctions.map((item) => (
+                      <AuctionCard key={item.id} item={item} onBid={handleBid} />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            ))}
+          </Tabs>
+        </div>
+      </section>
+
+      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
+    </>
   );
 };
 
