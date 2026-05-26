@@ -13,6 +13,7 @@ import Contact from "./pages/Contact";
 import MyBids from "./pages/MyBids";
 import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/reembolsos" element={<RefundPolicy />} />
           <Route path="/contacto" element={<Contact />} />
           <Route path="/mis-pujas" element={<MyBids />} />
+          <Route path="/admin" element={<Admin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
