@@ -75,7 +75,7 @@ const Profile = () => {
   const handleAddressSubmit = async (data: AddressFormData) => {
     if (!user) return;
     setSavingAddress(true);
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from("profiles")
       .update({
         shipping_full_name:  data.fullName,
@@ -109,7 +109,7 @@ const Profile = () => {
     setUploadingId(true);
     const ext = file.name.split(".").pop();
     const path = `${user.id}/identificacion.${ext}`;
-    const { error: uploadError } = await (supabase as any).storage
+    const { error: uploadError } = await supabase.storage
       .from("identificaciones")
       .upload(path, file, { upsert: true });
     if (uploadError) {
@@ -117,7 +117,7 @@ const Profile = () => {
       setUploadingId(false);
       return;
     }
-    await (supabase as any).from("profiles").update({ id_document_url: path, updated_at: new Date().toISOString() }).eq("id", user.id);
+    await supabase.from("profiles").update({ id_document_url: path, updated_at: new Date().toISOString() }).eq("id", user.id);
     setIdFileName(file.name);
     setUploadingId(false);
     toast({ title: "Identificación cargada", description: "Tu identificación fue guardada correctamente." });
