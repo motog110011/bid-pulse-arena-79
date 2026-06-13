@@ -119,15 +119,18 @@ serve(async (req) => {
         throw new Error('Invalid action')
     }
 
-    // Log the admin action
-    await supabaseAdmin.from('balance_transactions').insert({
-      user_id: user.id,
-      wallet_id: '00000000-0000-0000-0000-000000000000', // System transaction
-      amount: 0,
-      transaction_type: 'admin_action',
-      description: `Admin action: ${action} on user ${userId}`,
-      reference_number: `ADM-${Date.now()}`
-    })
+    // Log the admin action via admin_notifications (non-critical)
+    try {
+      await supabaseAdmin.from('admin_notifications').insert({
+        type: 'admin_action',
+        title: `Admin: ${action}`,
+        message: `Admin ${user.email} ejecutó ${action} en usuario ${userId}`,
+        data: { action, targetUserId: userId, adminId: user.id },
+        user_id: user.id,
+      })
+    } catch (_) {
+      // Audit log failure must not abort the main operation
+    }
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

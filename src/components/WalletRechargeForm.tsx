@@ -73,7 +73,7 @@ export function WalletRechargeForm() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("app_settings")
         .select("setting_value")
         .eq("setting_key", "bank_details")
@@ -111,7 +111,7 @@ export function WalletRechargeForm() {
       const ext  = proofFile.name.split(".").pop();
       const path = `${user.id}/${reference}.${ext}`;
 
-      const { error: uploadError } = await (supabase as any).storage
+      const { error: uploadError } = await supabase.storage
         .from("comprobantes")
         .upload(path, proofFile, { upsert: true });
 
@@ -129,7 +129,7 @@ export function WalletRechargeForm() {
     }
 
     // Save recharge request
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from("wallet_recharge_requests")
       .insert({
         user_id:           user.id,
@@ -148,7 +148,7 @@ export function WalletRechargeForm() {
     }
 
     // Notify admin
-    await (supabase as any).rpc("create_admin_notification", {
+    await supabase.rpc("create_admin_notification", {
       notification_type:    "recharge_request",
       notification_title:   "Nueva solicitud de recarga",
       notification_message: `Ref. ${reference} — $${finalAmount.toLocaleString("es-MX")}`,

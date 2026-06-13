@@ -52,12 +52,12 @@ const AuctionGrid = () => {
   const { toast } = useToast();
 
   const fetchAuctions = useCallback(async () => {
-    const { data, error } = await (supabase as any).rpc("get_random_auctions");
+    const { data, error } = await supabase.rpc("get_random_auctions");
     if (error) {
       toast({ title: "Error cargando subastas", variant: "destructive" });
       return;
     }
-    setAuctions((data as any[]).map(formatAuction));
+    setAuctions((data ?? []).map(formatAuction));
     setLoading(false);
   }, []);
 

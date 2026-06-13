@@ -8,7 +8,7 @@ export function useUserRole() {
   const { data: role, isLoading: loading } = useQuery({
     queryKey: ['user-role', user?.id],
     queryFn: async (): Promise<'admin' | 'user'> => {
-      const { data, error } = await (supabase as any).rpc('get_current_user_role');
+      const { data, error } = await supabase.rpc('get_current_user_role');
       if (error) return 'user';
       return (data as 'admin' | 'user') ?? 'user';
     },

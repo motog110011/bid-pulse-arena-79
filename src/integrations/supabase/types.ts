@@ -47,6 +47,33 @@ export type Database = {
         }
         Relationships: []
       }
+      bids: {
+        Row: {
+          amount: number
+          auction_id: string
+          created_at: string
+          id: string
+          is_winning: boolean
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          auction_id: string
+          created_at?: string
+          id?: string
+          is_winning?: boolean
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          auction_id?: string
+          created_at?: string
+          id?: string
+          is_winning?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           created_at: string
@@ -261,6 +288,16 @@ export type Database = {
           created_at: string | null
           full_name: string | null
           id: string
+          id_document_url: string | null
+          phone: string | null
+          shipping_city: string | null
+          shipping_colony: string | null
+          shipping_full_name: string | null
+          shipping_phone: string | null
+          shipping_references: string | null
+          shipping_state: string | null
+          shipping_street: string | null
+          shipping_zip_code: string | null
           updated_at: string | null
         }
         Insert: {
@@ -268,6 +305,16 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id: string
+          id_document_url?: string | null
+          phone?: string | null
+          shipping_city?: string | null
+          shipping_colony?: string | null
+          shipping_full_name?: string | null
+          shipping_phone?: string | null
+          shipping_references?: string | null
+          shipping_state?: string | null
+          shipping_street?: string | null
+          shipping_zip_code?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -275,6 +322,16 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id?: string
+          id_document_url?: string | null
+          phone?: string | null
+          shipping_city?: string | null
+          shipping_colony?: string | null
+          shipping_full_name?: string | null
+          shipping_phone?: string | null
+          shipping_references?: string | null
+          shipping_state?: string | null
+          shipping_street?: string | null
+          shipping_zip_code?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -396,6 +453,29 @@ export type Database = {
       generate_specific_image_url: {
         Args: { category: string; fallback_index?: number; title: string }
         Returns: string
+      }
+      get_random_auctions: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          title: string
+          description: string
+          category: string
+          current_bid: number
+          minimum_bid: number
+          bid_increment: number
+          image_url: string | null
+          end_time: string
+          status: string
+          current_bidder: string | null
+          total_bids: number
+          created_at: string
+          updated_at: string
+        }[]
+      }
+      place_bid: {
+        Args: { p_auction_id: string; p_amount: number }
+        Returns: Json
       }
       get_current_user_role: {
         Args: Record<PropertyKey, never>

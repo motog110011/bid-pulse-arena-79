@@ -24,7 +24,7 @@ export const useBidMutation = () => {
         throw new Error('Debes iniciar sesión para pujar.');
       }
 
-      const { data, error } = await (supabase as any).rpc('place_bid', {
+      const { data, error } = await supabase.rpc('place_bid', {
         p_auction_id: auctionId,
         p_amount: amount,
       });

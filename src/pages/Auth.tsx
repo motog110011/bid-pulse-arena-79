@@ -162,38 +162,6 @@ const Auth = () => {
     }
   };
 
-  const handleDemoLogin = async () => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: "demo@subastasgap.com.mx",
-        password: "demo123456",
-      });
-
-      if (error) {
-        toast({
-          title: "Error con usuario demo",
-          description: "No se pudo acceder con el usuario demo. Intenta crear una cuenta.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "¡Acceso demo activado!",
-          description: "Has iniciado sesión con el usuario demo.",
-        });
-        navigate("/");
-      }
-    } catch (error) {
-      toast({
-        title: "Error inesperado",
-        description: "Hubo un problema con el acceso demo.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">

@@ -33,7 +33,7 @@ export const useUserBids = () => {
     queryFn: async (): Promise<UserBid[]> => {
       if (!user) return [];
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('bids')
         .select(`
           id,
