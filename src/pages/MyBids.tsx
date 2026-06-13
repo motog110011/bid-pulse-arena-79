@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,11 +19,18 @@ import { resolveDeterministicImage } from "@/lib/deterministicImageResolver";
 import { useProductImageMappings } from "@/hooks/useProductImages";
 
 const MyBids = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const { data: userBids = [], isLoading, error, refetch } = useUserBids();
   const { data: mappings } = useProductImageMappings();
   const bidMutation = useBidMutation();
   const [biddingAuctions, setBiddingAuctions] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth?redirect=/mis-pujas");
+    }
+  }, [user, authLoading, navigate]);
 
   const handleBid = async (auctionId: string, amount: number) => {
     setBiddingAuctions(prev => new Set([...prev, auctionId]));

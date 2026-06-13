@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,11 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Upload, Truck, Gift, AlertCircle, User } from "lucide-react";
+import { MapPin, Upload, Truck, Gift, AlertCircle, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const addressSchema = z.object({
   fullName: z.string().min(2, "El nombre completo es requerido"),
@@ -27,48 +30,108 @@ const addressSchema = z.object({
 type AddressFormData = z.infer<typeof addressSchema>;
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [shippingCost, setShippingCost] = useState<number | null>(null);
   const [idFile, setIdFile] = useState<File | null>(null);
+  const [idFileName, setIdFileName] = useState<string | null>(null);
+  const [savingAddress, setSavingAddress] = useState(false);
+  const [uploadingId, setUploadingId] = useState(false);
 
   const addressForm = useForm<AddressFormData>({
     resolver: zodResolver(addressSchema),
   });
 
-  const handleAddressSubmit = (data: AddressFormData) => {
-    console.log("Dirección guardada:", data);
-    // Simular cálculo de costo de envío
-    setShippingCost(200);
-  };
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth?redirect=/perfil");
+    }
+  }, [user, authLoading, navigate]);
 
-  const handleIdUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setIdFile(file);
-      console.log("Archivo de ID seleccionado:", file.name);
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("shipping_full_name, shipping_phone, shipping_street, shipping_colony, shipping_city, shipping_state, shipping_zip_code, shipping_references, id_document_url")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (!data) return;
+        addressForm.reset({
+          fullName:   data.shipping_full_name  ?? "",
+          phone:      data.shipping_phone      ?? "",
+          street:     data.shipping_street     ?? "",
+          colony:     data.shipping_colony     ?? "",
+          city:       data.shipping_city       ?? "",
+          state:      data.shipping_state      ?? "",
+          zipCode:    data.shipping_zip_code   ?? "",
+          references: data.shipping_references ?? "",
+        });
+        if (data.id_document_url) setIdFileName(data.id_document_url.split("/").pop() ?? "Identificación cargada");
+      });
+  }, [user]);
+
+  const handleAddressSubmit = async (data: AddressFormData) => {
+    if (!user) return;
+    setSavingAddress(true);
+    const { error } = await (supabase as any)
+      .from("profiles")
+      .update({
+        shipping_full_name:  data.fullName,
+        shipping_phone:      data.phone,
+        shipping_street:     data.street,
+        shipping_colony:     data.colony,
+        shipping_city:       data.city,
+        shipping_state:      data.state,
+        shipping_zip_code:   data.zipCode,
+        shipping_references: data.references ?? null,
+        updated_at:          new Date().toISOString(),
+      })
+      .eq("id", user.id);
+    setSavingAddress(false);
+    if (error) {
+      toast({ title: "Error al guardar", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Dirección guardada", description: "Tu dirección de entrega fue actualizada." });
+      setShippingCost(200);
     }
   };
 
-  if (!user) {
+  const handleIdUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Archivo muy grande", description: "Máximo 5 MB.", variant: "destructive" });
+      return;
+    }
+    setIdFile(file);
+    setUploadingId(true);
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/identificacion.${ext}`;
+    const { error: uploadError } = await (supabase as any).storage
+      .from("identificaciones")
+      .upload(path, file, { upsert: true });
+    if (uploadError) {
+      toast({ title: "Error al subir identificación", description: uploadError.message, variant: "destructive" });
+      setUploadingId(false);
+      return;
+    }
+    await (supabase as any).from("profiles").update({ id_document_url: path, updated_at: new Date().toISOString() }).eq("id", user.id);
+    setIdFileName(file.name);
+    setUploadingId(false);
+    toast({ title: "Identificación cargada", description: "Tu identificación fue guardada correctamente." });
+  };
+
+  if (authLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center py-12">
-            <User className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-            <h1 className="text-2xl font-bold mb-2">Inicia sesión para ver tu perfil</h1>
-            <p className="text-muted-foreground mb-6">
-              Necesitas estar autenticado para acceder a tu perfil
-            </p>
-            <Button asChild>
-              <a href="/auth">Iniciar Sesión</a>
-            </Button>
-          </div>
-        </main>
-        <Footer />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -212,9 +275,11 @@ const Profile = () => {
                       )}
                     />
 
-                    <Button type="submit" className="w-full bg-gradient-primary">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      Guardar Dirección y Calcular Envío
+                    <Button type="submit" className="w-full bg-gradient-primary" disabled={savingAddress}>
+                      {savingAddress
+                        ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        : <MapPin className="h-4 w-4 mr-2" />}
+                      {savingAddress ? "Guardando..." : "Guardar Dirección y Calcular Envío"}
                     </Button>
                   </form>
                 </Form>
@@ -276,11 +341,17 @@ const Profile = () => {
                   </p>
                 </div>
 
-                {idFile && (
+                {uploadingId && (
+                  <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 rounded-lg">
+                    <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
+                    <span className="text-sm text-blue-800">Subiendo identificación...</span>
+                  </div>
+                )}
+                {!uploadingId && idFileName && (
                   <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                     <Upload className="h-4 w-4 text-green-600" />
                     <span className="text-sm text-green-800 dark:text-green-200">
-                      Archivo cargado: {idFile.name}
+                      Identificación guardada: {idFileName}
                     </span>
                   </div>
                 )}
